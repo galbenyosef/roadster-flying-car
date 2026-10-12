@@ -1,0 +1,30 @@
+{
+  "generated": "2026-10-12T23:59:03.053Z",
+  "origin": "https://roadster-the-flying-car-gamev28.vercel.app",
+  "files": {
+    "icon-192.png": {
+      "bytes": 3076,
+      "sha256": "aec9f76d55030f3b6b3dc966862c4b296dca90fc696a7825c0324c2c7c010d63"
+    },
+    "icon-512.png": {
+      "bytes": 8727,
+      "sha256": "460e702660606db0825a2c91b3fd1feb324a62aa8efc16eb534dac0f9ae13d19"
+    },
+    "index.html": {
+      "bytes": 2775374,
+      "sha256": "5ee65df8fb67d65a920fda4402112b9d3a09d0656f947bea688d59ffc1d426d4"
+    },
+    "manifest.webmanifest": {
+      "bytes": 407,
+      "sha256": "d29a61c733c01791716aaf74ab232a6c3945d7576459a37cf4a0105799953763"
+    },
+    "og.jpg": {
+      "bytes": 109573,
+      "sha256": "71591b8f6b0c9cbf1d556a32791a24da1fde9258b66d73cd7e8ceb4d9596a322"
+    },
+    "sw.js": {
+      "bytes": 1178,
+      "sha256": "318bebdbb2f63ada5ed188566f45c51bc9afc88fef09764720d7c0121c75245f"
+    }
+  }
+}

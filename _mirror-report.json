@@ -1,0 +1,36 @@
+{
+  "start": "https://roadster-the-flying-car-gamev28.vercel.app/",
+  "origin": "https://roadster-the-flying-car-gamev28.vercel.app",
+  "gated": false,
+  "sessionRenewal": "none",
+  "requests": 8,
+  "fetched": 6,
+  "bytes": 2898335,
+  "paths": [
+    "icon-192.png",
+    "icon-512.png",
+    "index.html",
+    "manifest.webmanifest",
+    "og.jpg",
+    "sw.js"
+  ],
+  "unresolved": [
+    {
+      "status": 404,
+      "path": "cloud.json",
+      "probes": 1
+    },
+    {
+      "status": 404,
+      "path": "favicon.ico",
+      "probes": 1
+    }
+  ],
+  "unreachable": [],
+  "external": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com/css2?family=Saira:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap",
+    "https://fonts.gstatic.com",
+    "https://www.gstatic.com/firebasejs/10.12.2/"
+  ]
+}
