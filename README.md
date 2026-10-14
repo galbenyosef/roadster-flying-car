@@ -76,8 +76,9 @@ the origin and covered by the static closure scan.
   `index-inline-1.pretty.css` (7 lines), `index-inline-2.pretty.css`
   (4,031 lines), `sw.pretty.js` (65 lines) + `index-inline-map.json` (byte
   ranges + sha256 for every inline block)
-- `src/` + `split-spec.json` — 65 statement-aligned slices with the recorded
-  derivation spec (69 sections)
+- `src/` + `split-spec.json` — 65 statement-aligned slices (69 sections) carrying
+  the recorded derivation spec **and the semantic rename layer** (129 reviewed
+  names over 60 slices; `rename-map.json` is the record)
 - `docs/cover.png` — gameplay cover (the Roadster flying at 110 m over the
   city, HOVER · 37 MPH, full HUD); `docs/boot-2026-10-13.png` — boot evidence
   (the TAP TO IGNITE gate); `docs/boot-network-2026-10-13.json` — the opencli
@@ -85,11 +86,26 @@ the origin and covered by the static closure scan.
 - `tools/capture.mjs` — byte-exact capture + runtime-closure fetch (`--check`
   for a residual closure audit)
 - `tools/derive.mjs` — rebuild `readable/` + `src/` + `split-spec.json`
+  (re-applying the recorded rename map on every re-cut)
 - `tools/verify.mjs` — re-hash the capture against the manifest
 - `tools/update.mjs` — read-only drift probe against the live origin
-- `tools/audit.js` — integrity gate for the derived layers (`AUDIT PASS`)
+- `tools/audit.js` — integrity gate for the derived layers (`AUDIT PASS`),
+  including the rename-map honesty gate
 - `tools/net-crosscheck.mjs` — compare an opencli network log against the
   manifest (dynamic closure check)
+- `tools/record-manifest.mjs` — re-cut / `--check` `.upstream/manifest.json`
+  (canonical SKIP/NOT_CAPTURED sets — derived layers never enter the sums)
+- `tools/probe-structure.mjs` — read-only structure probe (source maps, the
+  `__defs` factory table, top-level statements, recorded boundaries)
+- `tools/apply-names.mjs` — the PLAN §5 campaign writer (scope-aware, canonical
+  guard family); `tools/names.json` is the reviewed worklist
+- `tools/recover-scoped-map.mjs` — recover `rename-map.json` from the committed
+  slices by token alignment; `tools/verify-rename.mjs` + `tools/check-chunk.mjs`
+  + `tools/refcheck.mjs` are the campaign gates
+- `tools/engine/rename-layer.mjs` — the shared tokenizer / map application the
+  writer, derive, audit and the campaign gates all splice through;
+  `tools/lib-acorn.mjs` resolves acorn into a gitignored `tools/.deps/`
+  (authoring-time only)
 
 ## Assets
 
@@ -134,9 +150,15 @@ The boot evidence in `docs/boot-2026-10-13.png` and the cover in
 
 ```
 node tools/verify.mjs                 # re-hash the capture → 6 files checked, 0 problems
-node tools/audit.js                   # derived-layer integrity gate → AUDIT PASS
+node tools/audit.js                   # derived-layer integrity gate → AUDIT PASS (incl. rename-map gate)
 node tools/capture.mjs --check        # residual closure audit → 0 new unresolved
 node tools/net-crosscheck.mjs docs/boot-network-2026-10-13.json   # dynamic closure check
+node tools/update.mjs                 # read-only drift probe → up to date: 6 captured files identical
+node tools/record-manifest.mjs --check   # the manifest walk agrees, no derived path leaked
+node tools/probe-structure.mjs        # read-only structure evidence (the __defs factory table)
+node tools/apply-names.mjs --all --dry   # the campaign preflight (nothing written)
+node tools/verify-rename.mjs --all    # every slice reproduces byte-exact through rename-map.json
+node tools/check-chunk.mjs --all      # cross-slice calls still resolve after the rename
 ```
 
 ## Updating from upstream
@@ -243,11 +265,109 @@ fallback. Refreshing means re-fetching into a clean tree
   "Roadster: The Flying Car" return 0 repositories. The page declares itself
   an "Unofficial fan game … Not affiliated with or endorsed by Tesla or
   SpaceX". The mirror stands.
-- **Open task (PLAN §5)**: identifiers in `src/` are the bundle's own names.
-  The app code is authored readably (meaningful names survive the pretty
-  pass); the vendor region keeps three.js's own names. A deep identifier
-  rename campaign has not been run. Rebuild the derived layers any time with
-  `node tools/derive.mjs`.
+- **Open task (PLAN §5), closed 2026-10-15**: the first pass left identifiers
+  as bundled and recorded the deep identifier-rename campaign as an open task.
+  It was run on 2026-10-15 — see the structure + rename section below; the
+  finding was that the script is **authored, not minified**, so only 129
+  genuinely opaque short bindings needed naming. Rebuild the derived layers any
+  time with `node tools/derive.mjs`.
+
+### 2026-10-15 structure pass + identifier rename campaign (the open task, closed)
+
+Mission of this pass: converge the derived layers on the real project shape and
+run the PLAN §5 identifier rename campaign. The capture was **not** touched —
+`node tools/verify.mjs` still re-hashes all 6 files (0 problems) — so this
+section is entirely about `readable/`, `src/`, `split-spec.json`,
+`rename-map.json`, `tools/` and `legacy/`.
+
+- **Inventory (source maps + module boundaries) — recorded by
+  `tools/probe-structure.mjs`**:
+  - *Source maps*: **0** `sourceMappingURL` occurrences and **0** `*.map` files
+    across the capture (scanned byte-wise), so no original tree can be
+    reconstructed from maps; the derivation stays a prettier/slice pass.
+  - *Module boundaries*: the big inline module script opens with the bundle's
+    own `__defs`/`__req` registry — a **factory family in a single-file form**:
+    **12** top-level `__defs['<id>'] = function () { … };` module definitions.
+    The turbopack/webpack detection rule applies, adapted: the registry *is* a
+    module table, but **every factory is a VENDOR module** (three.js r187dev
+    `three.module.js` + `three.core.js` and the ten `examples/jsm` addons), so
+    the vendor rule claims the whole region wholeFile — exactly the turbopack
+    README's *"the vendor chunk (one that carries no push) stays wholeFile"*
+    gotcha adapted. There are **0 app factories**: the game's own code is a
+    flat classic **module top level** (931 top-level statements, **no IIFE**),
+    so the statement-aligned slices the first pass cut *are* the real shape and
+    the factory-extraction precedents (spawn-dust-2-dm / mindfall) do not
+    apply. The loader machinery and the 12 vendor definitions stay wholeFile
+    (never sliced, never renamed); the two inline stylesheets stay wholeFile by
+    the stylesheet rule.
+- **Rename campaign (PLAN §5) — applied and gated**: the finding that shaped
+  the campaign is that ROADSTER's script is **authored, not minified**. Of the
+  693 program-scope bindings of the app chunk, the great majority already carry
+  the author's own semantic names (`renderer`, `scene`, `camera`, `car`,
+  `body`, `wheels`, `mission`, `composer`, `clamp`, `lerp`, …) and are left
+  untouched — renaming them would destroy the author's naming, not recover it.
+  `tools/names.json` therefore renames only the **129 genuinely opaque short
+  bindings — all 129 fired, 0 refused, 3,957 identifier positions** spliced
+  across **60 slices**: the single-letter globals (`$`→`byId`,
+  `S`→`carState`, `M`→`currentMission`, `K`→`keyState`, `P`→`BLOCK_PITCH`,
+  `U`→`upgradeLevel`), the two/three-letter code abbreviations (`RW`→`ROAD_WIDTH`,
+  `NBK`→`BLOCK_COUNT`, `RPL`→`REPLAY`, `PHO`→`PHOTO`, `V26`→`MISSION_REBUILD`,
+  `ECO`→`ECONOMY`, `MIS`→`MISSIONS`, `VEH`→`VEHICLES`, `DRN`→`DRONE`, …) and
+  the `_`-prefixed scratch family (`_sq/_se/_sm/_sv/_ss`→`scratch*Skid`,
+  `_tc`→`textCache`, `_wv`→`wingVizSpans`, `_c3`→`scratchColor`). Applied by
+  `tools/apply-names.mjs` (chunk scope = the app module's top level, so every
+  nested local is untouched), recovered mechanically into `rename-map.json`
+  (**532 word-boundary + 17 indexed names over 164 occurrences**, 65/65 slices
+  aligned over 170,477 token positions, 60 renamed slices), and re-applied by
+  `tools/derive.mjs` on every re-cut.
+- **Guard family carried (all recorded fixes)**: marked
+  `FunctionDeclaration`/`ClassDeclaration` ids + token-level shorthand refusal
+  at preflight (proposal (p)); brace-depth template-substitution scanning
+  (proposal (r)); strict outside-ranged refusal + per-source line cache
+  (proposal (s)); the (t)(1) `renameBindings` record (this app chunk has no
+  index-only skipped section, so the exemption path is unreachable but the
+  honesty check is live); the token-based import/export handling (proposal
+  (ab)); per-chunk target uniqueness (proposal (ad)); flat-occurrence counting
+  on the base token stream (proposal (af)); canonical record-manifest
+  SKIP/NOT_CAPTURED sets incl. `rename-map.json` (proposal (u)/(t)(2)). The
+  `of`/`in` keyword guard (proposal (x)) and the whole-program-IIFE re-rooting
+  guard (proposal (ag), scoped to the true IIFE shape per proposal (ah)) are
+  carried: this capture is a flat module, so (ag) correctly re-roots nothing
+  (the literal program scope is kept) and the `of`/`in` guard has no rule to
+  fire on. **One deliberate divergence, recorded**: the `app` rules are keyed
+  by the **readable source**, not by capture rel — this capture is one file
+  (`index.html`) carrying two inline `<script>` chunks plus two inline
+  `<style>` blocks, so a capture rel does not identify a chunk here.
+- **One recorded frontier exclusion**: the touch-state object `T` shares its
+  spelling with a *local* `T` (`const T = VT[type]` in `vehicleModel`) that
+  appears in shorthand position (`{ T, … }`), which the canonical token-level
+  shorthand guard refuses — so `T` is left as the author wrote it rather than
+  weakening the guard. (darths-rage's binding-resolution adaptation is a
+  project-specific divergence and was deliberately not adopted here.)
+- **Pipeline** `apply → recover → derive → gates`; the superseded pre-campaign
+  `src/` + `readable/` layers are archived under `legacy/2026-10-15/` (71
+  files, 3.69 MB) — `readable/` is the capture rendering and is byte-identical
+  across the pass (archived per the archive-both rule); `rename-map.json`,
+  `split-spec.json` and `index-inline-map.json` regenerate in place (git is
+  their history).
+- **Gates**: `node tools/verify.mjs` → `6 files checked, 0 problems`;
+  `node tools/audit.js` → `AUDIT PASS` (69 spec sections — 65/65 src↔pretty
+  round-trips byte-exact through the recorded rename map, 60 renamed slices,
+  rename map 532 word-boundary + 164 indexed records over 60 slices
+  token-validated with no foreign position, 5/5 pretties re-render byte-exact
+  under pinned prettier 3.9.6 at the fixed point, vendor + shape guards held);
+  `node tools/verify-rename.mjs --all` → `65/65 slice(s) reproduce byte-exact,
+  60 renamed slice(s) (164 indexed occurrence(s)), 3/3 chunk(s)
+  references+bindings YES`; `node tools/check-chunk.mjs --all` → `3 chunk(s),
+  65 slice body(ies) substituted — all cross-slice calls resolve`;
+  `node tools/derive.mjs` re-run → 73 derived files byte-identical;
+  `node tools/record-manifest.mjs --check` → `PASS — 6 capture file(s)
+  recorded, walk agrees byte-for-byte, no derived path leaked`;
+  `node tools/update.mjs` → `up to date: 6 captured files identical upstream`;
+  `node tools/capture.mjs --check` → `1 unresolved (0 new)`; serve probe on
+  loopback → entry + `sw.js` + `manifest.webmanifest` + both icons + `og.jpg`
+  HTTP 200 at their recorded sizes (`cloud.json` → 404, matching upstream),
+  listener PID killed, port proven closed.
 
 ## Mirror conventions
 
@@ -264,6 +384,12 @@ fallback. Refreshing means re-fetching into a clean tree
   crawl record.
 - **Drift** — `tools/update.mjs` is read-only: it reports what changed
   upstream and never rewrites the capture.
+- **Rename layer** — `rename-map.json` records the semantic renames applied to
+  `src/` (the bundle's own opaque short names → reviewed names); `tools/derive.mjs`
+  re-applies it on every re-cut, and `tools/audit.js` + `tools/verify-rename.mjs`
+  + `tools/check-chunk.mjs` re-prove it. A capture refresh re-authors the campaign
+  (`node tools/apply-names.mjs --list` for the preflight verdicts) before the
+  derived layers are re-cut — the map is valid for one build only.
 
 ## Fleet status
 
