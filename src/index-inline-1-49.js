@@ -1,11 +1,11 @@
 // index-inline-1 49 — math
 // Lines 93896-94243 of readable/index-inline-1.pretty.js (statement-aligned).
 function routeFilm(k, onEnd) {
-  const C = CH[k],
-    id = MIS[C.mis].id,
+  const C = CHAPTERS[k],
+    id = MISSIONS[C.mis].id,
     V = (a, b, c) => new THREE.Vector3(a, b, c);
-  let T = filmTargets(id).filter((q) => Math.hypot(q.x - S.x, q.z - S.z) > 20);
-  const car = V(S.x, S.y, S.z),
+  let T = filmTargets(id).filter((q) => Math.hypot(q.x - carState.x, q.z - carState.z) > 20);
+  const car = V(carState.x, carState.y, carState.z),
     per = T.length > 4 ? 1.9 : 2.4,
     t0 = 2.8,
     dur = t0 + T.length * per + 1.6;
@@ -30,9 +30,9 @@ function routeFilm(k, onEnd) {
     });
     prev = tg;
   });
-  const yaw = S.yaw,
-    back = V(S.x + Math.sin(yaw) * 6, S.y + 1.9, S.z + Math.cos(yaw) * 6),
-    ahead = V(S.x - Math.sin(yaw) * 6, S.y + 0.8, S.z - Math.cos(yaw) * 6);
+  const yaw = carState.yaw,
+    back = V(carState.x + Math.sin(yaw) * 6, carState.y + 1.9, carState.z + Math.cos(yaw) * 6),
+    ahead = V(carState.x - Math.sin(yaw) * 6, carState.y + 0.8, carState.z - Math.cos(yaw) * 6);
   const cues = [
     [0.15, () => chapterCard(k, null)],
     [1.2, () => showSub(C.who, C.intro, Math.min(7, dur - 1.5))],
@@ -58,8 +58,8 @@ function routeFilm(k, onEnd) {
     dur - 1.4,
     () => {
       flashT = 0;
-      $("msgbig").textContent = "";
-      $("msgsmall").textContent = "";
+      byId("msgbig").textContent = "";
+      byId("msgsmall").textContent = "";
     },
   ]);
   const def = {
@@ -123,9 +123,9 @@ const DRONE_FILM = {
   dur: 11,
   setup() {
     droneReset();
-    DRN.g.visible = true;
-    DRN.g.position.set(DRN_ROOF[0], DRN_ROOF[1] + 0.6, DRN_ROOF[2]);
-    DRN.g.rotation.set(0, 0, 0);
+    DRONE.g.visible = true;
+    DRONE.g.position.set(DRN_ROOF[0], DRN_ROOF[1] + 0.6, DRN_ROOF[2]);
+    DRONE.g.rotation.set(0, 0, 0);
   },
   cues: [
     [
@@ -149,15 +149,15 @@ const DRONE_FILM = {
       9.3,
       () => {
         flashT = 0;
-        $("msgbig").textContent = "";
-        $("msgsmall").textContent = "";
+        byId("msgbig").textContent = "";
+        byId("msgsmall").textContent = "";
       },
     ],
   ],
   cam(t) {
     const V = (a, b, c) => new THREE.Vector3(a, b, c),
       R = DRN_ROOF,
-      g = DRN.g,
+      g = DRONE.g,
       s0 = drnAt(0);
     let red = t > 3.9;
     if (t < 3.2) {
@@ -202,34 +202,34 @@ const DRONE_FILM = {
       };
     }
     const u = easeIO(clamp((t - 9.4) / 1.6)),
-      yaw = S.yaw;
+      yaw = carState.yaw;
     return {
       p: V(
-        S.x + Math.sin(yaw) * lerp(18, 6, u),
-        S.y + lerp(9, 1.9, u),
-        S.z + Math.cos(yaw) * lerp(18, 6, u),
+        carState.x + Math.sin(yaw) * lerp(18, 6, u),
+        carState.y + lerp(9, 1.9, u),
+        carState.z + Math.cos(yaw) * lerp(18, 6, u),
       ),
-      tg: V(S.x - Math.sin(yaw) * 6, S.y + 0.8, S.z - Math.cos(yaw) * 6),
+      tg: V(carState.x - Math.sin(yaw) * 6, carState.y + 0.8, carState.z - Math.cos(yaw) * 6),
       fov: lerp(48, 58, u),
     };
   },
 };
 function storyFilm(k) {
-  const C = CH[k],
+  const C = CHAPTERS[k],
     go = () => {
       begin();
-      $("mission").hidden = false;
+      byId("mission").hidden = false;
       phase = "play";
-      if (M) {
-        M.t0 = clock;
-        if (M.def.race) M.gt = 0;
+      if (currentMission) {
+        currentMission.t0 = clock;
+        if (currentMission.def.race) currentMission.gt = 0;
       }
       snapCam();
     };
-  if (MIS[C.mis].id === "drone") {
+  if (MISSIONS[C.mis].id === "drone") {
     startCut(DRONE_FILM, () => {
       go();
-      DRN.g.position.copy(drnAt(0));
+      DRONE.g.position.copy(drnAt(0));
     });
     return;
   }
@@ -239,20 +239,20 @@ function storyFilm(k) {
 /* ---- story: act 1 rebuilt without the plain hover and drift tests ---- */
 {
   const at = (x, z) => [x, z];
-  CH[1] = {
+  CHAPTERS[1] = {
     t: "ROGUE DRONE",
-    mis: MI("drone"),
+    mis: missionIndex("drone"),
     act: 0,
     who: "MAE",
     intro:
       "My drone! It's got six pies and no brain. Catch it before it reaches the desert.",
     outro:
       "You flew that like you were born up there. Launch Control just called. They want you.",
-    at: at(CARP.x - 12, CARP.z - 6),
+    at: at(CAR_START.x - 12, CAR_START.z - 6),
   };
-  CH[3] = Object.assign({}, CH[3], {
+  CHAPTERS[3] = Object.assign({}, CHAPTERS[3], {
     t: "SPECIAL DELIVERY",
-    mis: MI("courier"),
+    mis: missionIndex("courier"),
     act: 0,
     who: "MAE",
     intro:
@@ -263,12 +263,12 @@ function storyFilm(k) {
   });
 }
 ["hover", "drift"].forEach((id) => {
-  const m = MIS.find((q) => q.id === id);
+  const m = MISSIONS.find((q) => q.id === id);
   if (m) m.hidden = true;
 });
 
 /* ================= V26: every mission rebuilt around its own idea, harder as you go ================= */
-var V26 = {
+var MISSION_REBUILD = {
   T: {},
   noRegen: false,
   noServ: false,
@@ -276,7 +276,7 @@ var V26 = {
   lastTrick: null,
   hs0: null,
 };
-const V3x = (a, b, c) => new THREE.Vector3(a, b, c);
+const vec3 = (a, b, c) => new THREE.Vector3(a, b, c);
 
 /* ---- slow-motion showcases: at most twice per session each, then only by chance ---- */
 var SESS = { hover: 0, boost: 0, jump: 0, mini: -99 };
@@ -313,18 +313,18 @@ function trickType(a) {
 {
   const _pop = pop;
   pop = function (a, pts, bad) {
-    const before = M && M.pts != null ? M.pts : 0;
+    const before = currentMission && currentMission.pts != null ? currentMission.pts : 0;
     const r = _pop(a, pts, bad);
     const ty = trickType(a);
     if (ty && pts > 0 && !bad && phase === "play") {
-      V26.lastTrick = {
+      MISSION_REBUILD.lastTrick = {
         a,
         ty,
         t: clock,
         pts,
-        got: M && M.pts != null ? M.pts - before : pts,
+        got: currentMission && currentMission.pts != null ? currentMission.pts - before : pts,
       };
-      if (M && !M.done && V26.onTrick) V26.onTrick(V26.lastTrick);
+      if (currentMission && !currentMission.done && MISSION_REBUILD.onTrick) MISSION_REBUILD.onTrick(MISSION_REBUILD.lastTrick);
     }
     return r;
   };
@@ -332,7 +332,7 @@ function trickType(a) {
 
 /* ---- one meter under the mission line: pies, comfort, cell heat, tether, ring clock ---- */
 function meter(label, v, txt, bad) {
-  const el = $("mMeter");
+  const el = byId("mMeter");
   if (!el) return;
   if (label == null) {
     if (!el.hidden) el.hidden = true;
@@ -341,7 +341,7 @@ function meter(label, v, txt, bad) {
   if (el.hidden) el.hidden = false;
   setT("mmL", label);
   setT("mmV", txt != null ? txt : `${Math.round(v)}%`);
-  const u = $("mmU");
+  const u = byId("mmU");
   u.style.transform = `scaleX(${clamp(v / 100).toFixed(3)})`;
   el.classList.toggle("bad", !!bad);
   el.classList.toggle("warn", !bad && v < 35);

@@ -190,8 +190,8 @@ shareProgress = async function () {
 
 /* ---------------- loop ---------------- */
 let last = performance.now(),
-  pvx = 0,
-  pvz = 0,
+  prevVx = 0,
+  prevVz = 0,
   mapTick = 0;
 // adaptive resolution: drop the pixel ratio when frames run long, raise it again when there is headroom
 const PERF = {

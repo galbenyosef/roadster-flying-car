@@ -69,7 +69,7 @@ function drawDinerScreen(t) {
 }
 // 2. MEGAFAB: a clean white chip factory with a solar roof
 {
-  const F = FAB;
+  const F = MEGAFAB;
   const s1 = textPlane("MEGAFAB", 46, 10, {
     col: "#1f4d78",
     font: "900 170px Saira, Arial Black, sans-serif",
@@ -109,7 +109,7 @@ function drawDinerScreen(t) {
   scene.add(pan);
 }
 // 3. SKYLINE LAUNCH COMPLEX: mount, lattice tower, a reusable rocket, landing zone, tanks, grandstand
-const LS = {
+const LAUNCH_SITE = {
   mount: {
     x: (blockMin(17) + blockMax(17)) / 2,
     z: (blockMin(17) + blockMax(17)) / 2,
@@ -120,5 +120,5 @@ const LS = {
     z: (blockMin(18) + blockMax(18)) / 2,
   },
 };
-LS.tower = { x: LS.mount.x + 24, z: LS.mount.z, h: 100 };
+LAUNCH_SITE.tower = { x: LAUNCH_SITE.mount.x + 24, z: LAUNCH_SITE.mount.z, h: 100 };
 const ROCKET = {};

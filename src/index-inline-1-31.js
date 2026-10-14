@@ -1,12 +1,12 @@
 // index-inline-1 31 — lerp
 // Lines 88199-88539 of readable/index-inline-1.pretty.js (statement-aligned).
 function cutTick(dt) {
-  cut.t += dt;
-  const D = cut.def,
-    t = cut.t;
+  activeCut.t += dt;
+  const D = activeCut.def,
+    t = activeCut.t;
   D.cues.forEach((c, i) => {
-    if (!cut.fired.has(i) && t >= c[0]) {
-      cut.fired.add(i);
+    if (!activeCut.fired.has(i) && t >= c[0]) {
+      activeCut.fired.add(i);
       c[1]();
     }
   });
@@ -21,20 +21,20 @@ function cutTick(dt) {
   camera.clearViewOffset();
   camera.updateProjectionMatrix();
 }
-$("cutSkip").addEventListener("click", () => {
-  if (cut) endCut();
-  else if (cin.on && cin.freeze) cin.t = cin.dur;
+byId("cutSkip").addEventListener("click", () => {
+  if (activeCut) endCut();
+  else if (cinematic.on && cinematic.freeze) cinematic.t = cinematic.dur;
 });
 // opening: Zero walks out of the diner, gets in, and the Roadster pulls out
-const DN = DINER.b,
-  DOOR = new THREE.Vector3((DN[0] + DN[1]) / 2, 0.2, DN[3] + 1.4),
-  CARP = new THREE.Vector3(DN[0] + 14, 0, DN[3] + 15);
+const DINER_BOUNDS = DINER.b,
+  DOOR = new THREE.Vector3((DINER_BOUNDS[0] + DINER_BOUNDS[1]) / 2, 0.2, DINER_BOUNDS[3] + 1.4),
+  CAR_START = new THREE.Vector3(DINER_BOUNDS[0] + 14, 0, DINER_BOUNDS[3] + 15);
 const OPENING = {
   dur: 11.8,
   setup() {
-    applyVehicle(VSEL().fly ? VSEL() : VEH[0]);
-    place(CARP.x, CARP.z, Math.PI / 2);
-    S.v = 0;
+    applyVehicle(SELECTED_VEHICLE().fly ? SELECTED_VEHICLE() : VEHICLES[0]);
+    place(CAR_START.x, CAR_START.z, Math.PI / 2);
+    carState.v = 0;
     ZERO.visible = true;
     ZERO.scale.setScalar(1);
     ZERO.position.copy(DOOR);
@@ -43,7 +43,7 @@ const OPENING = {
   path: [
     [DOOR.x, DOOR.z],
     [DOOR.x - 4, DOOR.z + 6],
-    [CARP.x - 1.2, CARP.z + 2.2],
+    [CAR_START.x - 1.2, CAR_START.z + 2.2],
   ],
   cues: [
     [0.3, () => showSub("", "LAS VEGAS · 7:42 AM", 2.8)],
@@ -98,9 +98,9 @@ const OPENING = {
       const e = easeIO(t / 3.2);
       return {
         p: V(
-          lerp(CARP.x - 70, CARP.x - 52, e),
+          lerp(CAR_START.x - 70, CAR_START.x - 52, e),
           lerp(20, 14, e),
-          lerp(CARP.z + 80, CARP.z + 60, e),
+          lerp(CAR_START.z + 80, CAR_START.z + 60, e),
         ),
         tg: V(DOOR.x + 6, 5, DOOR.z),
         fov: 48,
@@ -122,11 +122,11 @@ const OPENING = {
       const e = easeIO((t - 8) / 2.6);
       return {
         p: V(
-          CARP.x + lerp(-7, -6, e),
+          CAR_START.x + lerp(-7, -6, e),
           lerp(1.1, 1.4, e),
-          CARP.z + lerp(6, 4, e),
+          CAR_START.z + lerp(6, 4, e),
         ),
-        tg: V(CARP.x, 0.7, CARP.z),
+        tg: V(CAR_START.x, 0.7, CAR_START.z),
         fov: 38,
       };
     }
@@ -135,11 +135,11 @@ const OPENING = {
       rr = lerp(7.2, 5.3, e);
     return {
       p: V(
-        CARP.x + Math.cos(a) * rr,
+        CAR_START.x + Math.cos(a) * rr,
         lerp(1.4, 1.55, e),
-        CARP.z + Math.sin(a) * rr,
+        CAR_START.z + Math.sin(a) * rr,
       ),
-      tg: V(CARP.x - lerp(0, 6, e), lerp(0.7, 0.75, e), CARP.z),
+      tg: V(CAR_START.x - lerp(0, 6, e), lerp(0.7, 0.75, e), CAR_START.z),
       fov: lerp(38, 58, e),
     };
   },
@@ -260,7 +260,7 @@ function nearestS(Pa, x, z) {
   return projSP(Pa, x, z, best);
 }
 // chevron boards across the road just past every corner, pointing the way
-const CHEV = (() => {
+const CHEVRONS = (() => {
   const mk = (dir) => {
     const c = document.createElement("canvas");
     c.width = 512;
@@ -312,27 +312,27 @@ const CHEV = (() => {
 function chevrons(Pa, group) {
   for (const t of Pa.turns) {
     const [cx, cz, a] = t.c;
-    const lx = Math.round((cx + HALF) / P) * P - HALF,
-      lz = Math.round((cz + HALF) / P) * P - HALF;
+    const lx = Math.round((cx + HALF) / BLOCK_PITCH) * BLOCK_PITCH - HALF,
+      lz = Math.round((cz + HALF) / BLOCK_PITCH) * BLOCK_PITCH - HALF;
     const g = new THREE.Group();
     g.position.set(lx + a[0] * 12.5, 0, lz + a[1] * 12.5);
     g.rotation.y = Math.atan2(-a[0], -a[1]);
     const bd = new THREE.Mesh(
       new THREE.PlaneGeometry(14, 2.6),
-      t.dir === "RIGHT" ? CHEV.R : CHEV.L,
+      t.dir === "RIGHT" ? CHEVRONS.R : CHEVRONS.L,
     );
     bd.position.y = 2.3;
     g.add(bd);
     const bk = new THREE.Mesh(
       new THREE.BoxGeometry(14.3, 2.9, 0.16),
-      CHEV.back,
+      CHEVRONS.back,
     );
     bk.position.set(0, 2.3, -0.1);
     g.add(bk);
     for (const sx of [-6.4, 6.4]) {
       const p = new THREE.Mesh(
         new THREE.BoxGeometry(0.22, 1.2, 0.22),
-        CHEV.post,
+        CHEVRONS.post,
       );
       p.position.set(sx, 0.6, -0.1);
       g.add(p);

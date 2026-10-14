@@ -1,9 +1,9 @@
-// index-inline-1 20 — spawn
+// index-inline-1 20 — carstate
 // Lines 84435-84771 of readable/index-inline-1.pretty.js (statement-aligned).
 const rimMat = wheels[0].spin.children[1].material,
   calMat = wheels[0].steer.children[2].material,
-  RIM0 = "#" + rimMat.color.getHexString(),
-  CAL0 = "#" + calMat.color.getHexString();
+  RIM_COLOR = "#" + rimMat.color.getHexString(),
+  CALIPER_COLOR = "#" + calMat.color.getHexString();
 const glowM = new THREE.Mesh(
   new THREE.PlaneGeometry(2.2, 4.7),
   new THREE.MeshBasicMaterial({
@@ -37,14 +37,14 @@ if (carEnv) {
 }
 function applySkin(s) {
   skinMat(paint, s);
-  rimMat.color.set(s.rim || RIM0);
+  rimMat.color.set(s.rim || RIM_COLOR);
   rimMat.emissive.set(s.rimE || "#000000");
   rimMat.emissiveIntensity = s.rimE ? 2.2 : 1;
-  calMat.color.set(s.cal || CAL0);
+  calMat.color.set(s.cal || CALIPER_COLOR);
   glowM.visible = !!s.glow;
   if (s.glow) glowM.material.color.set(s.glow).multiplyScalar(1.3);
 }
-const UPG = [
+const UPGRADES = [
   { id: "tank", n: "AIR TANK", d: "Hover uses 15% less air per level" },
   { id: "cool", n: "COOLING", d: "Thrusters heat up 18% slower per level" },
   { id: "thrust", n: "THRUST", d: "+12% boost push and +10% climb per level" },
@@ -52,63 +52,63 @@ const UPG = [
   { id: "power", n: "POWER", d: "+10% motor power per level" },
 ];
 const UCOST = [400, 900, 1600],
-  U = (id) => ECO.upg[id] | 0,
-  VSEL = () => VEH[0];
-let veh = VEH[0],
+  upgradeLevel = (id) => ECONOMY.upg[id] | 0,
+  SELECTED_VEHICLE = () => VEHICLES[0];
+let activeVehicle = VEHICLES[0],
   curPaint = "#B3121B";
 const ALT = {};
 function applyVehicle(v) {
-  veh = VEH[0];
+  activeVehicle = VEHICLES[0];
   body.visible = true;
   wheels.forEach((w) => (w.steer.visible = true));
-  applySkin(SKIN());
-  const hv = $("tbHov");
+  applySkin(activeSkin());
+  const hv = byId("tbHov");
   if (hv) hv.querySelector("i").textContent = "HOVER";
 }
 function flash(a, b, d = 2.4) {
-  $("msgbig").textContent = a;
-  $("msgsmall").textContent = tx(b) || "";
+  byId("msgbig").textContent = a;
+  byId("msgsmall").textContent = touchText(b) || "";
   flashT = d;
 }
 function place(x, z, yaw) {
-  S.loop = null;
-  S.ball = false;
-  S.rollV = 0;
-  S.spinA = 0;
-  S.susp = 0;
-  S.suspV = 0;
-  S.pitchV = 0;
-  S.vyaw = yaw;
-  S.dr = 0;
-  S.slip = 0;
-  S.rampOn = null;
-  S.jumpR = null;
-  S.gvy = 0;
-  S.airT = 0;
+  carState.loop = null;
+  carState.ball = false;
+  carState.rollV = 0;
+  carState.spinA = 0;
+  carState.susp = 0;
+  carState.suspV = 0;
+  carState.pitchV = 0;
+  carState.vyaw = yaw;
+  carState.dr = 0;
+  carState.slip = 0;
+  carState.rampOn = null;
+  carState.jumpR = null;
+  carState.gvy = 0;
+  carState.airT = 0;
   if (typeof SCORE !== "undefined") SCORE.drift = 0;
   if (typeof TRAFFIC !== "undefined") setTimeout(clearLane, 0);
-  S.x = x;
-  S.z = z;
-  S.y = groundH(x, z).h + 0.02;
-  S.yaw = yaw;
-  S.v = 0;
-  S.vx = S.vz = S.vy = 0;
-  S.air = false;
-  S.armed = false;
-  S.spool = 0;
-  S.crash = 0;
-  S.thermal = false;
+  carState.x = x;
+  carState.z = z;
+  carState.y = groundH(x, z).h + 0.02;
+  carState.yaw = yaw;
+  carState.v = 0;
+  carState.vx = carState.vz = carState.vy = 0;
+  carState.air = false;
+  carState.armed = false;
+  carState.spool = 0;
+  carState.crash = 0;
+  carState.thermal = false;
   body.position.y = 0;
   prevZ = z;
   try {
-    camPos.set(x + Math.sin(yaw) * 6, S.y + 2, z + Math.cos(yaw) * 6);
-    look.set(x, S.y + 0.7, z);
+    camPos.set(x + Math.sin(yaw) * 6, carState.y + 2, z + Math.cos(yaw) * 6);
+    look.set(x, carState.y + 0.7, z);
   } catch (e) {}
 }
 // snap to the nearest street lane (right-hand traffic)
 function atStreet(x, z) {
-  const lx = Math.round((x + HALF) / P) * P - HALF,
-    lz = Math.round((z + HALF) / P) * P - HALF;
+  const lx = Math.round((x + HALF) / BLOCK_PITCH) * BLOCK_PITCH - HALF,
+    lz = Math.round((z + HALF) / BLOCK_PITCH) * BLOCK_PITCH - HALF;
   if (Math.abs(x - lx) <= Math.abs(z - lz)) {
     const zz = clamp(z, -HALF + 12, HALF - 12);
     place(lx + 3.5, zz, 0);
@@ -119,7 +119,7 @@ function atStreet(x, z) {
 }
 function clearLane() {
   for (const c of TRAFFIC) {
-    if (Math.hypot(c.x - S.x, c.z - S.z) < 70) {
+    if (Math.hypot(c.x - carState.x, c.z - carState.z) < 70) {
       c.pos += (c.pos > 0 ? -1 : 1) * 160;
     }
   }
@@ -130,25 +130,25 @@ function atPad(label, faceLabel) {
   place(p.x, p.z, f ? Math.atan2(-(f.x - p.x), -(f.z - p.z)) : 0);
 }
 function respawn(manual) {
-  if (manual && M && !M.done && M.def.id === "tutorial") {
-    M.def.spawn();
+  if (manual && currentMission && !currentMission.done && currentMission.def.id === "tutorial") {
+    currentMission.def.spawn();
     return;
   }
   if (mission && manual) {
-    if (STORY.on && STORY.cur >= 0 && CH[STORY.cur].mis === mission) {
+    if (STORY.on && STORY.cur >= 0 && CHAPTERS[STORY.cur].mis === mission) {
       startChapter(STORY.cur);
       return;
     }
     startMission(mission);
     return;
   }
-  if (mission && M && !M.done) {
-    M.def.spawn();
+  if (mission && currentMission && !currentMission.done) {
+    currentMission.def.spawn();
     return;
   }
-  atStreet(S.x, S.z);
-  S.tank = Math.max(S.tank, 40);
-  S.heat = 25;
+  atStreet(carState.x, carState.z);
+  carState.tank = Math.max(carState.tank, 40);
+  carState.heat = 25;
 }
 function padAt(x, z, y) {
   for (const p of PADS) {
@@ -159,7 +159,7 @@ function padAt(x, z, y) {
 }
 
 /* ---------------- missions ---------------- */
-const MIS = [
+const MISSIONS = [
   {
     id: "launch",
     r: 300,
@@ -317,8 +317,8 @@ const MIS = [
   },
 ];
 function renderMissionList() {
-  $("mlist").innerHTML = "";
-  MIS.map((m, i) => [m, i])
+  byId("mlist").innerHTML = "";
+  MISSIONS.map((m, i) => [m, i])
     .sort((a, b) => {
       const k = (n) => {
         const v = parseInt(n, 10);
@@ -333,7 +333,7 @@ function renderMissionList() {
       const best = parseFloat(store.get("rfc_" + m.id));
       b.innerHTML = `<div class="n">TEST ${m.n}${window.__MED ? window.__MED(m.id) : ""}</div><div class="t">${m.t}</div><div class="b">${best ? "best " + best.toFixed(2) + " s · <span class=rw>+" + Math.round(m.r / 4) + " CR</span>" : "<span class=rw>REWARD " + m.r.toLocaleString("en-US") + " CR</span>"}</div>`;
       b.addEventListener("click", () => startMission(i));
-      $("mlist").appendChild(b);
+      byId("mlist").appendChild(b);
     });
 }
 renderMissionList();

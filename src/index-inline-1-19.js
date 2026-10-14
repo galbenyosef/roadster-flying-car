@@ -166,7 +166,7 @@ const SKINS = [
     tag: "Faceted, iridescent, catches every light. The rarest finish.",
   },
 ];
-const SKIN = () => SKINS.find((s) => s.id === ECO.skin) || SKINS[0];
+const activeSkin = () => SKINS.find((s) => s.id === ECONOMY.skin) || SKINS[0];
 // skin textures are painted once on canvases, mapped on the body's UVs (u around the body, v nose to tail)
 const SKTEX = {};
 function skTex(k) {

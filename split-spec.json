@@ -2,12 +2,20 @@
   "project": "roadster-flying-car",
   "kind": "statement-aligned-slices",
   "defaultFile": "src/sw-01.js",
-  "note": "ROADSTER: The Flying Car (https://roadster-the-flying-car-gamev28.vercel.app/) is capture-class: a single-file three.js game served by Vercel at the origin root. §0.4 fork-over-mirror was checked on 2026-10-13 — no public upstream source repo exists (the captured text carries no github/gitlab/bitbucket reference for the project itself; the only repository credits are third-party library banners inside the bundled three.js source — mrdoob/three.js, toji/gl-matrix, mapbox/earcut, paper.js, GeometricTools, lightgl.js — and a GitHub search for the project finds nothing), so the mirror stands. Derived pipeline: capture → pinned prettier 3.9.6 (module API, default options, single pass verified idempotent — never the CLI: it respects .gitignore and can silently echo its input) → the entry document's inline <script type=\"module\"> becomes readable/index-inline-1.pretty.js and the service-worker registration script becomes readable/index-inline-2.pretty.js (both pretties provably NOT byte-identical to their capture blocks; readable/index-inline-map.json records each block's exact byte range + sha256), the two inline <style> blocks become readable/index-inline-1|2.pretty.css, and the captured sw.js becomes readable/sw.pretty.js. The big script is a single-file bundle behind a tiny `__defs`/`__req` module registry: its first two statements (the registry object and the `__req` loader) are wholeFile build machinery, the next twelve statements are the vendor `__defs['<id>'] = function () { … };` module definitions (three.js r187dev three.core/three.module plus the ten examples/jsm postprocessing+shader addons) claimed wholeFile under the vendor rule (indexed, never sliced; the id set and content anchors are asserted), and everything from the app's `const THREE = __req('three.module.js');` on is the game's own app code — statement-aligned slices src/index-inline-1-NN.js at top-level statement boundaries (~250-350 line windows; oversized single declarations stay whole) with an exact 2-line provenance header. Every slice parses standalone under `node --input-type=module --check -` and round-trips byte-exact to its recorded readable line range. Stylesheet rule — the two inline <style> blocks are wholeFile sections, never sliced. Non-code payloads (icon-192.png, icon-512.png, og.jpg and the manifest.webmanifest data file) are hashed notRendered records (bytes + sha256, no pretty pass). The off-origin loads (the Google Fonts stylesheet + font origins, the gstatic firebase base the optional cloud-login path dynamic-imports) were never captured (socker precedent, PLAN §1) and have no derived layer; tools/capture.mjs --check lists them as external references. Identifiers in src/ are the bundle's own names — the rename campaign (PLAN §5) is recorded as an open task in README.md, not claimed here. Capture bytes are untouched by everything above; re-cut with `node tools/derive.mjs` after any capture refresh. `node tools/audit.js` is the gate.",
+  "note": "ROADSTER: The Flying Car (https://roadster-the-flying-car-gamev28.vercel.app/) is capture-class: a single-file three.js game served by Vercel at the origin root. §0.4 fork-over-mirror was checked on 2026-10-13 — no public upstream source repo exists (the captured text carries no github/gitlab/bitbucket reference for the project itself; the only repository credits are third-party library banners inside the bundled three.js source — mrdoob/three.js, toji/gl-matrix, mapbox/earcut, paper.js, GeometricTools, lightgl.js — and a GitHub search for the project finds nothing), so the mirror stands. Derived pipeline: capture → pinned prettier 3.9.6 (module API, default options, single pass verified idempotent — never the CLI: it respects .gitignore and can silently echo its input) → the entry document's inline <script type=\"module\"> becomes readable/index-inline-1.pretty.js and the service-worker registration script becomes readable/index-inline-2.pretty.js (both pretties provably NOT byte-identical to their capture blocks; readable/index-inline-map.json records each block's exact byte range + sha256), the two inline <style> blocks become readable/index-inline-1|2.pretty.css, and the captured sw.js becomes readable/sw.pretty.js. The big script is a single-file bundle behind a tiny `__defs`/`__req` module registry: its first two statements (the registry object and the `__req` loader) are wholeFile build machinery, the next twelve statements are the vendor `__defs['<id>'] = function () { … };` module definitions (three.js r187dev three.core/three.module plus the ten examples/jsm postprocessing+shader addons) claimed wholeFile under the vendor rule (indexed, never sliced; the id set and content anchors are asserted), and everything from the app's `const THREE = __req('three.module.js');` on is the game's own app code — statement-aligned slices src/index-inline-1-NN.js at top-level statement boundaries (~250-350 line windows; oversized single declarations stay whole) with an exact 2-line provenance header. Every slice parses standalone under `node --input-type=module --check -` and round-trips byte-exact to its recorded readable line range. Stylesheet rule — the two inline <style> blocks are wholeFile sections, never sliced. Non-code payloads (icon-192.png, icon-512.png, og.jpg and the manifest.webmanifest data file) are hashed notRendered records (bytes + sha256, no pretty pass). The off-origin loads (the Google Fonts stylesheet + font origins, the gstatic firebase base the optional cloud-login path dynamic-imports) were never captured (socker precedent, PLAN §1) and have no derived layer; tools/capture.mjs --check lists them as external references. The bundle's module boundaries were decided from bytes (tools/probe-structure.mjs): the `__defs` registry IS a factory family (12 module factories), but every factory is a VENDOR module, so the whole region is wholeFile by the vendor rule (the turbopack README's \"the vendor chunk stays wholeFile\" gotcha adapted); there are 0 app factories, so the app code is a flat module and statement-aligned slices are its real shape. Identifiers in src/ carry the semantic rename campaign (PLAN §5): the script is AUTHORED, not minified, so tools/names.json renames only the genuinely opaque short bindings (single-letter globals, two/three-letter codes, the `_`-prefixed scratch family) and leaves the author's own semantic names alone; tools/apply-names.mjs applies them, tools/recover-scoped-map.mjs recovers rename-map.json, and this tool re-applies the map on every re-cut. The vendor `__defs`/`__req` loader and the twelve three.js module factories are never candidates. Capture bytes are untouched by everything above; re-cut with `node tools/derive.mjs` after any capture refresh. `node tools/audit.js` is the gate.",
   "renderOptions": {
     "_default": "prettier 3.9.6, module API, default options, single pass (re-format verified idempotent at derive time) — never the CLI: it respects .gitignore and can silently echo its input",
     "js": "parser babel, no plugins (inline <script> blocks + captured sw.js)",
     "css": "parser css, no plugins (inline <style>)",
     "json": "parser json, no plugins (inline importmap blocks, if any)"
+  },
+  "rename": {
+    "map": "rename-map.json",
+    "slices": 60,
+    "names": 129,
+    "splices": 3957,
+    "namesSource": "tools/names.json (reviewed worklist) → tools/apply-names.mjs (scope-aware writer, canonical guard family) → recovered by tools/recover-scoped-map.mjs",
+    "note": "Semantic renames are recorded per slice in rename-map.json and re-applied on every re-cut. The script is AUTHORED (not minified), so the campaign renames only the genuinely opaque chunk-scope bindings (129 names: single-letter globals, two/three-letter codes, the `_`-prefixed scratch family) and leaves the author's own semantic names, THREE.* property names and all globals/vendor identifiers untouched. The vendor `__defs`/`__req` loader and the twelve three.js r187dev module factories are wholeFile and never candidates. `T` (touch state) is a recorded frontier exclusion: it shares its spelling with a local `T` used in shorthand position, which the canonical token-level shorthand guard refuses."
   },
   "source": "readable/: 4 inline twin(s) + 1 captured script twin(s) (3 sliced script(s): 3 total); src/: 65 statement-aligned slice(s); 2 wholeFile section(s); 0 skipped section(s); capture: 6 files under .upstream/manifest.json; inline scan: index.html (4 content block(s)); notRendered: 4 hashed payload record(s).",
   "inline": {
@@ -32,6 +40,7 @@
       "tag": "sw",
       "slicingMode": "top-level-program",
       "slices": 1,
+      "renameBindings": {},
       "derived": "readable + 1 statement-aligned slice(s)"
     },
     {
@@ -79,6 +88,137 @@
       "tag": "index-inline-1",
       "slicingMode": "top-level-program",
       "slices": 63,
+      "renameBindings": {
+        "$": "byId",
+        "BLD": "buildings",
+        "FAB": "MEGAFAB",
+        "GK": "cellKey",
+        "NBK": "BLOCK_COUNT",
+        "P": "BLOCK_PITCH",
+        "RW": "ROAD_WIDTH",
+        "h2": "hash2",
+        "n2": "valueNoise",
+        "sm": "smoothstep",
+        "SIG": "SIGNALS",
+        "S": "carState",
+        "LS": "LAUNCH_SITE",
+        "Q0": "scratchQuat",
+        "V2": "scratchVec3",
+        "VT": "VEHICLE_TYPES",
+        "WEV": "walkerEvent",
+        "bc": "blockCenter",
+        "BAYP": "BAY_PORTS",
+        "PH": "PLATE_H",
+        "PW": "PLATE_W",
+        "PY": "PLATE_Y",
+        "PZ": "PLATE_Z",
+        "K": "keyState",
+        "cin": "cinematic",
+        "inp": "readInput",
+        "angD": "angleDelta",
+        "M": "currentMission",
+        "rco": "calloutState",
+        "SKIN": "activeSkin",
+        "VEH": "VEHICLES",
+        "earn": "earnCredits",
+        "jget": "jsonGet",
+        "tx": "touchText",
+        "ECO": "ECONOMY",
+        "CAL0": "CALIPER_COLOR",
+        "CH": "CHAPTERS",
+        "MIS": "MISSIONS",
+        "RIM0": "RIM_COLOR",
+        "U": "upgradeLevel",
+        "UPG": "UPGRADES",
+        "VSEL": "SELECTED_VEHICLE",
+        "veh": "activeVehicle",
+        "CARP": "CAR_START",
+        "DZ": "DROP_ZONE",
+        "KY": "KEY_LABELS",
+        "SKYR": "TOUR_MARKERS",
+        "TUT": "TUTORIAL",
+        "PF": "PHOTO_FINISH",
+        "cut": "activeCut",
+        "V26": "MISSION_REBUILD",
+        "VP": "VIEWPOINT",
+        "mctx": "mapCtx",
+        "SKID": "SKID_MARKS",
+        "_se": "scratchEulerSkid",
+        "_sm": "scratchMatrixSkid",
+        "_sq": "scratchQuatSkid",
+        "_ss": "scratchVecSkidB",
+        "_sv": "scratchVecSkidA",
+        "_tc": "textCache",
+        "fmtT": "formatTime",
+        "fovK": "fovKick",
+        "gctx": "gballCtx",
+        "snz": "smoothNoise",
+        "ICAM": "INTRO_CAMS",
+        "ICUT": "INTRO_CUTS",
+        "ISND": "INTRO_SOUNDS",
+        "ITXT": "INTRO_TITLES",
+        "IZ0": "INTRO_Z0",
+        "LV": "lerpVec3",
+        "V3": "vec3FromArray",
+        "_wv": "wingVizSpans",
+        "icut": "introCut",
+        "keyL": "keyLight",
+        "ACTS": "ACT_NAMES",
+        "CHEV": "CHEVRONS",
+        "DN": "DINER_BOUNDS",
+        "LITE": "RIVAL_MESH",
+        "VX": "VEX_TUNE",
+        "WOFF": "WHEEL_OFFSETS",
+        "WR0": "WHEEL_RADIUS",
+        "Z70": "CHASE_RING",
+        "MI": "missionIndex",
+        "MK": "STORY_MARKER",
+        "SFX": "SPEED_FX",
+        "RPL": "REPLAY",
+        "PHO": "PHOTO",
+        "dlNS": "downloadLink",
+        "CEV": "COUNTDOWN_STATE",
+        "DIG": "COUNTDOWN",
+        "DIGM": "DIGIT_MATERIAL",
+        "DIGS": "DIGIT_MESHES",
+        "JAM": "TRAFFIC_JAM",
+        "MS": "MINI_SLOW",
+        "ZTAG": "ZONE_TAG",
+        "BAT": "BATTERY_SAVER",
+        "MCOL": "MEDAL_COLORS",
+        "EVT": "FREE_ROAM_EVENTS",
+        "TOD": "TIME_OF_DAY",
+        "TODP": "TOD_PRESETS",
+        "_c3": "scratchColor",
+        "evPX": "prevEventX",
+        "evPZ": "prevEventZ",
+        "DAY0": "DAILY_EPOCH",
+        "ORB": "ORBIT_MODE",
+        "DRN": "DRONE",
+        "FLY": "FLY_MISSIONS",
+        "RCUE": "REVEAL_CUES",
+        "TBTN": "TOUCH_BUTTONS",
+        "TG1": "TUTORIAL_PAD",
+        "V3x": "vec3",
+        "DRN2": "DRONE_RING",
+        "DRNV": "DRONE_SPEEDS",
+        "FT": "FOOD_TRUCK",
+        "RR": "RING_RUN",
+        "RRT": "RING_RUN_TUNE",
+        "FTP": "FOOD_TRUCK_PATH",
+        "SY": "STUNT_YARD",
+        "VAN": "VAN_MODEL",
+        "VANK": "VAN_SCALE",
+        "BAZ": "BIG_AIR_ZONE",
+        "FUME": "FUME_TUNE",
+        "TJZ": "TRUCK_JUMP_ZONE",
+        "HC": "HOT_CELL",
+        "SS": "STUNT_SHOW",
+        "SSN": "TRICK_KINDS",
+        "v27T": "v27Timer",
+        "pvx": "prevVx",
+        "pvz": "prevVz"
+      },
       "derived": "readable + 63 statement-aligned slice(s) + 2 wholeFile region(s)"
     },
     {
@@ -96,6 +236,7 @@
       "tag": "index-inline-2",
       "slicingMode": "top-level-program",
       "slices": 1,
+      "renameBindings": {},
       "derived": "readable + 1 statement-aligned slice(s)"
     }
   ],
@@ -151,7 +292,7 @@
     {
       "file": "index-inline-1-01.js",
       "title": "index-inline-1 01 — three",
-      "desc": "Lines 78641-78929. Markers: three(27), math(24).",
+      "desc": "Lines 78641-78929. Markers: three(27), math(24). Range re-cut through the recorded semantic rename map.",
       "startLine": 78641,
       "endLine": 78929,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -159,7 +300,7 @@
     {
       "file": "index-inline-1-02.js",
       "title": "index-inline-1 02 — math",
-      "desc": "Lines 78930-79257. Markers: math(18), addb(15).",
+      "desc": "Lines 78930-79257. Markers: math(18), addb(15). Range re-cut through the recorded semantic rename map.",
       "startLine": 78930,
       "endLine": 79257,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -167,7 +308,7 @@
     {
       "file": "index-inline-1-03.js",
       "title": "index-inline-1 03 — three",
-      "desc": "Lines 79258-79583. Markers: three(20), push(11).",
+      "desc": "Lines 79258-79583. Markers: three(20), push(11). Range re-cut through the recorded semantic rename map.",
       "startLine": 79258,
       "endLine": 79583,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -175,7 +316,7 @@
     {
       "file": "index-inline-1-04.js",
       "title": "index-inline-1 04 — three",
-      "desc": "Lines 79584-79908. Markers: three(65), color(11).",
+      "desc": "Lines 79584-79908. Markers: three(65), color(11). Range re-cut through the recorded semantic rename map.",
       "startLine": 79584,
       "endLine": 79908,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -183,7 +324,7 @@
     {
       "file": "index-inline-1-05.js",
       "title": "index-inline-1 05 — three",
-      "desc": "Lines 79909-80193. Markers: three(32), math(14).",
+      "desc": "Lines 79909-80193. Markers: three(32), math(14). Range re-cut through the recorded semantic rename map.",
       "startLine": 79909,
       "endLine": 80193,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -199,7 +340,7 @@
     {
       "file": "index-inline-1-07.js",
       "title": "index-inline-1 07 — fillstyle",
-      "desc": "Lines 80498-80619. Markers: fillstyle(11), three(8).",
+      "desc": "Lines 80498-80619. Markers: fillstyle(11), three(8). Range re-cut through the recorded semantic rename map.",
       "startLine": 80498,
       "endLine": 80619,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -207,7 +348,7 @@
     {
       "file": "index-inline-1-08.js",
       "title": "index-inline-1 08 — three",
-      "desc": "Lines 80620-80919. Markers: three(47), add(33).",
+      "desc": "Lines 80620-80919. Markers: three(47), add(33). Range re-cut through the recorded semantic rename map.",
       "startLine": 80620,
       "endLine": 80919,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -215,7 +356,7 @@
     {
       "file": "index-inline-1-09.js",
       "title": "index-inline-1 09 — three",
-      "desc": "Lines 80920-81219. Markers: three(38), color(19).",
+      "desc": "Lines 80920-81219. Markers: three(38), color(19). Range re-cut through the recorded semantic rename map.",
       "startLine": 80920,
       "endLine": 81219,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -223,7 +364,7 @@
     {
       "file": "index-inline-1-10.js",
       "title": "index-inline-1 10 — math",
-      "desc": "Lines 81220-81499. Markers: math(41), three(24).",
+      "desc": "Lines 81220-81499. Markers: math(41), three(24). Range re-cut through the recorded semantic rename map.",
       "startLine": 81220,
       "endLine": 81499,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -231,7 +372,7 @@
     {
       "file": "index-inline-1-11.js",
       "title": "index-inline-1 11 — three",
-      "desc": "Lines 81500-81810. Markers: three(36), math(12).",
+      "desc": "Lines 81500-81810. Markers: three(36), math(12). Range re-cut through the recorded semantic rename map.",
       "startLine": 81500,
       "endLine": 81810,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -255,7 +396,7 @@
     {
       "file": "index-inline-1-14.js",
       "title": "index-inline-1 14 — three",
-      "desc": "Lines 82486-82787. Markers: three(43), position(14).",
+      "desc": "Lines 82486-82787. Markers: three(43), position(14). Range re-cut through the recorded semantic rename map.",
       "startLine": 82486,
       "endLine": 82787,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -263,7 +404,7 @@
     {
       "file": "index-inline-1-15.js",
       "title": "index-inline-1 15 — three",
-      "desc": "Lines 82788-83135. Markers: three(39), add(16).",
+      "desc": "Lines 82788-83135. Markers: three(39), keystate(22). Range re-cut through the recorded semantic rename map.",
       "startLine": 82788,
       "endLine": 83135,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -271,7 +412,7 @@
     {
       "file": "index-inline-1-16.js",
       "title": "index-inline-1 16 — connect",
-      "desc": "Lines 83136-83478. Markers: connect(27), gain(26).",
+      "desc": "Lines 83136-83478. Markers: connect(27), gain(26). Range re-cut through the recorded semantic rename map.",
       "startLine": 83136,
       "endLine": 83478,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -279,7 +420,7 @@
     {
       "file": "index-inline-1-17.js",
       "title": "index-inline-1 17 — three",
-      "desc": "Lines 83479-83813. Markers: three(35), vector3(12).",
+      "desc": "Lines 83479-83813. Markers: three(35), vector3(12). Range re-cut through the recorded semantic rename map.",
       "startLine": 83479,
       "endLine": 83813,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -287,7 +428,7 @@
     {
       "file": "index-inline-1-18.js",
       "title": "index-inline-1 18 — kind",
-      "desc": "Lines 83814-84086. Markers: kind(28), cin(21).",
+      "desc": "Lines 83814-84086. Markers: kind(28), carstate(26). Range re-cut through the recorded semantic rename map.",
       "startLine": 83814,
       "endLine": 84086,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -295,95 +436,95 @@
     {
       "file": "index-inline-1-19.js",
       "title": "index-inline-1 19 — fillstyle",
-      "desc": "Lines 84087-84434. Markers: fillstyle(13), fillrect(12).",
+      "desc": "Lines 84087-84434. Markers: fillstyle(13), fillrect(12). Range re-cut through the recorded semantic rename map.",
       "startLine": 84087,
       "endLine": 84434,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-20.js",
-      "title": "index-inline-1 20 — spawn",
-      "desc": "Lines 84435-84771. Markers: spawn(20), place(17).",
+      "title": "index-inline-1 20 — carstate",
+      "desc": "Lines 84435-84771. Markers: carstate(36), spawn(20). Range re-cut through the recorded semantic rename map.",
       "startLine": 84435,
       "endLine": 84771,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-21.js",
-      "title": "index-inline-1 21 — eco",
-      "desc": "Lines 84772-85050. Markers: eco(14), foreach(11).",
+      "title": "index-inline-1 21 — byid",
+      "desc": "Lines 84772-85050. Markers: byid(30), economy(14). Range re-cut through the recorded semantic rename map.",
       "startLine": 84772,
       "endLine": 85050,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-22.js",
-      "title": "index-inline-1 22 — hidden",
-      "desc": "Lines 85051-85177. Markers: hidden(8), stats(7).",
+      "title": "index-inline-1 22 — byid",
+      "desc": "Lines 85051-85177. Markers: byid(21), currentmission(14). Range re-cut through the recorded semantic rename map.",
       "startLine": 85051,
       "endLine": 85177,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-23.js",
-      "title": "index-inline-1 23 — finish",
-      "desc": "Oversized single declaration (kept whole). Lines 85178-85624. Markers: finish(31), time(31).",
+      "title": "index-inline-1 23 — currentmission",
+      "desc": "Oversized single declaration (kept whole). Lines 85178-85624. Markers: currentmission(96), carstate(41). Range re-cut through the recorded semantic rename map.",
       "startLine": 85178,
       "endLine": 85624,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-24.js",
-      "title": "index-inline-1 24 — math",
-      "desc": "Lines 85625-85960. Markers: math(22), tokens(18).",
+      "title": "index-inline-1 24 — currentmission",
+      "desc": "Lines 85625-85960. Markers: currentmission(26), math(22). Range re-cut through the recorded semantic rename map.",
       "startLine": 85625,
       "endLine": 85960,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-25.js",
-      "title": "index-inline-1 25 — math",
-      "desc": "Lines 85961-86306. Markers: math(41), fillstyle(12).",
+      "title": "index-inline-1 25 — carstate",
+      "desc": "Lines 85961-86306. Markers: carstate(76), math(41). Range re-cut through the recorded semantic rename map.",
       "startLine": 85961,
       "endLine": 86306,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-26.js",
-      "title": "index-inline-1 26 — math",
-      "desc": "Lines 86307-86654. Markers: math(85), abs(20).",
+      "title": "index-inline-1 26 — carstate",
+      "desc": "Lines 86307-86654. Markers: carstate(112), math(85). Range re-cut through the recorded semantic rename map.",
       "startLine": 86307,
       "endLine": 86654,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-27.js",
-      "title": "index-inline-1 27 — math",
-      "desc": "Oversized single declaration (kept whole). Lines 86655-87292. Markers: math(71), air(27).",
+      "title": "index-inline-1 27 — carstate",
+      "desc": "Oversized single declaration (kept whole). Lines 86655-87292. Markers: carstate(421), math(71). Range re-cut through the recorded semantic rename map.",
       "startLine": 86655,
       "endLine": 87292,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-28.js",
-      "title": "index-inline-1 28 — lerp",
-      "desc": "Lines 87293-87641. Markers: lerp(36), math(33).",
+      "title": "index-inline-1 28 — carstate",
+      "desc": "Lines 87293-87641. Markers: carstate(52), lerp(36). Range re-cut through the recorded semantic rename map.",
       "startLine": 87293,
       "endLine": 87641,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-29.js",
-      "title": "index-inline-1 29 — classlist",
-      "desc": "Lines 87642-87857. Markers: classlist(15), sett(10).",
+      "title": "index-inline-1 29 — carstate",
+      "desc": "Lines 87642-87857. Markers: carstate(23), byid(18). Range re-cut through the recorded semantic rename map.",
       "startLine": 87642,
       "endLine": 87857,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-30.js",
-      "title": "index-inline-1 30 — three",
-      "desc": "Lines 87858-88198. Markers: three(24), add(19).",
+      "title": "index-inline-1 30 — carstate",
+      "desc": "Lines 87858-88198. Markers: carstate(28), three(24). Range re-cut through the recorded semantic rename map.",
       "startLine": 87858,
       "endLine": 88198,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -391,7 +532,7 @@
     {
       "file": "index-inline-1-31.js",
       "title": "index-inline-1 31 — lerp",
-      "desc": "Lines 88199-88539. Markers: lerp(23), math(23).",
+      "desc": "Lines 88199-88539. Markers: lerp(23), math(23). Range re-cut through the recorded semantic rename map.",
       "startLine": 88199,
       "endLine": 88539,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -399,23 +540,23 @@
     {
       "file": "index-inline-1-32.js",
       "title": "index-inline-1 32 — three",
-      "desc": "Lines 88540-88887. Markers: three(31), visible(15).",
+      "desc": "Lines 88540-88887. Markers: three(31), visible(15). Range re-cut through the recorded semantic rename map.",
       "startLine": 88540,
       "endLine": 88887,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-33.js",
-      "title": "index-inline-1 33 — mis",
-      "desc": "Lines 88888-89206. Markers: mis(19), intro(18).",
+      "title": "index-inline-1 33 — missionindex",
+      "desc": "Lines 88888-89206. Markers: missionindex(19), intro(18). Range re-cut through the recorded semantic rename map.",
       "startLine": 88888,
       "endLine": 89206,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-34.js",
-      "title": "index-inline-1 34 — three",
-      "desc": "Lines 89207-89480. Markers: three(16), story(15).",
+      "title": "index-inline-1 34 — currentmission",
+      "desc": "Lines 89207-89480. Markers: currentmission(24), three(16). Range re-cut through the recorded semantic rename map.",
       "startLine": 89207,
       "endLine": 89480,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -423,39 +564,39 @@
     {
       "file": "index-inline-1-35.js",
       "title": "index-inline-1 35 — math",
-      "desc": "Lines 89481-89803. Markers: math(39), combo(28).",
+      "desc": "Lines 89481-89803. Markers: math(39), carstate(30). Range re-cut through the recorded semantic rename map.",
       "startLine": 89481,
       "endLine": 89803,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-36.js",
-      "title": "index-inline-1 36 — rpl",
-      "desc": "Lines 89804-90083. Markers: rpl(64), radio(13).",
+      "title": "index-inline-1 36 — replay",
+      "desc": "Lines 89804-90083. Markers: replay(65), carstate(24). Range re-cut through the recorded semantic rename map.",
       "startLine": 89804,
       "endLine": 90083,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-37.js",
-      "title": "index-inline-1 37 — rpl",
-      "desc": "Lines 90084-90406. Markers: rpl(54), math(38).",
+      "title": "index-inline-1 37 — replay",
+      "desc": "Lines 90084-90406. Markers: replay(54), carstate(53). Range re-cut through the recorded semantic rename map.",
       "startLine": 90084,
       "endLine": 90406,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-38.js",
-      "title": "index-inline-1 38 — pho",
-      "desc": "Lines 90407-90731. Markers: pho(44), addeventlistener(20).",
+      "title": "index-inline-1 38 — photo",
+      "desc": "Lines 90407-90731. Markers: photo(46), byid(31). Range re-cut through the recorded semantic rename map.",
       "startLine": 90407,
       "endLine": 90731,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-39.js",
-      "title": "index-inline-1 39 — math",
-      "desc": "Lines 90732-91081. Markers: math(13), cev(12).",
+      "title": "index-inline-1 39 — byid",
+      "desc": "Lines 90732-91081. Markers: byid(16), math(13). Range re-cut through the recorded semantic rename map.",
       "startLine": 90732,
       "endLine": 91081,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -463,7 +604,7 @@
     {
       "file": "index-inline-1-40.js",
       "title": "index-inline-1 40 — connect",
-      "desc": "Lines 91082-91409. Markers: connect(16), gain(15).",
+      "desc": "Lines 91082-91409. Markers: connect(16), byid(15). Range re-cut through the recorded semantic rename map.",
       "startLine": 91082,
       "endLine": 91409,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -471,23 +612,23 @@
     {
       "file": "index-inline-1-41.js",
       "title": "index-inline-1 41 — clip",
-      "desc": "Lines 91410-91758. Markers: clip(28), ghost(28).",
+      "desc": "Lines 91410-91758. Markers: clip(28), ghost(28). Range re-cut through the recorded semantic rename map.",
       "startLine": 91410,
       "endLine": 91758,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-42.js",
-      "title": "index-inline-1 42 — evt",
-      "desc": "Lines 91759-92058. Markers: evt(17), three(14).",
+      "title": "index-inline-1 42 — currentmission",
+      "desc": "Lines 91759-92058. Markers: currentmission(17), free_roam_events(17). Range re-cut through the recorded semantic rename map.",
       "startLine": 91759,
       "endLine": 92058,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-43.js",
-      "title": "index-inline-1 43 — math",
-      "desc": "Lines 92059-92369. Markers: math(18), act(15).",
+      "title": "index-inline-1 43 — carstate",
+      "desc": "Lines 92059-92369. Markers: carstate(35), math(18). Range re-cut through the recorded semantic rename map.",
       "startLine": 92059,
       "endLine": 92369,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -495,31 +636,31 @@
     {
       "file": "index-inline-1-44.js",
       "title": "index-inline-1 44 — three",
-      "desc": "Lines 92370-92639. Markers: three(18), math(17).",
+      "desc": "Lines 92370-92639. Markers: three(18), math(17). Range re-cut through the recorded semantic rename map.",
       "startLine": 92370,
       "endLine": 92639,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-45.js",
-      "title": "index-inline-1 45 — math",
-      "desc": "Lines 92640-92973. Markers: math(22), orb(11).",
+      "title": "index-inline-1 45 — carstate",
+      "desc": "Lines 92640-92973. Markers: carstate(32), math(22). Range re-cut through the recorded semantic rename map.",
       "startLine": 92640,
       "endLine": 92973,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-46.js",
-      "title": "index-inline-1 46 — rco",
-      "desc": "Lines 92974-93264. Markers: rco(21), cin(20).",
+      "title": "index-inline-1 46 — calloutstate",
+      "desc": "Lines 92974-93264. Markers: calloutstate(21), cinematic(20). Range re-cut through the recorded semantic rename map.",
       "startLine": 92974,
       "endLine": 93264,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-47.js",
-      "title": "index-inline-1 47 — three",
-      "desc": "Lines 93265-93610. Markers: three(31), add(12).",
+      "title": "index-inline-1 47 — carstate",
+      "desc": "Lines 93265-93610. Markers: carstate(34), three(31). Range re-cut through the recorded semantic rename map.",
       "startLine": 93265,
       "endLine": 93610,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -527,7 +668,7 @@
     {
       "file": "index-inline-1-48.js",
       "title": "index-inline-1 48 — math",
-      "desc": "Lines 93611-93895. Markers: math(21), pts(20).",
+      "desc": "Lines 93611-93895. Markers: math(21), pts(20). Range re-cut through the recorded semantic rename map.",
       "startLine": 93611,
       "endLine": 93895,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -535,7 +676,7 @@
     {
       "file": "index-inline-1-49.js",
       "title": "index-inline-1 49 — math",
-      "desc": "Lines 93896-94243. Markers: math(33), lerp(18).",
+      "desc": "Lines 93896-94243. Markers: math(33), carstate(19). Range re-cut through the recorded semantic rename map.",
       "startLine": 93896,
       "endLine": 94243,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -543,7 +684,7 @@
     {
       "file": "index-inline-1-50.js",
       "title": "index-inline-1 50 — three",
-      "desc": "Lines 94244-94532. Markers: three(33), v26(19).",
+      "desc": "Lines 94244-94532. Markers: three(33), mission_rebuild(19). Range re-cut through the recorded semantic rename map.",
       "startLine": 94244,
       "endLine": 94532,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -551,15 +692,15 @@
     {
       "file": "index-inline-1-51.js",
       "title": "index-inline-1 51 — math",
-      "desc": "Lines 94533-94837. Markers: math(20), pts(20).",
+      "desc": "Lines 94533-94837. Markers: math(20), pts(20). Range re-cut through the recorded semantic rename map.",
       "startLine": 94533,
       "endLine": 94837,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-52.js",
-      "title": "index-inline-1 52 — math",
-      "desc": "Lines 94838-95180. Markers: math(30), position(14).",
+      "title": "index-inline-1 52 — carstate",
+      "desc": "Lines 94838-95180. Markers: carstate(30), math(30). Range re-cut through the recorded semantic rename map.",
       "startLine": 94838,
       "endLine": 95180,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -567,23 +708,23 @@
     {
       "file": "index-inline-1-53.js",
       "title": "index-inline-1 53 — three",
-      "desc": "Lines 95181-95527. Markers: three(35), math(21).",
+      "desc": "Lines 95181-95527. Markers: three(35), carstate(25). Range re-cut through the recorded semantic rename map.",
       "startLine": 95181,
       "endLine": 95527,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-54.js",
-      "title": "index-inline-1 54 — v26",
-      "desc": "Lines 95528-95838. Markers: v26(12), math(11).",
+      "title": "index-inline-1 54 — carstate",
+      "desc": "Lines 95528-95838. Markers: carstate(24), mission_rebuild(12). Range re-cut through the recorded semantic rename map.",
       "startLine": 95528,
       "endLine": 95838,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-55.js",
-      "title": "index-inline-1 55 — math",
-      "desc": "Lines 95839-96147. Markers: math(19), time(17).",
+      "title": "index-inline-1 55 — carstate",
+      "desc": "Lines 95839-96147. Markers: carstate(25), math(19). Range re-cut through the recorded semantic rename map.",
       "startLine": 95839,
       "endLine": 96147,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -591,15 +732,15 @@
     {
       "file": "index-inline-1-56.js",
       "title": "index-inline-1 56 — keep",
-      "desc": "Lines 96148-96381. Markers: keep(8), mis(8).",
+      "desc": "Lines 96148-96381. Markers: keep(8), the(7). Range re-cut through the recorded semantic rename map.",
       "startLine": 96148,
       "endLine": 96381,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-57.js",
-      "title": "index-inline-1 57 — the",
-      "desc": "Lines 96382-96726. Markers: the(19), classlist(12).",
+      "title": "index-inline-1 57 — currentmission",
+      "desc": "Lines 96382-96726. Markers: currentmission(37), the(19). Range re-cut through the recorded semantic rename map.",
       "startLine": 96382,
       "endLine": 96726,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -607,15 +748,15 @@
     {
       "file": "index-inline-1-58.js",
       "title": "index-inline-1 58 — three",
-      "desc": "Lines 96727-96973. Markers: three(35), position(19).",
+      "desc": "Lines 96727-96973. Markers: three(35), position(19). Range re-cut through the recorded semantic rename map.",
       "startLine": 96727,
       "endLine": 96973,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-59.js",
-      "title": "index-inline-1 59 — lerp",
-      "desc": "Lines 96974-97290. Markers: lerp(21), math(16).",
+      "title": "index-inline-1 59 — carstate",
+      "desc": "Lines 96974-97290. Markers: carstate(22), lerp(21). Range re-cut through the recorded semantic rename map.",
       "startLine": 96974,
       "endLine": 97290,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -623,15 +764,15 @@
     {
       "file": "index-inline-1-60.js",
       "title": "index-inline-1 60 — cloud",
-      "desc": "Lines 97291-97634. Markers: cloud(33), moment(14).",
+      "desc": "Lines 97291-97634. Markers: cloud(33), moment(14). Range re-cut through the recorded semantic rename map.",
       "startLine": 97291,
       "endLine": 97634,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-61.js",
-      "title": "index-inline-1 61 — math",
-      "desc": "Lines 97635-97931. Markers: math(25), rpl(22).",
+      "title": "index-inline-1 61 — carstate",
+      "desc": "Lines 97635-97931. Markers: carstate(35), math(25). Range re-cut through the recorded semantic rename map.",
       "startLine": 97635,
       "endLine": 97931,
       "sourceFile": "readable/index-inline-1.pretty.js"
@@ -639,15 +780,15 @@
     {
       "file": "index-inline-1-62.js",
       "title": "index-inline-1 62 — perf",
-      "desc": "Lines 97932-98161. Markers: perf(24), file(15).",
+      "desc": "Lines 97932-98161. Markers: perf(24), file(15). Range re-cut through the recorded semantic rename map.",
       "startLine": 97932,
       "endLine": 98161,
       "sourceFile": "readable/index-inline-1.pretty.js"
     },
     {
       "file": "index-inline-1-63.js",
-      "title": "index-inline-1 63 — math",
-      "desc": "Lines 98162-98435. Markers: math(33), cin(29).",
+      "title": "index-inline-1 63 — carstate",
+      "desc": "Lines 98162-98435. Markers: carstate(92), math(33). Range re-cut through the recorded semantic rename map.",
       "startLine": 98162,
       "endLine": 98435,
       "sourceFile": "readable/index-inline-1.pretty.js"

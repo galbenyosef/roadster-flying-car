@@ -19,7 +19,7 @@ function updateTraffic(dt) {
         l = Math.abs(dx * fz - dz * fx);
       return f > 0 && f < reach && l < lat;
     };
-    let blocked = S.y < 2.5 && ahead(S.x, S.z, 2.4, c.T.L / 2 + 6),
+    let blocked = carState.y < 2.5 && ahead(carState.x, carState.z, 2.4, c.T.L / 2 + 6),
       byLight = false;
     if (!blocked && c.ghost <= 0)
       for (const o of TRAFFIC) {
@@ -33,11 +33,11 @@ function updateTraffic(dt) {
       const nxt =
           -HALF +
           (c.dir > 0
-            ? Math.ceil((c.pos + HALF) / P + 1e-6)
-            : Math.floor((c.pos + HALF) / P - 1e-6)) *
-            P,
+            ? Math.ceil((c.pos + HALF) / BLOCK_PITCH + 1e-6)
+            : Math.floor((c.pos + HALF) / BLOCK_PITCH - 1e-6)) *
+            BLOCK_PITCH,
         dd = (nxt - c.pos) * c.dir,
-        st = c.axis === "z" ? SIG.state.ns : SIG.state.ew;
+        st = c.axis === "z" ? SIGNALS.state.ns : SIGNALS.state.ew;
       if (
         nxt > -HALF + 1 &&
         nxt < HALF - 1 &&
@@ -50,7 +50,7 @@ function updateTraffic(dt) {
     c.wait = blocked ? c.wait + dt : 0;
     blocked = blocked || byLight;
     c.ghost = Math.max(0, c.ghost - dt);
-    if (c.wait > 9 && !(S.y < 2.5 && ahead(S.x, S.z, 2.4, c.T.L / 2 + 6))) {
+    if (c.wait > 9 && !(carState.y < 2.5 && ahead(carState.x, carState.z, 2.4, c.T.L / 2 + 6))) {
       c.ghost = 2;
       c.wait = 0;
     }
@@ -60,8 +60,8 @@ function updateTraffic(dt) {
     c.v += clamp(tv - c.v, -9 * dt, 4 * dt);
     const prev = c.pos;
     c.pos += c.dir * c.v * dt;
-    const k = Math.round((prev + HALF) / P),
-      cross = -HALF + k * P;
+    const k = Math.round((prev + HALF) / BLOCK_PITCH),
+      cross = -HALF + k * BLOCK_PITCH;
     if ((prev - cross) * (c.pos - cross) <= 0 && prev !== c.pos) {
       const ch = Math.random();
       if (
@@ -80,12 +80,12 @@ function updateTraffic(dt) {
         c.dir = Math.random() < 0.5 ? 1 : -1;
       }
     }
-    if (c.pos > HALF - P * 0.5) {
-      c.pos = HALF - P * 0.5;
+    if (c.pos > HALF - BLOCK_PITCH * 0.5) {
+      c.pos = HALF - BLOCK_PITCH * 0.5;
       c.dir = -1;
     }
-    if (c.pos < -HALF + P * 0.5) {
-      c.pos = -HALF + P * 0.5;
+    if (c.pos < -HALF + BLOCK_PITCH * 0.5) {
+      c.pos = -HALF + BLOCK_PITCH * 0.5;
       c.dir = 1;
     }
     const off = 3.2 * c.dir;
@@ -124,12 +124,12 @@ function updateTraffic(dt) {
     M.compose(V.set(c.x, 0, c.z), Q, One);
     c.T.meshes.forEach((m) => m.setMatrixAt(c.idx, M));
     c.T.wheels.forEach((w, j) => {
-      W.compose(S3.set(w[0], w[1], w[2]), Q0, V2.set(0.3, c.T.wr, c.T.wr));
+      W.compose(S3.set(w[0], w[1], w[2]), scratchQuat, scratchVec3.set(0.3, c.T.wr, c.T.wr));
       W.premultiply(M);
       TRAFFIC.wheels.setMatrixAt(c.wb + j, W);
     });
   }
-  for (const T of Object.values(VT))
+  for (const T of Object.values(VEHICLE_TYPES))
     if (T.meshes)
       T.meshes.forEach((m) => {
         m.instanceMatrix.needsUpdate = true;
@@ -174,8 +174,8 @@ const WALKERS = [];
   for (let i = 0; i < n; i++) {
     let bi, bj;
     do {
-      bi = (r() * NBK) | 0;
-      bj = (r() * NBK) | 0;
+      bi = (r() * BLOCK_COUNT) | 0;
+      bj = (r() * BLOCK_COUNT) | 0;
     } while (
       district(bi, bj) === "park" ||
       district(bi, bj) === "launch" ||
@@ -215,7 +215,7 @@ function walkerPos(w) {
   s -= L1;
   return [w.a, w.d - s, Math.PI];
 }
-const WEV = { look: 0, wave: 0, px: 0, pz: 0 };
+const walkerEvent = { look: 0, wave: 0, px: 0, pz: 0 };
 function updateWalkers(dt, t) {
   const M = new THREE.Matrix4(),
     L = new THREE.Matrix4(),
@@ -225,12 +225,12 @@ function updateWalkers(dt, t) {
     V = new THREE.Vector3(),
     One = new THREE.Vector3(1, 1, 1);
   WALKERS.forEach((w, i) => {
-    const near = Math.hypot(w.x - S.x, w.z - S.z);
+    const near = Math.hypot(w.x - carState.x, w.z - carState.z);
     w.wave =
-      (near < 14 && !S.air) || WEV.wave > 0
+      (near < 14 && !carState.air) || walkerEvent.wave > 0
         ? Math.min(1, w.wave + dt * 3)
         : Math.max(0, w.wave - dt * 2);
-    const ev = WEV.look > 0 || WEV.wave > 0;
+    const ev = walkerEvent.look > 0 || walkerEvent.wave > 0;
     if (w.hit > 0) w.hit = Math.max(0, w.hit - dt);
     else if (!ev) w.s += w.sp * dt * (w.wave > 0.5 ? 0.25 : 1);
     w.ph += dt * Math.abs(w.sp) * 5.5 * (w.hit > 0 || ev ? 0 : 1);
@@ -238,7 +238,7 @@ function updateWalkers(dt, t) {
     w.x = x;
     w.z = z;
     const wy = ev
-      ? Math.atan2(WEV.px - x, WEV.pz - z)
+      ? Math.atan2(walkerEvent.px - x, walkerEvent.pz - z)
       : yw + (w.sp < 0 ? Math.PI : 0);
     if (w.yaw == null || !isFinite(w.yaw)) w.yaw = wy;
     w.yaw +=
@@ -279,4 +279,4 @@ function updateWalkers(dt, t) {
 }
 
 /* ---------------- STUNT YARD: open lots with kicker ramps on the west side ---------------- */
-const bc = (i) => -HALF + i * P + P / 2;
+const blockCenter = (i) => -HALF + i * BLOCK_PITCH + BLOCK_PITCH / 2;

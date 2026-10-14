@@ -283,7 +283,7 @@ for (const [k, ms] of [
   };
 }
 {
-  const b = $("fsBtn");
+  const b = byId("fsBtn");
   const fsOn = () =>
     !!(document.fullscreenElement || document.webkitFullscreenElement);
   const sync = () => {
@@ -328,12 +328,12 @@ for (const [k, ms] of [
     } catch (_) {}
   };
   b.addEventListener("click", go);
-  $("fsBtn2").addEventListener("click", go);
+  byId("fsBtn2").addEventListener("click", go);
   document.addEventListener("fullscreenchange", sync);
   document.addEventListener("webkitfullscreenchange", sync);
 }
 /* ---------------- state ---------------- */
-const angD = (a, b) =>
+const angleDelta = (a, b) =>
   ((((a - b + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) -
   Math.PI;
 const HOVER_DRAIN = 1.9,

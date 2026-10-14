@@ -134,21 +134,21 @@ const MOMENT = { on: false, tag: "", text: "" };
   };
 }
 function momentStart() {
-  if (phase !== "result" || !M) return;
-  const d = M.def,
-    med = M.medal ? ["", "BRONZE", "SILVER", "GOLD"][M.medal] : "",
-    tm = M.lastTime;
+  if (phase !== "result" || !currentMission) return;
+  const d = currentMission.def,
+    med = currentMission.medal ? ["", "BRONZE", "SILVER", "GOLD"][currentMission.medal] : "",
+    tm = currentMission.lastTime;
   MOMENT.tag = `TEST ${d.n} · ${d.t.toUpperCase()}${tm != null ? ` · ${tm.toFixed(2)} s` : ""}${med ? " · " + med : ""}`;
-  MOMENT.text = `${d.t}${tm != null ? ` in ${tm.toFixed(2)} s` : ""}${med ? ` · ${med}` : ""} in ROADSTER: The Flying Car.${M.shareTxt && /RC-/.test(M.shareTxt) ? " Beat me: " + M.shareTxt.match(/RC-\S+/)[0] : ""}`;
-  $("result").hidden = true;
+  MOMENT.text = `${d.t}${tm != null ? ` in ${tm.toFixed(2)} s` : ""}${med ? ` · ${med}` : ""} in ROADSTER: The Flying Car.${currentMission.shareTxt && /RC-/.test(currentMission.shareTxt) ? " Beat me: " + currentMission.shareTxt.match(/RC-\S+/)[0] : ""}`;
+  byId("result").hidden = true;
   phase = "play";
   if (!replayStart()) {
     phase = "result";
-    $("result").hidden = false;
+    byId("result").hidden = false;
     flash("MOMENT", "drive a few seconds first", 1.4);
     return;
   }
-  RPL.fromRes = true;
+  REPLAY.fromRes = true;
   MOMENT.on = true;
   clipStart(true);
   if (!CLIP.on) {
@@ -314,7 +314,7 @@ function cloudSoon() {
   CLOUD.pushT = setTimeout(() => cloudSync(false), 2500);
 }
 function acctPaint() {
-  const b = $("acct");
+  const b = byId("acct");
   if (!b) return;
   b.hidden = !CLOUD.ready;
   if (!CLOUD.ready) return;
@@ -330,10 +330,10 @@ function acctPaint() {
       : "Sign in to keep your progress on every device.",
   );
   ["acctG", "acctX"].forEach((id) => {
-    const e = $(id);
+    const e = byId(id);
     if (e) e.hidden = !!u;
   });
-  const o = $("acctOut");
+  const o = byId("acctOut");
   if (o) o.hidden = !u;
 }
 {

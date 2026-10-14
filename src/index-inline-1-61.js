@@ -1,4 +1,4 @@
-// index-inline-1 61 — math
+// index-inline-1 61 — carstate
 // Lines 97635-97931 of readable/index-inline-1.pretty.js (statement-aligned).
 {
   const _oe = orbitEnd;
@@ -9,35 +9,35 @@
 }
 
 /* ---- wiring ---- */
-$("acct").addEventListener("click", () => {
-  $("acctBox").hidden = false;
+byId("acct").addEventListener("click", () => {
+  byId("acctBox").hidden = false;
   setT("acctMsg", "");
   acctPaint();
 });
-$("acctClose").addEventListener("click", () => {
-  $("acctBox").hidden = true;
+byId("acctClose").addEventListener("click", () => {
+  byId("acctBox").hidden = true;
 });
-$("acctG").addEventListener("click", () => cloudSignIn("google"));
-$("acctX").addEventListener("click", () => cloudSignIn("x"));
-$("acctOut").addEventListener("click", async () => {
+byId("acctG").addEventListener("click", () => cloudSignIn("google"));
+byId("acctX").addEventListener("click", () => cloudSignIn("x"));
+byId("acctOut").addEventListener("click", async () => {
   try {
     await CLOUD.A.signOut(CLOUD.auth);
     setT("acctMsg", "Signed out. Progress stays on this device.");
   } catch (e) {}
 });
-$("shareProg").addEventListener("click", () => shareProgress());
-$("rmoment").addEventListener("click", () => momentStart());
-$("clipShare").addEventListener("click", () => shareClip());
-let v27T = 0;
+byId("shareProg").addEventListener("click", () => shareProgress());
+byId("rmoment").addEventListener("click", () => momentStart());
+byId("clipShare").addEventListener("click", () => shareClip());
+let v27Timer = 0;
 function v27Frame(rdt) {
-  v27T += rdt;
-  if (v27T > 0.4) {
-    v27T = 0;
+  v27Timer += rdt;
+  if (v27Timer > 0.4) {
+    v27Timer = 0;
     overlayGuard();
-    const rm = $("rmoment");
+    const rm = byId("rmoment");
     if (rm) {
       const on =
-        phase === "result" && !!M && M.done && RPL.n >= 45 && !!clipMime();
+        phase === "result" && !!currentMission && currentMission.done && REPLAY.n >= 45 && !!clipMime();
       if (rm.hidden === on) rm.hidden = !on;
     }
   }
@@ -52,14 +52,14 @@ const HERO_JPG =
 
 /* ---- Mae's food truck: solid sides, a roof you can land on that carries you ---- */
 function vanLocal(x, z) {
-  const dx = x - VAN.position.x,
-    dz = z - VAN.position.z,
-    c = Math.cos(VAN.rotation.y),
-    s = Math.sin(VAN.rotation.y);
+  const dx = x - VAN_MODEL.position.x,
+    dz = z - VAN_MODEL.position.z,
+    c = Math.cos(VAN_MODEL.rotation.y),
+    s = Math.sin(VAN_MODEL.rotation.y);
   return { x: dx * c - dz * s, z: dx * s + dz * c };
 }
 function vanRoofAt(x, z) {
-  if (!VANS.on || !VAN.visible) return null;
+  if (!VANS.on || !VAN_MODEL.visible) return null;
   const q = vanLocal(x, z);
   if (Math.abs(q.x) > VANS.hw) return null;
   if (q.z > VANS.z0 && q.z < VANS.z1) return VANS.top;
@@ -79,39 +79,39 @@ function vanRoofAt(x, z) {
   };
 }
 function onVanRoof() {
-  if (!VANS.on || S.air) return false;
-  const h = vanRoofAt(S.x, S.z);
-  return h != null && Math.abs(S.y - h) < 0.35;
+  if (!VANS.on || carState.air) return false;
+  const h = vanRoofAt(carState.x, carState.z);
+  return h != null && Math.abs(carState.y - h) < 0.35;
 }
 // the truck moved and turned this tick: anything standing on its roof goes with it
 function vanCarry(v0, on) {
   if (!on) return;
-  let d = VAN.rotation.y - v0.r;
+  let d = VAN_MODEL.rotation.y - v0.r;
   d = Math.atan2(Math.sin(d), Math.cos(d));
-  const x = S.x - v0.x,
-    z = S.z - v0.z,
+  const x = carState.x - v0.x,
+    z = carState.z - v0.z,
     c = Math.cos(d),
     s = Math.sin(d);
-  S.x = VAN.position.x + x * c + z * s;
-  S.z = VAN.position.z - x * s + z * c;
-  S.yaw += d;
-  S.vyaw += d;
-  const h = vanRoofAt(S.x, S.z);
-  if (h != null) S.y = h;
+  carState.x = VAN_MODEL.position.x + x * c + z * s;
+  carState.z = VAN_MODEL.position.z - x * s + z * c;
+  carState.yaw += d;
+  carState.vyaw += d;
+  const h = vanRoofAt(carState.x, carState.z);
+  if (h != null) carState.y = h;
 }
 // below the roof the truck is a box: push the car out and cost the pies
 function vanCollide(M) {
-  if (!VAN.visible) return;
-  const q = vanLocal(S.x, S.z),
+  if (!VAN_MODEL.visible) return;
+  const q = vanLocal(carState.x, carState.z),
     hw = VANS.hw + 1,
     z0 = VANS.cz0 - 1.6,
     z1 = VANS.z1 + 1.6,
-    h = vanRoofAt(S.x, S.z);
+    h = vanRoofAt(carState.x, carState.z);
   if (
     Math.abs(q.x) >= hw ||
     q.z <= z0 ||
     q.z >= z1 ||
-    S.y > (h != null ? h : VANS.top) - 0.6
+    carState.y > (h != null ? h : VANS.top) - 0.6
   )
     return;
   const ox = hw - Math.abs(q.x),
@@ -120,11 +120,11 @@ function vanCollide(M) {
     lz = q.z;
   if (ox < oz) lx = Math.sign(q.x || 1) * hw;
   else lz = q.z - z0 < z1 - q.z ? z0 : z1;
-  const c = Math.cos(VAN.rotation.y),
-    s = Math.sin(VAN.rotation.y);
-  S.x = VAN.position.x + lx * c + lz * s;
-  S.z = VAN.position.z - lx * s + lz * c;
-  const sp = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v);
+  const c = Math.cos(VAN_MODEL.rotation.y),
+    s = Math.sin(VAN_MODEL.rotation.y);
+  carState.x = VAN_MODEL.position.x + lx * c + lz * s;
+  carState.z = VAN_MODEL.position.z - lx * s + lz * c;
+  const sp = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v);
   if (sp > 3 && M && M.pie != null && (!M.vanHit || clock - M.vanHit > 0.8)) {
     M.vanHit = clock;
     const k = Math.min(30, sp * 2);
@@ -133,10 +133,10 @@ function vanCollide(M) {
     shake = Math.max(shake, 0.3);
     audio.hit();
   }
-  S.v *= 0.3;
-  S.vx *= 0.3;
-  S.vz *= 0.3;
-  V26.hs0 = null;
+  carState.v *= 0.3;
+  carState.vx *= 0.3;
+  carState.vz *= 0.3;
+  MISSION_REBUILD.hs0 = null;
 }
 {
   const _c = v26Clear;
@@ -152,11 +152,11 @@ misOpen = function (i) {
   const L = misOrder(),
     p = L.indexOf(i);
   if (p <= 1) return true;
-  const id = MIS[i].id,
+  const id = MISSIONS[i].id,
     ch = chapterOf(id);
   if (lockClr(id)) return true;
   if (ch >= 0 && ch <= STORY.done) return true;
-  return lockClr(MIS[L[p - 1]].id);
+  return lockClr(MISSIONS[L[p - 1]].id);
 };
 modeOpen = function (key) {
   const ch = chapterOf(MODELOCK[key].ch);
@@ -178,31 +178,31 @@ const STUNTCTX = new Set([
   "daily",
 ]);
 function inYard() {
-  return S.x > -880 && S.x < -470 && S.z > -300 && S.z < 110;
+  return carState.x > -880 && carState.x < -470 && carState.z > -300 && carState.z < 110;
 }
 {
   const _m = maybeShow;
   maybeShow = function (kind) {
-    if (kind === "jump" && showOn && phase === "play" && !cin.on) {
-      const mis = M && !M.done ? M.def.id : null;
-      if ((mis && STUNTCTX.has(mis)) || (!M && inYard())) {
+    if (kind === "jump" && showOn && phase === "play" && !cinematic.on) {
+      const mis = currentMission && !currentMission.done ? currentMission.def.id : null;
+      if ((mis && STUNTCTX.has(mis)) || (!currentMission && inYard())) {
         const now = performance.now() / 1000,
-          big = S.jumpR && S.jumpR.H >= 3.2,
-          first = M ? !M.jshow : !SESS.yardShow;
+          big = carState.jumpR && carState.jumpR.H >= 3.2,
+          first = currentMission ? !currentMission.jshow : !SESS.yardShow;
         // the first ramp jump of every stunt attempt gets the full slow-motion orbit (unless one just played), big jumps get it again every 30 s
         if ((first && now - lastShow > 20) || (big && now - lastShow > 30)) {
-          if (M) M.jshow = true;
+          if (currentMission) currentMission.jshow = true;
           else SESS.yardShow = true;
           lastShow = now;
           startShow("jump");
           return;
         }
-        if (M) M.jshow = true;
+        if (currentMission) currentMission.jshow = true;
         else SESS.yardShow = true;
         // every other jump: a short slow-mo beat
         if (now - (SESS.stuntMini || -99) > 8) {
           SESS.stuntMini = now;
-          MS.t = 0.8;
+          MINI_SLOW.t = 0.8;
         }
         return;
       }
@@ -212,49 +212,49 @@ function inYard() {
 }
 
 /* ---- replay: tyre marks appear when the car lays them, not before ---- */
-SKID.tot = 0;
+SKID_MARKS.tot = 0;
 {
   const _s = skidMark;
   skidMark = function (x, y, z, yaw, len) {
     _s(x, y, z, yaw, len);
-    SKID.tot++;
+    SKID_MARKS.tot++;
   };
 }
-RPL.sk = new Float64Array(RPL.N);
+REPLAY.sk = new Float64Array(REPLAY.N);
 {
   const _r = recTick;
   recTick = function (dt) {
-    const i0 = RPL.i;
+    const i0 = REPLAY.i;
     _r(dt);
-    if (RPL.i !== i0) RPL.sk[i0] = SKID.tot;
+    if (REPLAY.i !== i0) REPLAY.sk[i0] = SKID_MARKS.tot;
   };
 }
 {
   const _st = replayStart;
   replayStart = function () {
     const ok = _st();
-    if (ok && RPL.on) {
-      RPL.skSnap = SKID.m.instanceMatrix.array.slice();
-      RPL.skNow = SKID.tot;
-      RPL.skAt = -1;
+    if (ok && REPLAY.on) {
+      REPLAY.skSnap = SKID_MARKS.m.instanceMatrix.array.slice();
+      REPLAY.skNow = SKID_MARKS.tot;
+      REPLAY.skAt = -1;
     }
     return ok;
   };
 }
 function skidReplay() {
-  if (!RPL.on || !RPL.skSnap) return;
-  const a = rplIdx(Math.floor(RPL.p)),
-    at = RPL.sk[a];
-  if (at === RPL.skAt) return;
-  RPL.skAt = at;
-  const arr = SKID.m.instanceMatrix.array;
-  arr.set(RPL.skSnap);
-  const n = SKID.n;
-  for (let s = Math.max(at, RPL.skNow - n); s < RPL.skNow; s++) {
+  if (!REPLAY.on || !REPLAY.skSnap) return;
+  const a = rplIdx(Math.floor(REPLAY.p)),
+    at = REPLAY.sk[a];
+  if (at === REPLAY.skAt) return;
+  REPLAY.skAt = at;
+  const arr = SKID_MARKS.m.instanceMatrix.array;
+  arr.set(REPLAY.skSnap);
+  const n = SKID_MARKS.n;
+  for (let s = Math.max(at, REPLAY.skNow - n); s < REPLAY.skNow; s++) {
     const o = (s % n) * 16;
     for (let k = 0; k < 16; k++) arr[o + k] = 0;
   }
-  SKID.m.instanceMatrix.needsUpdate = true;
+  SKID_MARKS.m.instanceMatrix.needsUpdate = true;
 }
 {
   const _rt = replayTick;
@@ -266,10 +266,10 @@ function skidReplay() {
 {
   const _re = replayEnd;
   replayEnd = function () {
-    if (RPL.skSnap) {
-      SKID.m.instanceMatrix.array.set(RPL.skSnap);
-      SKID.m.instanceMatrix.needsUpdate = true;
-      RPL.skSnap = null;
+    if (REPLAY.skSnap) {
+      SKID_MARKS.m.instanceMatrix.array.set(REPLAY.skSnap);
+      SKID_MARKS.m.instanceMatrix.needsUpdate = true;
+      REPLAY.skSnap = null;
     }
     _re();
   };
@@ -277,21 +277,21 @@ function skidReplay() {
 
 // the car only makes its sounds while it is being driven: films, result screens, replays, photo mode and frozen rocket shows are quiet
 /* ---- a landed spin is remembered on its own: the AIRTIME pop that follows a big jump must not hide the 360 (Stunt Yard, Mega Ramp) ---- */
-V26.lastSpin = null;
+MISSION_REBUILD.lastSpin = null;
 {
   const _ls = landSpin;
   landSpin = function (fw) {
-    const spin = Math.abs(S.spinA || 0),
+    const spin = Math.abs(carState.spinA || 0),
       n = Math.round(spin / Math.PI),
-      hov = S.hovUsed;
+      hov = carState.hovUsed;
     _ls(fw);
     if (n >= 2 && !hov && spin > Math.PI * 0.8)
-      V26.lastSpin = { deg: n * 180, t: clock };
+      MISSION_REBUILD.lastSpin = { deg: n * 180, t: clock };
   };
 }
 
 function v28Frame(rdt) {
-  if (phase !== "play" || PF.on || (cin.on && cin.freeze)) quietCar();
+  if (phase !== "play" || PHOTO_FINISH.on || (cinematic.on && cinematic.freeze)) quietCar();
 }
 
 /* ---- the share photo: the Roadster in flight on every card; on a phone X gets it attached, on a computer it is one paste away, and the link previews it ---- */

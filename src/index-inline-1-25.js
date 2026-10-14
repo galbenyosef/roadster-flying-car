@@ -1,12 +1,12 @@
-// index-inline-1 25 — math
+// index-inline-1 25 — carstate
 // Lines 85961-86306 of readable/index-inline-1.pretty.js (statement-aligned).
 function mapTarget() {
-  if (!M && STORY.on) {
+  if (!currentMission && STORY.on) {
     const k = storyNext();
-    if (k >= 0) return { x: CH[k].at[0], z: CH[k].at[1] };
+    if (k >= 0) return { x: CHAPTERS[k].at[0], z: CHAPTERS[k].at[1] };
   }
-  if (!M || M.done) return null;
-  const d = M.def.id,
+  if (!currentMission || currentMission.done) return null;
+  const d = currentMission.def.id,
     pd = (l) => PADS.find((p) => p.label === l);
   {
     const x = mapTarget23(d, pd);
@@ -14,23 +14,23 @@ function mapTarget() {
   }
   if (d === "hover") return pd("BOX");
   if (d === "pad") return pd("B");
-  if (d === "rings") return M.ring < RINGS.length ? RINGS[M.ring] : pd("C");
-  if (d === "relay") return pd(["A", "C", "B"][Math.min(2, M.step)]);
+  if (d === "rings") return currentMission.ring < RINGS.length ? RINGS[currentMission.ring] : pd("C");
+  if (d === "relay") return pd(["A", "C", "B"][Math.min(2, currentMission.step)]);
   if (d === "deck") return pd("L");
-  if (d === "race" || d === "final") return RACE.gates[M.cp];
+  if (d === "race" || d === "final") return RACE.gates[currentMission.cp];
   if (d === "truck") return RAMPS.find((r) => r.name === "TRUCK JUMP");
   if (d === "loop") return { x: LOOPS[0].x, z: LOOPS[0].z };
   if (d === "bigair") return RAMPS.find((r) => r.name === "MEGA RAMP");
   if (d === "courier") {
-    const q = DROPS[Math.min(M.step, DROPS.length - 1)];
+    const q = DROPS[Math.min(currentMission.step, DROPS.length - 1)];
     return { x: q[0], z: q[1] };
   }
   if (d === "ramps") {
     let b = null,
       bd = 1e9;
     for (const r of RAMPS) {
-      if (r.name === "POND JUMP" || M.hit.has(r.name)) continue;
-      const dd = Math.hypot(r.x - S.x, r.z - S.z);
+      if (r.name === "POND JUMP" || currentMission.hit.has(r.name)) continue;
+      const dd = Math.hypot(r.x - carState.x, r.z - carState.z);
       if (dd < bd) {
         bd = dd;
         b = r;
@@ -41,14 +41,14 @@ function mapTarget() {
   if (d === "chase")
     return { x: RIVALS[0].g.position.x, z: RIVALS[0].g.position.z };
   if (d === "skytour")
-    return M.ring < STOUR.length
-      ? { x: STOUR[M.ring][0], z: STOUR[M.ring][2] }
+    return currentMission.ring < STOUR.length
+      ? { x: STOUR[currentMission.ring][0], z: STOUR[currentMission.ring][2] }
       : pd("L");
-  if (d === "catch") return { x: VP[0], z: VP[1] };
+  if (d === "catch") return { x: VIEWPOINT[0], z: VIEWPOINT[1] };
   return null;
 }
 function drawMap(t) {
-  const c = mctx,
+  const c = mapCtx,
     W = 200,
     R = 100,
     sc = R / 230;
@@ -60,14 +60,14 @@ function drawMap(t) {
   c.fillStyle = "#4a515b";
   c.fillRect(0, 0, W, W);
   c.translate(R, R);
-  c.rotate(S.yaw);
-  const i0 = Math.max(-2, blockOf(S.x - 300)),
-    i1 = Math.min(NBK + 1, blockOf(S.x + 300)),
-    j0 = Math.max(-2, blockOf(S.z - 300)),
-    j1 = Math.min(NBK + 1, blockOf(S.z + 300));
+  c.rotate(carState.yaw);
+  const i0 = Math.max(-2, blockOf(carState.x - 300)),
+    i1 = Math.min(BLOCK_COUNT + 1, blockOf(carState.x + 300)),
+    j0 = Math.max(-2, blockOf(carState.z - 300)),
+    j1 = Math.min(BLOCK_COUNT + 1, blockOf(carState.z + 300));
   for (let bi = i0; bi <= i1; bi++)
     for (let bj = j0; bj <= j1; bj++) {
-      const inside = bi >= 0 && bj >= 0 && bi < NBK && bj < NBK,
+      const inside = bi >= 0 && bj >= 0 && bi < BLOCK_COUNT && bj < BLOCK_COUNT,
         ds = inside ? district(bi, bj) : "out";
       c.fillStyle = {
         park: "#3d6b3a",
@@ -80,30 +80,30 @@ function drawMap(t) {
         out: "#1a1d22",
       }[ds];
       c.fillRect(
-        (blockMin(bi) - S.x) * sc,
-        (blockMin(bj) - S.z) * sc,
-        (P - RW) * sc,
-        (P - RW) * sc,
+        (blockMin(bi) - carState.x) * sc,
+        (blockMin(bj) - carState.z) * sc,
+        (BLOCK_PITCH - ROAD_WIDTH) * sc,
+        (BLOCK_PITCH - ROAD_WIDTH) * sc,
       );
     }
   for (const [px, pz, a, b] of PONDS) {
     c.fillStyle = "#3f7fa6";
     c.beginPath();
-    c.ellipse((px - S.x) * sc, (pz - S.z) * sc, a * sc, b * sc, 0, 0, 7);
+    c.ellipse((px - carState.x) * sc, (pz - carState.z) * sc, a * sc, b * sc, 0, 0, 7);
     c.fill();
   }
   c.fillStyle = "rgba(255,255,255,.55)";
   for (const v of TRAFFIC) {
-    const x = (v.x - S.x) * sc,
-      z = (v.z - S.z) * sc;
+    const x = (v.x - carState.x) * sc,
+      z = (v.z - carState.z) * sc;
     if (Math.abs(x) < R && Math.abs(z) < R)
       c.fillRect(x - 1.2, z - 1.2, 2.4, 2.4);
   }
   if (RACE.on || CHASE.on)
     for (const r of RIVALS) {
       if (!r.g.visible) continue;
-      const x = (r.g.position.x - S.x) * sc,
-        z = (r.g.position.z - S.z) * sc;
+      const x = (r.g.position.x - carState.x) * sc,
+        z = (r.g.position.z - carState.z) * sc;
       c.fillStyle = r.col;
       c.beginPath();
       c.arc(x, z, 4, 0, 7);
@@ -111,8 +111,8 @@ function drawMap(t) {
     }
   TOKENS.forEach((k, i) => {
     if (SCORE.tokens.has(i)) return;
-    const x = (k.x - S.x) * sc,
-      z = (k.z - S.z) * sc;
+    const x = (k.x - carState.x) * sc,
+      z = (k.z - carState.z) * sc;
     if (Math.abs(x) > R || Math.abs(z) > R) return;
     c.fillStyle = "#a77bff";
     c.beginPath();
@@ -123,8 +123,8 @@ function drawMap(t) {
     c.fill();
   });
   for (const p of PADS) {
-    const x = (p.x - S.x) * sc,
-      z = (p.z - S.z) * sc;
+    const x = (p.x - carState.x) * sc,
+      z = (p.z - carState.z) * sc;
     c.fillStyle = "#" + p.color.toString(16).padStart(6, "0");
     c.beginPath();
     c.arc(x, z, 4.5, 0, 7);
@@ -133,8 +133,8 @@ function drawMap(t) {
   const tg = mapTarget();
   let tAng = null;
   if (tg) {
-    const x = (tg.x - S.x) * sc,
-      z = (tg.z - S.z) * sc,
+    const x = (tg.x - carState.x) * sc,
+      z = (tg.z - carState.z) * sc,
       dd = Math.hypot(x, z);
     if (dd < R - 10) {
       c.strokeStyle = "#fff";
@@ -142,7 +142,7 @@ function drawMap(t) {
       c.beginPath();
       c.arc(x, z, 7 + 2 * Math.sin(t * 5), 0, 7);
       c.stroke();
-    } else tAng = Math.atan2(z, x) + S.yaw;
+    } else tAng = Math.atan2(z, x) + carState.yaw;
   }
   drawEvents(c, sc);
   drawRing(c, sc);
@@ -177,10 +177,10 @@ function drawMap(t) {
   c.font = "700 10px JetBrains Mono, monospace";
   c.textAlign = "center";
   for (const lm of LANDMARKS) {
-    const dx = (lm.x - S.x) * sc,
-      dz = (lm.z - S.z) * sc,
-      sx = dx * Math.cos(S.yaw) - dz * Math.sin(S.yaw),
-      sz = dx * Math.sin(S.yaw) + dz * Math.cos(S.yaw);
+    const dx = (lm.x - carState.x) * sc,
+      dz = (lm.z - carState.z) * sc,
+      sx = dx * Math.cos(carState.yaw) - dz * Math.sin(carState.yaw),
+      sz = dx * Math.sin(carState.yaw) + dz * Math.cos(carState.yaw);
     if (Math.hypot(sx, sz) < R - 16) {
       c.fillStyle = "rgba(0,0,0,.6)";
       c.fillText(lm.n, R + sx + 1, R + sz + 1);
@@ -188,8 +188,8 @@ function drawMap(t) {
       c.fillText(lm.n, R + sx, R + sz);
     }
   }
-  const nx = R + Math.sin(S.yaw) * (R - 13),
-    nz = R - Math.cos(S.yaw) * (R - 13);
+  const nx = R + Math.sin(carState.yaw) * (R - 13),
+    nz = R - Math.cos(carState.yaw) * (R - 13);
   c.fillStyle = "#fff";
   c.font = "700 14px JetBrains Mono, monospace";
   c.textAlign = "center";
@@ -201,14 +201,14 @@ function drawMap(t) {
 function rocketCollide(dt) {
   if (!ROCKET.g.visible) return;
   const R = ROCKET.g.position,
-    dx = S.x - R.x,
-    dz = S.z - R.z,
+    dx = carState.x - R.x,
+    dz = carState.z - R.z,
     d = Math.hypot(dx, dz);
-  if (d < 5.8 && S.y > R.y - 3 && S.y < R.y + 70) {
+  if (d < 5.8 && carState.y > R.y - 3 && carState.y < R.y + 70) {
     const nx = dx / (d || 1),
       nz = dz / (d || 1);
-    S.x = R.x + nx * 5.8;
-    S.z = R.z + nz * 5.8;
+    carState.x = R.x + nx * 5.8;
+    carState.z = R.z + nz * 5.8;
     impact(nx, nz, dt);
   }
 }
@@ -220,29 +220,29 @@ function bldCollide(dt) {
   let hit = false;
   for (let it = 0; it < 3; it++) {
     const m = 1.15,
-      b = hitB(S.x, S.z, S.y, m);
+      b = hitB(carState.x, carState.z, carState.y, m);
     if (!b) break;
     hit = true;
     const d = [
-        S.x - (b.x0 - m),
-        b.x1 + m - S.x,
-        S.z - (b.z0 - m),
-        b.z1 + m - S.z,
+        carState.x - (b.x0 - m),
+        b.x1 + m - carState.x,
+        carState.z - (b.z0 - m),
+        b.z1 + m - carState.z,
       ],
       mn = Math.min(...d);
     let nx = 0,
       nz = 0;
     if (mn === d[0]) {
-      S.x = b.x0 - m;
+      carState.x = b.x0 - m;
       nx = -1;
     } else if (mn === d[1]) {
-      S.x = b.x1 + m;
+      carState.x = b.x1 + m;
       nx = 1;
     } else if (mn === d[2]) {
-      S.z = b.z0 - m;
+      carState.z = b.z0 - m;
       nz = -1;
     } else {
-      S.z = b.z1 + m;
+      carState.z = b.z1 + m;
       nz = 1;
     }
     impact(nx, nz, dt);
@@ -250,18 +250,18 @@ function bldCollide(dt) {
   const E = HALF + 6;
   let nx = 0,
     nz = 0;
-  if (S.x > E) {
-    S.x = E;
+  if (carState.x > E) {
+    carState.x = E;
     nx = -1;
-  } else if (S.x < -E) {
-    S.x = -E;
+  } else if (carState.x < -E) {
+    carState.x = -E;
     nx = 1;
   }
-  if (S.z > E) {
-    S.z = E;
+  if (carState.z > E) {
+    carState.z = E;
     nz = -1;
-  } else if (S.z < -E) {
-    S.z = -E;
+  } else if (carState.z < -E) {
+    carState.z = -E;
     nz = 1;
   }
   if (nx || nz) {
@@ -275,19 +275,19 @@ function landFx(imp, fw) {
   rplLand = imp;
   camOffV.y -= Math.min(3.2, imp * 0.2);
   if (imp > 11) hitStop = Math.max(hitStop, 0.05);
-  S.suspV = (S.suspV || 0) - Math.min(2.2, imp * 0.14);
-  S.pitchV = (S.pitchV || 0) - Math.min(2.5, imp * 0.12);
+  carState.suspV = (carState.suspV || 0) - Math.min(2.2, imp * 0.14);
+  carState.pitchV = (carState.pitchV || 0) - Math.min(2.5, imp * 0.12);
   shake = Math.max(shake, Math.min(0.7, imp * 0.045));
-  if (!S.armed || S.ball) S.v *= 1 - Math.min(0.22, imp * 0.011);
+  if (!carState.armed || carState.ball) carState.v *= 1 - Math.min(0.22, imp * 0.011);
   const r = Math.random,
     n = Math.min(40, Math.round(imp * 2.5));
   for (let k = 0; k < n; k++) {
     const an = r() * 6.283,
       rr = 1.2 + r() * 1.4;
     dust.emit(
-      S.x + Math.cos(an) * rr,
-      S.y + 0.15,
-      S.z + Math.sin(an) * rr,
+      carState.x + Math.cos(an) * rr,
+      carState.y + 0.15,
+      carState.z + Math.sin(an) * rr,
       Math.cos(an) * (4 + imp * 0.5),
       0.4 + r() * 1.2,
       Math.sin(an) * (4 + imp * 0.5),
@@ -299,12 +299,12 @@ function landFx(imp, fw) {
   if (imp > 8) {
     for (let k = 0; k < 20; k++)
       sparks.emit(
-        S.x - fw[0] * 1.6 + (r() - 0.5) * 1.4,
-        S.y + 0.12,
-        S.z - fw[1] * 1.6 + (r() - 0.5) * 1.4,
-        (r() - 0.5) * 6 - fw[0] * S.v * 0.3,
+        carState.x - fw[0] * 1.6 + (r() - 0.5) * 1.4,
+        carState.y + 0.12,
+        carState.z - fw[1] * 1.6 + (r() - 0.5) * 1.4,
+        (r() - 0.5) * 6 - fw[0] * carState.v * 0.3,
         1 + r() * 3,
-        (r() - 0.5) * 6 - fw[1] * S.v * 0.3,
+        (r() - 0.5) * 6 - fw[1] * carState.v * 0.3,
         0.45,
         0.16,
         0,
@@ -313,15 +313,15 @@ function landFx(imp, fw) {
   }
   for (const sd of [-0.93, 0.93])
     skidMark(
-      S.x - fw[0] * 1.38 + Math.cos(S.yaw) * sd,
-      S.y + 0.03,
-      S.z - fw[1] * 1.38 - Math.sin(S.yaw) * sd,
-      S.yaw,
+      carState.x - fw[0] * 1.38 + Math.cos(carState.yaw) * sd,
+      carState.y + 0.03,
+      carState.z - fw[1] * 1.38 - Math.sin(carState.yaw) * sd,
+      carState.yaw,
       1.6,
     );
 }
 // tyre marks: a ring buffer of dark quads on the road
-const SKID = (() => {
+const SKID_MARKS = (() => {
   const n = 700,
     g = new THREE.PlaneGeometry(0.3, 1);
   const m = new THREE.InstancedMesh(
@@ -341,8 +341,8 @@ const SKID = (() => {
   scene.add(m);
   return { m, n, i: 0 };
 })();
-const _sq = new THREE.Quaternion(),
-  _se = new THREE.Euler(),
-  _sm = new THREE.Matrix4(),
-  _sv = new THREE.Vector3(),
-  _ss = new THREE.Vector3();
+const scratchQuatSkid = new THREE.Quaternion(),
+  scratchEulerSkid = new THREE.Euler(),
+  scratchMatrixSkid = new THREE.Matrix4(),
+  scratchVecSkidA = new THREE.Vector3(),
+  scratchVecSkidB = new THREE.Vector3();

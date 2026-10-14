@@ -9,22 +9,22 @@
       roughness: 0.7,
       metalness: 0.4,
     }),
-    BLD.length * 3,
+    buildings.length * 3,
   );
   const blink = new THREE.InstancedMesh(
     new THREE.SphereGeometry(0.6, 8, 6),
     new THREE.MeshBasicMaterial({ color: new THREE.Color(8, 0.4, 0.3) }),
-    BLD.length,
+    buildings.length,
   );
   const mast = new THREE.InstancedMesh(
     new THREE.CylinderGeometry(0.15, 0.3, 9, 6),
     ac.material,
-    BLD.length,
+    buildings.length,
   );
   const M = new THREE.Matrix4();
   let k = 0,
     kb = 0;
-  for (const B of BLD) {
+  for (const B of buildings) {
     if (B.style < 0 || B.style === 3 || B.style === 6) continue;
     if (
       PADS.some(
@@ -128,9 +128,9 @@
   gt.wrapS = gt.wrapT = THREE.RepeatWrapping;
   gt.repeat.set(10, 10);
   gt.colorSpace = THREE.SRGBColorSpace;
-  const n = (NBK + 4) * (NBK + 4);
+  const n = (BLOCK_COUNT + 4) * (BLOCK_COUNT + 4);
   const walk = new THREE.InstancedMesh(
-    new THREE.BoxGeometry(P - RW, 0.2, P - RW),
+    new THREE.BoxGeometry(BLOCK_PITCH - ROAD_WIDTH, 0.2, BLOCK_PITCH - ROAD_WIDTH),
     new THREE.MeshStandardMaterial({
       map: st,
       roughness: 0.9,
@@ -139,15 +139,15 @@
     n,
   );
   const lawn = new THREE.InstancedMesh(
-    new THREE.BoxGeometry(P - RW - 6, 0.26, P - RW - 6),
+    new THREE.BoxGeometry(BLOCK_PITCH - ROAD_WIDTH - 6, 0.26, BLOCK_PITCH - ROAD_WIDTH - 6),
     new THREE.MeshStandardMaterial({ map: gt, roughness: 0.95 }),
     8,
   );
   const M = new THREE.Matrix4();
   let k = 0,
     kl = 0;
-  for (let bi = -2; bi < NBK + 2; bi++)
-    for (let bj = -2; bj < NBK + 2; bj++) {
+  for (let bi = -2; bi < BLOCK_COUNT + 2; bi++)
+    for (let bj = -2; bj < BLOCK_COUNT + 2; bj++) {
       M.makeTranslation(
         (blockMin(bi) + blockMax(bi)) / 2,
         0.1,
@@ -206,9 +206,9 @@
     );
     dash.setMatrixAt(m++, M);
   };
-  for (let l = 0; l <= NBK; l++) {
-    const line = -HALF + l * P;
-    for (let seg = 0; seg < NBK; seg++) {
+  for (let l = 0; l <= BLOCK_COUNT; l++) {
+    const line = -HALF + l * BLOCK_PITCH;
+    for (let seg = 0; seg < BLOCK_COUNT; seg++) {
       const a = blockMin(seg) + 2,
         b = blockMax(seg) - 2;
       for (let s = a; s < b; s += 8) {
@@ -241,8 +241,8 @@
     return new THREE.CanvasTexture(c);
   })();
   const spots = [];
-  for (let bi = 0; bi < NBK; bi++)
-    for (let bj = 0; bj < NBK; bj++) {
+  for (let bi = 0; bi < BLOCK_COUNT; bi++)
+    for (let bj = 0; bj < BLOCK_COUNT; bj++) {
       if (
         district(bi, bj) === "strip" ||
         district(bi, bj) === "launch" ||
@@ -319,7 +319,7 @@
   scene.add(pole, head, pool);
 }
 // traffic signals at every inner intersection (one controller for the whole grid)
-const SIG = {
+const SIGNALS = {
   ns: new THREE.MeshBasicMaterial({ color: 0x33ff88 }),
   ew: new THREE.MeshBasicMaterial({ color: 0xff3030 }),
   t: 0,

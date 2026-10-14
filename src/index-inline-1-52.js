@@ -1,18 +1,18 @@
-// index-inline-1 52 — math
+// index-inline-1 52 — carstate
 // Lines 94838-95180 of readable/index-inline-1.pretty.js (statement-aligned).
-V26.T.drone = (M, dt, ev, el) => {
-  const D = DRN,
+MISSION_REBUILD.T.drone = (M, dt, ev, el) => {
+  const D = DRONE,
     g = D.g,
-    left = DRNV.time - el;
+    left = DRONE_SPEEDS.time - el;
   g.visible = true;
   let obj,
     tt = `${Math.max(0, left).toFixed(1)} s left`;
   if (phase === "cut") return ["", tt];
   if (!D.att) {
     const d3 = Math.hypot(
-      S.x - g.position.x,
-      S.y + 0.5 - g.position.y,
-      S.z - g.position.z,
+      carState.x - g.position.x,
+      carState.y + 0.5 - g.position.y,
+      carState.z - g.position.z,
     );
     D.gt += dt;
     const stall = d3 < 25 && D.gt % 11 > 9.9;
@@ -26,31 +26,31 @@ V26.T.drone = (M, dt, ev, el) => {
     D.mt = (D.mt || 0) - dt;
     if (D.mode === "dart" && D.mt <= 0) {
       D.mode = "tired";
-      D.mt = DRNV.tiredT;
+      D.mt = DRONE_SPEEDS.tiredT;
     } else if (D.mode === "tired" && D.mt <= 0) {
       D.mode = "cruise";
       D.mt = 1.5;
     } else if (
       (D.mode || "cruise") === "cruise" &&
       D.mt <= 0 &&
-      d3 < DRNV.near &&
+      d3 < DRONE_SPEEDS.near &&
       D.lock <= 0
     ) {
       D.mode = "dart";
-      D.mt = DRNV.dartT;
+      D.mt = DRONE_SPEEDS.dartT;
       pop("SHE BOLTS", 0);
     }
     D.s +=
       (stall
         ? 2
         : D.mode === "dart"
-          ? DRNV.dart
+          ? DRONE_SPEEDS.dart
           : D.mode === "tired"
-            ? DRNV.tired
-            : DRNV.base) * dt;
+            ? DRONE_SPEEDS.tired
+            : DRONE_SPEEDS.base) * dt;
     // jukes: when you get close she darts sideways and up or down
     D.jt -= dt;
-    if (d3 < DRNV.juke && D.jt <= 0 && !stall) {
+    if (d3 < DRONE_SPEEDS.juke && D.jt <= 0 && !stall) {
       D.jt = 1.8 + Math.random() * 0.9;
       const a = Math.random() * 6.283;
       D.jx = Math.cos(a) * 7;
@@ -67,7 +67,7 @@ V26.T.drone = (M, dt, ev, el) => {
     D.jz *= Math.exp(-dt * 0.6);
     const pos = drn2At(D.s),
       tgt = pos.add(
-        V3x(
+        vec3(
           D.ox + Math.sin(clock * 1.7) * 1.5,
           D.oy + Math.sin(clock * 2.3) * 0.6,
           D.oz + Math.cos(clock * 1.3) * 1.5,
@@ -88,8 +88,8 @@ V26.T.drone = (M, dt, ev, el) => {
     drnSpin(clock * (stall ? 0.3 : D.mode === "tired" ? 0.6 : 1), true);
     // the tether: fires inside 7 m, holds while you stay inside 12 m, locks after 1 s
     D.snap = Math.max(0, D.snap - dt);
-    if (D.lock > 0 || (d3 < DRNV.lockR && D.snap <= 0)) {
-      if (d3 > DRNV.holdR) {
+    if (D.lock > 0 || (d3 < DRONE_SPEEDS.lockR && D.snap <= 0)) {
+      if (d3 > DRONE_SPEEDS.holdR) {
         D.lock = 0;
         D.snap = 0.8;
         BEAM.visible = false;
@@ -102,17 +102,17 @@ V26.T.drone = (M, dt, ev, el) => {
         }
         D.lock += dt;
         beam(
-          V3x(S.x, S.y + 1.15, S.z),
-          g.position.clone().add(V3x(0, -0.45, 0)),
+          vec3(carState.x, carState.y + 1.15, carState.z),
+          g.position.clone().add(vec3(0, -0.45, 0)),
           true,
           1,
         );
-        if (D.lock >= DRNV.lockT) {
+        if (D.lock >= DRONE_SPEEDS.lockT) {
           D.att = true;
           D.lock = 0;
           audio.chime();
           pop("DRONE DOCKED · AIR REFILLED", 600);
-          S.tank = 100;
+          carState.tank = 100;
           M.dockT = el;
           dockCut(() => {
             showSub(
@@ -120,20 +120,20 @@ V26.T.drone = (M, dt, ev, el) => {
               "You got her! Bring her home: the roof of the diner. Gently, those are pies.",
               4.5,
             );
-            DZ.visible = true;
+            DROP_ZONE.visible = true;
             zoneColor(0xffc24a);
-            DZ.position.set(DRN_ROOF[0], DRN_ROOF[1], DRN_ROOF[2]);
+            DROP_ZONE.position.set(DRN_ROOF[0], DRN_ROOF[1], DRN_ROOF[2]);
           });
           return ["", tt];
         }
       }
     } else BEAM.visible = false;
-    meter(D.lock > 0 ? "TETHER" : null, (D.lock / DRNV.lockT) * 100);
+    meter(D.lock > 0 ? "TETHER" : null, (D.lock / DRONE_SPEEDS.lockT) * 100);
     obj =
       D.lock > 0
-        ? `Hold her · tether ${Math.round((D.lock / DRNV.lockT) * 100)}% · stay inside 12 m`
+        ? `Hold her · tether ${Math.round((D.lock / DRONE_SPEEDS.lockT) * 100)}% · stay inside 12 m`
         : d3 > 80
-          ? `Catch Mae's drone · ${Math.round(d3)} m · ${KY("boost")} to close in`
+          ? `Catch Mae's drone · ${Math.round(d3)} m · ${KEY_LABELS("boost")} to close in`
           : stall
             ? "GLITCH! She stalls · get inside 7 m now"
             : D.mode === "tired"
@@ -142,25 +142,25 @@ V26.T.drone = (M, dt, ev, el) => {
   }
   if (D.att) {
     meter(null);
-    const fw = [-Math.sin(S.yaw), -Math.cos(S.yaw)];
+    const fw = [-Math.sin(carState.yaw), -Math.cos(carState.yaw)];
     g.position.set(
-      S.x - fw[0] * 0.2,
-      S.y + 2.4 + Math.sin(clock * 3) * 0.08,
-      S.z - fw[1] * 0.2,
+      carState.x - fw[0] * 0.2,
+      carState.y + 2.4 + Math.sin(clock * 3) * 0.08,
+      carState.z - fw[1] * 0.2,
     );
-    g.rotation.set(0, S.yaw, 0);
+    g.rotation.set(0, carState.yaw, 0);
     drnSpin(clock, false);
-    obj = S.air
+    obj = carState.air
       ? "Land on the DINER ROOF (follow the beam) · softly"
       : "Lift off and land on the DINER ROOF";
     if (ev && ev.land != null) {
       const b = DINER.b;
       if (
-        S.x > b[0] - 0.5 &&
-        S.x < b[1] + 0.5 &&
-        S.z > b[2] - 0.5 &&
-        S.z < b[3] + 0.5 &&
-        S.y > 6
+        carState.x > b[0] - 0.5 &&
+        carState.x < b[1] + 0.5 &&
+        carState.z > b[2] - 0.5 &&
+        carState.z < b[3] + 0.5 &&
+        carState.y > 6
       ) {
         finish(
           true,
@@ -185,7 +185,7 @@ V26.T.drone = (M, dt, ev, el) => {
 
 /* ---- 03 RING RUN v2: ten rings, a clock that only refills at a ring, finish through the gold ring. No pad. ---- */
 // rings 1-6 run down the boulevard; 7-10 drop low, climb a street canyon, turn right and finish low
-const RR = (() => {
+const RING_RUN = (() => {
   const L = RINGS.map((r) => ({
     x: r.x,
     y: r.y,
@@ -211,18 +211,18 @@ const RR = (() => {
   add(150, 14, -192, 1, 0, 5.4);
   return L;
 })();
-const RRT = { start: 11, per: 22, base: 0.8, turn: 1.6 };
+const RING_RUN_TUNE = { start: 11, per: 22, base: 0.8, turn: 1.6 };
 function rrBonus(i) {
-  const a = RR[i],
-    b = RR[i + 1];
+  const a = RING_RUN[i],
+    b = RING_RUN[i + 1];
   if (!b) return 0;
   const d = Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
-  return d / RRT.per + RRT.base + (a.nx !== b.nx ? RRT.turn : 0);
+  return d / RING_RUN_TUNE.per + RING_RUN_TUNE.base + (a.nx !== b.nx ? RING_RUN_TUNE.turn : 0);
 }
 function rrPaint(k) {
-  RR.forEach((r, i) => {
+  RING_RUN.forEach((r, i) => {
     r.m.visible = true;
-    const last = i === RR.length - 1;
+    const last = i === RING_RUN.length - 1;
     r.m.material.emissive.set(
       i < k
         ? 0x3a4a55
@@ -237,29 +237,29 @@ function rrPaint(k) {
     r.m.material.emissiveIntensity = i === k ? 4.2 : i < k ? 1 : 2.6;
   });
 }
-V26.setup.rings = (d) => {
+MISSION_REBUILD.setup.rings = (d) => {
   rrPaint(0);
-  Object.assign(M, {
+  Object.assign(currentMission, {
     ring: 0,
-    left: RRT.start,
-    px: S.x,
-    py: S.y,
-    pz: S.z,
+    left: RING_RUN_TUNE.start,
+    px: carState.x,
+    py: carState.y,
+    pz: carState.z,
     tot: 0,
   });
 };
-V26.T.rings = (M, dt, ev, el) => {
+MISSION_REBUILD.T.rings = (M, dt, ev, el) => {
   const k = M.ring,
-    r = RR[k];
-  if (!cin.on) M.left -= dt;
+    r = RING_RUN[k];
+  if (!cinematic.on) M.left -= dt;
   if (r) {
     const dp = (M.px - r.x) * r.nx + (M.pz - r.z) * r.nz,
-      dc = (S.x - r.x) * r.nx + (S.z - r.z) * r.nz;
+      dc = (carState.x - r.x) * r.nx + (carState.z - r.z) * r.nz;
     if (dp * dc <= 0 && (dp !== 0 || dc !== 0) && Math.abs(dp - dc) < 30) {
       const u = dp / (dp - dc || 1),
-        ix = lerp(M.px, S.x, u),
-        iy = lerp(M.py, S.y, u) + 0.6,
-        iz = lerp(M.pz, S.z, u),
+        ix = lerp(M.px, carState.x, u),
+        iy = lerp(M.py, carState.y, u) + 0.6,
+        iz = lerp(M.pz, carState.z, u),
         off = Math.hypot(ix - r.x, iy - r.y, iz - r.z);
       if (off < r.R) {
         M.ring++;
@@ -267,8 +267,8 @@ V26.T.rings = (M, dt, ev, el) => {
         M.left += b;
         audio.ping();
         burst(r.x, r.y, r.z, 30, 9);
-        if (M.ring >= RR.length) {
-          rrPaint(RR.length);
+        if (M.ring >= RING_RUN.length) {
+          rrPaint(RING_RUN.length);
           audio.chime();
           finish(
             true,
@@ -278,14 +278,14 @@ V26.T.rings = (M, dt, ev, el) => {
           return ["", ""];
         }
         rrPaint(M.ring);
-        flash(`RING ${M.ring} / ${RR.length}`, `+${b.toFixed(1)} s`, 1);
+        flash(`RING ${M.ring} / ${RING_RUN.length}`, `+${b.toFixed(1)} s`, 1);
       } else if (off < 22)
         flash("MISSED RING", "turn round and go through it", 1.4);
     }
   }
-  M.px = S.x;
-  M.py = S.y;
-  M.pz = S.z;
+  M.px = carState.x;
+  M.py = carState.y;
+  M.pz = carState.z;
   meter(
     "RING CLOCK",
     Math.min(100, (M.left / 12) * 100),
@@ -295,14 +295,14 @@ V26.T.rings = (M, dt, ev, el) => {
   if (M.left <= 0) {
     finish(
       false,
-      `Out of time after ${M.ring} of ${RR.length} rings. Boost between rings, then line up early.`,
+      `Out of time after ${M.ring} of ${RING_RUN.length} rings. Boost between rings, then line up early.`,
       { time: null },
     );
     return ["", ""];
   }
-  const nx = RR[M.ring];
+  const nx = RING_RUN[M.ring];
   return [
-    `Ring ${M.ring + 1} of ${RR.length}${M.ring === RR.length - 1 ? " · GOLD FINISH" : ""} · ${Math.round(Math.hypot(nx.x - S.x, nx.z - S.z))} m`,
+    `Ring ${M.ring + 1} of ${RING_RUN.length}${M.ring === RING_RUN.length - 1 ? " · GOLD FINISH" : ""} · ${Math.round(Math.hypot(nx.x - carState.x, nx.z - carState.z))} m`,
     `${el.toFixed(1)} s`,
   ];
 };
@@ -312,7 +312,7 @@ V26.T.rings = (M, dt, ev, el) => {
 function pickRoof(cx, cz, d0, d1, h0, h1, tx, tz) {
   let best = null,
     bs = 1e9;
-  for (const b of BLD) {
+  for (const b of buildings) {
     if (b.style < 0 || b.style === 3 || b.h < h0 || b.h > h1) continue;
     const w = b.x1 - b.x0,
       l = b.z1 - b.z0;
@@ -341,5 +341,5 @@ function pickRoof(cx, cz, d0, d1, h0, h1, tx, tz) {
   }
   return best;
 }
-const FT = { x0: -384, x1: -192, z0: -288, z1: -96 };
+const FOOD_TRUCK = { x0: -384, x1: -192, z0: -288, z1: -96 };
 // the food truck, 1.45x a van: a 3.3 m x 4.5 m roof at 4.5 m you can land on, solid sides

@@ -4,74 +4,74 @@ function watchOffer(kind) {
   watchK = kind;
   watchT = kind === "launch" ? 6 : 5;
   setT("watchTxt", kind === "launch" ? "WATCH LIFTOFF" : "WATCH TOUCHDOWN");
-  $("watchChip").classList.add("on");
+  byId("watchChip").classList.add("on");
 }
 function watchGo() {
-  if (!watchK || phase !== "play" || cin.on) return;
+  if (!watchK || phase !== "play" || cinematic.on) return;
   const k = watchK;
   watchK = null;
-  $("watchChip").classList.remove("on");
+  byId("watchChip").classList.remove("on");
   startShow(k);
 }
-$("watchChip").addEventListener("click", watchGo);
+byId("watchChip").addEventListener("click", watchGo);
 
 /* ---- pause menu: camera, wing, units, cinematics, music and battery live here now ---- */
 const PAUSE = { on: false };
-const BAT = { on: store.get("rfc_bat") === "1", t: 0 };
+const BATTERY_SAVER = { on: store.get("rfc_bat") === "1", t: 0 };
 function pauseLabels() {
   setT("pCam", "CAMERA · " + ["CHASE", "FAR", "BONNET"][camMode]);
   setT("pWing", "WING · " + WMODES[wingSel]);
   setT("pUnits", "UNITS · " + (metric ? "KM/H" : "MPH"));
   setT("pCine", "CINEMATICS · " + (showOn ? "ON" : "OFF"));
   setT("pMusic", "MUSIC · " + (MUSIC.on ? "ON" : "OFF"));
-  setT("pBat", "BATTERY 30 FPS · " + (BAT.on ? "ON" : "OFF"));
-  $("pRestart").hidden = !M;
+  setT("pBat", "BATTERY 30 FPS · " + (BATTERY_SAVER.on ? "ON" : "OFF"));
+  byId("pRestart").hidden = !currentMission;
 }
 function pauseOpen() {
   if (phase !== "play" || PAUSE.on) return;
   PAUSE.on = true;
-  for (const k in K) K[k] = false;
+  for (const k in keyState) keyState[k] = false;
   for (const k in T) if (typeof T[k] === "boolean") T[k] = false;
   pauseLabels();
-  $("pause").hidden = false;
+  byId("pause").hidden = false;
 }
 function pauseClose() {
   PAUSE.on = false;
-  $("pause").hidden = true;
+  byId("pause").hidden = true;
   last = performance.now();
 }
-$("pResume").addEventListener("click", pauseClose);
-$("pRestart").addEventListener("click", () => {
+byId("pResume").addEventListener("click", pauseClose);
+byId("pRestart").addEventListener("click", () => {
   pauseClose();
   respawn(true);
 });
-$("pQuit").addEventListener("click", () => {
+byId("pQuit").addEventListener("click", () => {
   pauseClose();
   toMenu();
 });
-$("pCam").addEventListener("click", () => {
+byId("pCam").addEventListener("click", () => {
   camMode = (camMode + 1) % 3;
   pauseLabels();
 });
-$("pWing").addEventListener("click", () => {
+byId("pWing").addEventListener("click", () => {
   cycleWing();
   pauseLabels();
 });
-$("pUnits").addEventListener("click", () => {
+byId("pUnits").addEventListener("click", () => {
   metric = !metric;
   pauseLabels();
 });
-$("pCine").addEventListener("click", () => {
+byId("pCine").addEventListener("click", () => {
   showOn = !showOn;
   pauseLabels();
 });
-$("pMusic").addEventListener("click", () => {
+byId("pMusic").addEventListener("click", () => {
   MUSIC.set(!MUSIC.on);
   pauseLabels();
 });
-$("pBat").addEventListener("click", () => {
-  BAT.on = !BAT.on;
-  store.set("rfc_bat", BAT.on ? "1" : "0");
+byId("pBat").addEventListener("click", () => {
+  BATTERY_SAVER.on = !BATTERY_SAVER.on;
+  store.set("rfc_bat", BATTERY_SAVER.on ? "1" : "0");
   pauseLabels();
 });
 
@@ -259,7 +259,7 @@ const MUSIC = {
     }
     const c = audio.c,
       t = c.currentTime,
-      hs = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v),
+      hs = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v),
       play = phase === "play" || phase === "replay";
     const L = LAUNCH;
     if (L.st === "up" && L.t < 0.3 && !this.dropped) {
@@ -278,7 +278,7 @@ const MUSIC = {
             this.drop > 0 ? 1 : 0,
           )
         : 0,
-      tfl = play && S.air && (S.armed || S.airT > 0.6) ? 1 : 0;
+      tfl = play && carState.air && (carState.armed || carState.airT > 0.6) ? 1 : 0;
     this.lay.cruise = tc;
     this.lay.speed = tsp;
     this.lay.flight = tfl;
@@ -290,7 +290,7 @@ const MUSIC = {
       t,
       L.st === "count" ? 0.8 : 0.05,
     );
-    this.duck.gain.setTargetAtTime(RADIO.t > 0 || cin.on ? 0.45 : 1, t, 0.15);
+    this.duck.gain.setTargetAtTime(RADIO.t > 0 || cinematic.on ? 0.45 : 1, t, 0.15);
   },
 };
 addEventListener("keydown", (e) => {

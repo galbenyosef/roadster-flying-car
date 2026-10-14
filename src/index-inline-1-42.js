@@ -1,11 +1,11 @@
-// index-inline-1 42 — evt
+// index-inline-1 42 — currentmission
 // Lines 91759-92058 of readable/index-inline-1.pretty.js (statement-aligned).
 function checkUnlocks() {
   for (const id in EARN) {
-    if (ECO.skins.has(id)) continue;
+    if (ECONOMY.skins.has(id)) continue;
     const e = EARN[id];
     if (e.have() >= eNeed(e)) {
-      ECO.skins.add(id);
+      ECONOMY.skins.add(id);
       saveEco();
       const sk = SKINS.find((s) => s.id === id);
       flash("SKIN UNLOCKED", `${sk.n} · equip it in the garage`, 2.6);
@@ -15,7 +15,7 @@ function checkUnlocks() {
 }
 
 /* ---- golden hour and night: one time-of-day system for sky, sun, fog, windows and bloom ---- */
-const TODP = {
+const TOD_PRESETS = {
   day: {
     zen: [0.13, 0.32, 0.7],
     hor: [0.62, 0.74, 0.86],
@@ -74,9 +74,9 @@ const TODP = {
     win: 1.35,
   },
 };
-const TOD = {
+const TIME_OF_DAY = {
   mode: "golden",
-  cur: JSON.parse(JSON.stringify(TODP.golden)),
+  cur: JSON.parse(JSON.stringify(TOD_PRESETS.golden)),
   clock: 0,
   want: null,
 };
@@ -89,7 +89,7 @@ function todMix(a, b, f) {
   return o;
 }
 function todCycle() {
-  const p = (TOD.clock / 720) % 1,
+  const p = (TIME_OF_DAY.clock / 720) % 1,
     K = [
       [0, "day"],
       [0.42, "day"],
@@ -102,12 +102,12 @@ function todCycle() {
   for (let i = 0; i < K.length - 1; i++) {
     if (p >= K[i][0] && p <= K[i + 1][0]) {
       const f = easeIO((p - K[i][0]) / Math.max(1e-6, K[i + 1][0] - K[i][0]));
-      return todMix(TODP[K[i][1]], TODP[K[i + 1][1]], f);
+      return todMix(TOD_PRESETS[K[i][1]], TOD_PRESETS[K[i + 1][1]], f);
     }
   }
-  return TODP.day;
+  return TOD_PRESETS.day;
 }
-const _c3 = new THREE.Color();
+const scratchColor = new THREE.Color();
 function todApply(P) {
   const U = skyMat.uniforms;
   U.uZen.value.set(...P.zen);
@@ -132,10 +132,10 @@ function todApply(P) {
   for (const m of CITYMATS) m.emissiveIntensity = P.win;
 }
 function todTarget() {
-  if (M)
-    return M.def.id === "final"
+  if (currentMission)
+    return currentMission.def.id === "final"
       ? "night"
-      : M.story != null || STORY.on
+      : currentMission.story != null || STORY.on
         ? "golden"
         : "day";
   if (phase === "play" || phase === "replay" || phase === "photo")
@@ -145,29 +145,29 @@ function todTarget() {
 }
 function todTick(dt) {
   const tg = todTarget();
-  if (tg === "cycle") TOD.clock += dt;
-  const want = tg === "cycle" ? todCycle() : TODP[tg];
-  const k = 1 - Math.exp(-dt * (tg === TOD.mode ? 3 : 1.2));
-  TOD.mode = tg;
-  TOD.cur = todMix(TOD.cur, want, k);
-  todApply(TOD.cur);
+  if (tg === "cycle") TIME_OF_DAY.clock += dt;
+  const want = tg === "cycle" ? todCycle() : TOD_PRESETS[tg];
+  const k = 1 - Math.exp(-dt * (tg === TIME_OF_DAY.mode ? 3 : 1.2));
+  TIME_OF_DAY.mode = tg;
+  TIME_OF_DAY.cur = todMix(TIME_OF_DAY.cur, want, k);
+  todApply(TIME_OF_DAY.cur);
 }
-TOD.clock = 720 * 0.18;
+TIME_OF_DAY.clock = 720 * 0.18;
 
 /* ---- per-frame hook ---- */
 function v21Tick(rdt, dt) {
   todTick(rdt);
   ghostTick(dt);
-  if (M && !M.done && M.def.id === "chase" && M.rs === "run") {
+  if (currentMission && !currentMission.done && currentMission.def.id === "chase" && currentMission.rs === "run") {
     const v = RIVALS[0];
-    M.dSum =
-      (M.dSum || 0) +
-      Math.hypot(S.x - v.g.position.x, S.z - v.g.position.z) * dt;
-    M.dN = (M.dN || 0) + dt;
+    currentMission.dSum =
+      (currentMission.dSum || 0) +
+      Math.hypot(carState.x - v.g.position.x, carState.z - v.g.position.z) * dt;
+    currentMission.dN = (currentMission.dN || 0) + dt;
   }
-  if (M && !M.done && M.def.id === "deck" && M.onDeck && M.deckLeft == null) {
+  if (currentMission && !currentMission.done && currentMission.def.id === "deck" && currentMission.onDeck && currentMission.deckLeft == null) {
     const Lc = LAUNCH;
-    M.deckLeft =
+    currentMission.deckLeft =
       Lc.st === "idle" ? Lc.cycle - Lc.t : Lc.st === "count" ? 10 - Lc.t : 0;
   }
 }
@@ -176,11 +176,11 @@ window.__EARN = EARN;
 window.__eNeed = eNeed;
 window.__MED = (id) => {
   const m = medalOf(id);
-  return m ? ` · <b style="color:${MCOL[m]}">${MNAME[m]}</b>` : "";
+  return m ? ` · <b style="color:${MEDAL_COLORS[m]}">${MNAME[m]}</b>` : "";
 };
 /* ================= V22: spread — free-roam events, signature spots, 15-chapter story, Orbit finale, Daily Run, challenges ================= */
 /* ---- free-roam events: speed traps, drift zones and ramp airtime, each with 1–3 stars and a personal best ---- */
-const EVT = {
+const FREE_ROAM_EVENTS = {
   traps: [],
   zones: [],
   best: (() => {
@@ -192,29 +192,29 @@ const EVT = {
   })(),
   zone: null,
 };
-const evSave = () => store.set("rfc_ev", JSON.stringify(EVT.best));
+const evSave = () => store.set("rfc_ev", JSON.stringify(FREE_ROAM_EVENTS.best));
 const STARS = (n) => "★".repeat(n) + "☆".repeat(3 - n);
 {
   const r = rng(2026),
     okB = (bi, bj) =>
       bi >= 0 &&
       bj >= 0 &&
-      bi < NBK &&
-      bj < NBK &&
+      bi < BLOCK_COUNT &&
+      bj < BLOCK_COUNT &&
       !["stunt", "launch", "park"].includes(district(bi, bj)),
     lines = [];
-  for (let k = 2; k < NBK - 1; k++) lines.push(-HALF + k * P);
+  for (let k = 2; k < BLOCK_COUNT - 1; k++) lines.push(-HALF + k * BLOCK_PITCH);
   let guard = 0;
-  while (EVT.traps.length < 12 && guard++ < 400) {
+  while (FREE_ROAM_EVENTS.traps.length < 12 && guard++ < 400) {
     const ax = r() < 0.5 ? "z" : "x",
       line = lines[(r() * lines.length) | 0],
-      j = 2 + ((r() * (NBK - 4)) | 0),
-      mid = -HALF + j * P + P / 2,
+      j = 2 + ((r() * (BLOCK_COUNT - 4)) | 0),
+      mid = -HALF + j * BLOCK_PITCH + BLOCK_PITCH / 2,
       bi = ax === "z" ? blockOf(line - 1) : blockOf(mid),
       bj = ax === "z" ? blockOf(mid) : blockOf(line - 1);
     if (
       !okB(bi, bj) ||
-      EVT.traps.some(
+      FREE_ROAM_EVENTS.traps.some(
         (t) =>
           Math.hypot(
             t.x - (ax === "z" ? line : mid),
@@ -223,25 +223,25 @@ const STARS = (n) => "★".repeat(n) + "☆".repeat(3 - n);
       )
     )
       continue;
-    EVT.traps.push({
-      id: "T" + EVT.traps.length,
+    FREE_ROAM_EVENTS.traps.push({
+      id: "T" + FREE_ROAM_EVENTS.traps.length,
       ax,
       x: ax === "z" ? line : mid,
       z: ax === "z" ? mid : line,
     });
   }
   guard = 0;
-  while (EVT.zones.length < 6 && guard++ < 400) {
+  while (FREE_ROAM_EVENTS.zones.length < 6 && guard++ < 400) {
     const x = lines[(r() * lines.length) | 0],
       z = lines[(r() * lines.length) | 0];
     if (
       !okB(blockOf(x + 1), blockOf(z + 1)) ||
       !okB(blockOf(x - 1), blockOf(z - 1)) ||
-      EVT.zones.some((q) => Math.hypot(q.x - x, q.z - z) < 400) ||
-      EVT.traps.some((t) => Math.hypot(t.x - x, t.z - z) < 120)
+      FREE_ROAM_EVENTS.zones.some((q) => Math.hypot(q.x - x, q.z - z) < 400) ||
+      FREE_ROAM_EVENTS.traps.some((t) => Math.hypot(t.x - x, t.z - z) < 120)
     )
       continue;
-    EVT.zones.push({ id: "D" + EVT.zones.length, x, z, r: 24 });
+    FREE_ROAM_EVENTS.zones.push({ id: "D" + FREE_ROAM_EVENTS.zones.length, x, z, r: 24 });
   }
   const post = new THREE.BoxGeometry(0.5, 6, 0.5),
     bar = new THREE.BoxGeometry(1, 0.5, 0.5),
@@ -250,10 +250,10 @@ const STARS = (n) => "★".repeat(n) + "☆".repeat(3 - n);
       emissive: 0x28e0ff,
       emissiveIntensity: 2.2,
     });
-  const IP = new THREE.InstancedMesh(post, mat, EVT.traps.length * 2),
-    IB = new THREE.InstancedMesh(bar, mat, EVT.traps.length),
+  const IP = new THREE.InstancedMesh(post, mat, FREE_ROAM_EVENTS.traps.length * 2),
+    IB = new THREE.InstancedMesh(bar, mat, FREE_ROAM_EVENTS.traps.length),
     M4 = new THREE.Matrix4();
-  EVT.traps.forEach((t, i) => {
+  FREE_ROAM_EVENTS.traps.forEach((t, i) => {
     const w = 17,
       dx = t.ax === "z" ? 1 : 0,
       dz = t.ax === "z" ? 0 : 1;
@@ -276,7 +276,7 @@ const STARS = (n) => "★".repeat(n) + "☆".repeat(3 - n);
     side: THREE.DoubleSide,
     depthWrite: false,
   });
-  EVT.zones.forEach((q) => {
+  FREE_ROAM_EVENTS.zones.forEach((q) => {
     const m = new THREE.Mesh(new THREE.RingGeometry(q.r - 0.7, q.r, 64), rm);
     m.rotation.x = -Math.PI / 2;
     m.position.set(q.x, 0.3, q.z);
@@ -285,10 +285,10 @@ const STARS = (n) => "★".repeat(n) + "☆".repeat(3 - n);
 }
 function evResult(kind, id, val, thr, fmt, pts) {
   const st = val >= thr[2] ? 3 : val >= thr[1] ? 2 : val >= thr[0] ? 1 : 0,
-    prev = EVT.best[id] || 0,
+    prev = FREE_ROAM_EVENTS.best[id] || 0,
     pb = val > prev;
   if (pb) {
-    EVT.best[id] = val;
+    FREE_ROAM_EVENTS.best[id] = val;
     evSave();
   }
   flash(
@@ -298,5 +298,5 @@ function evResult(kind, id, val, thr, fmt, pts) {
   );
   if (st) pop(kind, st * 250);
 }
-let evPZ = 0,
-  evPX = 0;
+let prevEventZ = 0,
+  prevEventX = 0;

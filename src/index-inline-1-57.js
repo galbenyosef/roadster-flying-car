@@ -1,65 +1,65 @@
-// index-inline-1 57 — the
+// index-inline-1 57 — currentmission
 // Lines 96382-96726 of readable/index-inline-1.pretty.js (statement-aligned).
 {
   const _mt = mapTarget23;
   mapTarget23 = function (d, pd) {
     const R = (n) => RAMPS.find((r) => r.name === n);
     if (d === "launch")
-      return M.rs === "stage" ? null : { x: DRAG.x, z: DRAG.z1 };
-    if (d === "rings") return RR[Math.min(M.ring, RR.length - 1)];
+      return currentMission.rs === "stage" ? null : { x: DRAG.x, z: DRAG.z1 };
+    if (d === "rings") return RING_RUN[Math.min(currentMission.ring, RING_RUN.length - 1)];
     if (d === "courier")
-      return M.step === 0
+      return currentMission.step === 0
         ? { x: DROPS[0][0], z: DROPS[0][1] }
-        : M.step === 1
+        : currentMission.step === 1
           ? ROOF2
-          : { x: VAN.position.x, z: VAN.position.z };
-    if (d === "ramps") return R(SY[Math.min(M.step, SY.length - 1)].n);
+          : { x: VAN_MODEL.position.x, z: VAN_MODEL.position.z };
+    if (d === "ramps") return R(STUNT_YARD[Math.min(currentMission.step, STUNT_YARD.length - 1)].n);
     if (d === "pad") {
-      if (!S.air && S.tank < 24 && M.got && M.got.size < CANS.length) {
+      if (!carState.air && carState.tank < 24 && currentMission.got && currentMission.got.size < CANS.length) {
         let b = null,
           bd = 1e9;
         CANS.forEach((c, i) => {
-          if (M.got.has(i)) return;
-          const q = Math.hypot(c.x - S.x, c.z - S.z);
+          if (currentMission.got.has(i)) return;
+          const q = Math.hypot(c.x - carState.x, c.z - carState.z);
           if (q < bd) {
             bd = q;
             b = c;
           }
         });
-        M.tgtCan = true;
+        currentMission.tgtCan = true;
         return b;
       }
-      M.tgtCan = false;
+      currentMission.tgtCan = false;
       return pd("B");
     }
-    if (d === "truck") return M.cleared ? TJZ : R("TRUCK JUMP");
-    if (d === "relay") return pd(M.seq[Math.min(M.step, 3)]);
-    if (d === "bigair") return M.best > 0 ? BAZ : R("MEGA RAMP");
+    if (d === "truck") return currentMission.cleared ? TRUCK_JUMP_ZONE : R("TRUCK JUMP");
+    if (d === "relay") return pd(currentMission.seq[Math.min(currentMission.step, 3)]);
+    if (d === "bigair") return currentMission.best > 0 ? BIG_AIR_ZONE : R("MEGA RAMP");
     if (d === "loop")
-      return M.loops === 1 && !M.back
+      return currentMission.loops === 1 && !currentMission.back
         ? { x: LOOPS[0].x, z: LOOPS[0].z + 60 }
         : { x: LOOPS[0].x, z: LOOPS[0].z };
-    if (d === "hotcell") return { x: HC.gx, z: HC.gz };
+    if (d === "hotcell") return { x: HOT_CELL.gx, z: HOT_CELL.gz };
     return _mt(d, pd);
   };
   const _nl = navLabel23;
   navLabel23 = function (d) {
     const o = {
       launch: "FINISH LINE",
-      rings: M.ring >= RR.length - 1 ? "GOLD RING" : `RING ${M.ring + 1}`,
+      rings: currentMission.ring >= RING_RUN.length - 1 ? "GOLD RING" : `RING ${currentMission.ring + 1}`,
       courier: ["DROP ZONE", "ROOFTOP PARTY", "MAE'S TRUCK"][
-        Math.min(2, M.step)
+        Math.min(2, currentMission.step)
       ],
-      ramps: (SY[M.step] || SY[3]).n,
-      pad: M.tgtCan ? "AIR CANISTER" : "PAD B",
-      truck: M.cleared ? "GOLD BOX" : "TRUCK JUMP",
-      relay: M.seq
-        ? M.seq[Math.min(M.step, 3)] === "BOX"
+      ramps: (STUNT_YARD[currentMission.step] || STUNT_YARD[3]).n,
+      pad: currentMission.tgtCan ? "AIR CANISTER" : "PAD B",
+      truck: currentMission.cleared ? "GOLD BOX" : "TRUCK JUMP",
+      relay: currentMission.seq
+        ? currentMission.seq[Math.min(currentMission.step, 3)] === "BOX"
           ? "THE BOX"
-          : "PAD " + M.seq[Math.min(M.step, 3)]
+          : "PAD " + currentMission.seq[Math.min(currentMission.step, 3)]
         : "",
-      bigair: M.best > 0 ? "GOLD ZONE" : "MEGA RAMP",
-      loop: M.loops === 1 && !M.back ? "LOOP ENTRY" : "THE LOOP",
+      bigair: currentMission.best > 0 ? "GOLD ZONE" : "MEGA RAMP",
+      loop: currentMission.loops === 1 && !currentMission.back ? "LOOP ENTRY" : "THE LOOP",
       hotcell: "MEGAFAB GATE",
     }[d];
     return o || _nl(d);
@@ -81,12 +81,12 @@
       };
     switch (id) {
       case "rings":
-        return RR.filter((r, i) => i % 2 === 0 || i === RR.length - 1).map(
+        return RING_RUN.filter((r, i) => i % 2 === 0 || i === RING_RUN.length - 1).map(
           (r, i, a) => ({
             x: r.x,
             y: r.y,
             z: r.z,
-            l: i === a.length - 1 ? "GOLD FINISH" : `RING ${RR.indexOf(r) + 1}`,
+            l: i === a.length - 1 ? "GOLD FINISH" : `RING ${RING_RUN.indexOf(r) + 1}`,
           }),
         );
       case "courier":
@@ -94,14 +94,14 @@
           { x: DROPS[0][0], y: 0, z: DROPS[0][1], l: "ORDER 1 · STREET DROP" },
           { x: ROOF2.x, y: ROOF2.h, z: ROOF2.z, l: "ORDER 2 · ROOFTOP PARTY" },
           {
-            x: VAN.position.x,
+            x: VAN_MODEL.position.x,
             y: 2,
-            z: VAN.position.z,
+            z: VAN_MODEL.position.z,
             l: "ORDER 3 · MAE'S TRUCK",
           },
         ];
       case "ramps":
-        return SY.map((q) => R(q.n));
+        return STUNT_YARD.map((q) => R(q.n));
       case "pad":
         return [
           { x: CANS[0].x, y: 1.5, z: CANS[0].z, l: "AIR CANISTERS" },
@@ -117,16 +117,16 @@
             z: -150,
             l: "THREE HAULERS",
           },
-          { x: TJZ.x, y: 0, z: TJZ.z, l: "GOLD BOX · STOP" },
+          { x: TRUCK_JUMP_ZONE.x, y: 0, z: TRUCK_JUMP_ZONE.z, l: "GOLD BOX · STOP" },
         ];
       case "hotcell":
         return [
           { x: 96, y: 2, z: 300, l: "THE JAM" },
           { x: 96, y: 0, z: 192, l: "TURN RIGHT" },
-          { x: HC.gx, y: 0, z: HC.gz, l: "MEGAFAB GATE" },
+          { x: HOT_CELL.gx, y: 0, z: HOT_CELL.gz, l: "MEGAFAB GATE" },
         ];
       case "bigair":
-        return [R("MEGA RAMP"), { x: BAZ.x, y: 0, z: BAZ.z, l: "GOLD ZONE" }];
+        return [R("MEGA RAMP"), { x: BIG_AIR_ZONE.x, y: 0, z: BIG_AIR_ZONE.z, l: "GOLD ZONE" }];
     }
     return _ft(id);
   };
@@ -149,15 +149,15 @@ RSHOT[0].f = [40, 26];
 }
 function revealLight() {
   car.updateMatrixWorld();
-  keyL.position.copy(car.localToWorld(V3x(-2.4, 2.9, 3.4)));
-  keyL.intensity = 14;
+  keyLight.position.copy(car.localToWorld(vec3(-2.4, 2.9, 3.4)));
+  keyLight.intensity = 14;
 }
 function v26Frame(rdt, dt) {
-  if (cin.on && cin.rev) {
+  if (cinematic.on && cinematic.rev) {
     bloom.strength = Math.min(bloom.strength, 0.18);
   }
-  if (!(M && !M.done && M.def.id === "launch")) {
-    const t = $("tree");
+  if (!(currentMission && !currentMission.done && currentMission.def.id === "launch")) {
+    const t = byId("tree");
     if (t && t.classList.contains("on")) t.classList.remove("on");
   }
 }
@@ -170,10 +170,10 @@ function v26Frame(rdt, dt) {
       r &&
       r[0] &&
       M.step === 1 &&
-      S.air &&
-      S.y - groundH(S.x, S.z, S.y).h > 12
+      carState.air &&
+      carState.y - groundH(carState.x, carState.z, carState.y).h > 12
     )
-      r[0] = `Hold ${KY("brake")} to drop faster · ` + r[0];
+      r[0] = `Hold ${KEY_LABELS("brake")} to drop faster · ` + r[0];
     return r;
   };
 }
@@ -208,7 +208,7 @@ function v26Frame(rdt, dt) {
 }
 // NEXT TEST follows the numbers on the list, not the order the tests were written in
 function nextMis(i) {
-  const L = MIS.map((m, k) => [m, k])
+  const L = MISSIONS.map((m, k) => [m, k])
     .filter(([m]) => !m.hidden && !isNaN(parseInt(m.n, 10)))
     .sort((a, b) => parseInt(a[0].n, 10) - parseInt(b[0].n, 10))
     .map((x) => x[1]);
@@ -220,29 +220,29 @@ function nextMis(i) {
 
 /* ---- nothing from a film may stay on screen after it ends or is skipped ---- */
 function clearFilmOverlays() {
-  const vs = $("vs");
+  const vs = byId("vs");
   if (vs) {
     vs.classList.remove("on");
     vs.hidden = true;
   }
-  const cd = $("card");
+  const cd = byId("card");
   if (cd) {
     cd.classList.remove("on");
     cd.hidden = true;
   }
-  const f = $("flash");
+  const f = byId("flash");
   if (f) f.classList.remove("fl");
-  $("cutUI").hidden = true;
+  byId("cutUI").hidden = true;
   document.body.classList.remove("intro");
 }
 {
   const _e = endCut;
   endCut = function () {
-    const was = !!cut;
+    const was = !!activeCut;
     _e();
     if (was) {
       clearFilmOverlays();
-      if (phase === "play" && M && !M.done) $("mission").hidden = false;
+      if (phase === "play" && currentMission && !currentMission.done) byId("mission").hidden = false;
     }
   };
 }
@@ -250,21 +250,21 @@ function clearFilmOverlays() {
   const _c = endCin;
   endCin = function () {
     _c();
-    $("callouts").innerHTML = "";
+    byId("callouts").innerHTML = "";
     document.body.classList.remove("cine", "show");
   };
 }
 // a safety net: if no film is running, film-only overlays are never visible
 function overlayGuard() {
-  if (cut || phase === "cut" || phase === "intro") return;
-  const vs = $("vs");
+  if (activeCut || phase === "cut" || phase === "intro") return;
+  const vs = byId("vs");
   if (vs && !vs.hidden) {
     vs.classList.remove("on");
     vs.hidden = true;
   }
   if (phase === "play" && document.body.classList.contains("intro"))
     document.body.classList.remove("intro");
-  if (!cin.on && document.body.classList.contains("cine"))
+  if (!cinematic.on && document.body.classList.contains("cine"))
     document.body.classList.remove("cine", "show");
 }
 
@@ -293,8 +293,8 @@ sessMini = function () {
 }
 
 /* ---- difficulty: Ring Run and Rogue Drone 20% easier, the Showdown 10% harder ---- */
-Object.assign(RRT, { start: 13.2, per: 18.3, base: 0.96, turn: 1.9 });
-Object.assign(DRNV, { base: 17.1, dart: 27, tired: 11.7 });
+Object.assign(RING_RUN_TUNE, { start: 13.2, per: 18.3, base: 0.96, turn: 1.9 });
+Object.assign(DRONE_SPEEDS, { base: 17.1, dart: 27, tired: 11.7 });
 // VEX's two Showdown laps: 139 s before, 126 s now (10% faster)
 {
   const F = TRACKS.final;
@@ -312,35 +312,35 @@ function clearedId(id) {
 {
   const _f = finish;
   finish = function (ok, reason, stats) {
-    if (ok && M && !M.done) store.set("rfc_clr_" + M.def.id, "1");
+    if (ok && currentMission && !currentMission.done) store.set("rfc_clr_" + currentMission.def.id, "1");
     return _f(ok, reason, stats);
   };
 }
 function misOrder() {
-  return MIS.map((m, k) => [m, k])
+  return MISSIONS.map((m, k) => [m, k])
     .filter(([m]) => !m.hidden && !isNaN(parseInt(m.n, 10)))
     .sort((a, b) => parseInt(a[0].n, 10) - parseInt(b[0].n, 10))
     .map((x) => x[1]);
 }
 function chapterOf(id) {
-  return CH.findIndex((c) => MIS[c.mis] && MIS[c.mis].id === id);
+  return CHAPTERS.findIndex((c) => MISSIONS[c.mis] && MISSIONS[c.mis].id === id);
 }
 // a test opens when the one before it is cleared, or when the story has reached its chapter
 function misOpen(i) {
   const L = misOrder(),
     p = L.indexOf(i);
   if (p <= 1) return true;
-  const id = MIS[i].id,
+  const id = MISSIONS[i].id,
     ch = chapterOf(id);
   if (clearedId(id)) return true;
   if (ch >= 0 && ch <= STORY.done) return true;
-  return clearedId(MIS[L[p - 1]].id);
+  return clearedId(MISSIONS[L[p - 1]].id);
 }
 function misNeed(i) {
   const L = misOrder(),
     p = L.indexOf(i),
-    prev = MIS[L[p - 1]],
-    ch = chapterOf(MIS[i].id);
+    prev = MISSIONS[L[p - 1]],
+    ch = chapterOf(MISSIONS[i].id);
   return ch >= 0
     ? `Clear TEST ${prev.n} or reach chapter ${ch + 1}`
     : `Clear TEST ${prev.n} · ${prev.t}`;

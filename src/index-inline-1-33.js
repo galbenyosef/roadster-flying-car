@@ -1,16 +1,16 @@
-// index-inline-1 33 — mis
+// index-inline-1 33 — missionindex
 // Lines 88888-89206 of readable/index-inline-1.pretty.js (statement-aligned).
 function chaseEnd() {
   if (!CHASE.on) return;
   CHASE.on = false;
-  Z70.visible = false;
+  CHASE_RING.visible = false;
   CHASE.group.visible = false;
   RIVALS.forEach((r) => (r.g.visible = false));
   rivalWheels();
 }
 function updateChase(dt) {
   const v = RIVALS[0],
-    run = M && M.def.id === "chase" && M.rs === "run" && !M.done;
+    run = currentMission && currentMission.def.id === "chase" && currentMission.rs === "run" && !currentMission.done;
   if (run) {
     const sm = ((v.prog % CHASE.len) + CHASE.len) % CHASE.len;
     let dc = 1e9;
@@ -19,20 +19,20 @@ function updateChase(dt) {
       if (d < 0) d += CHASE.len;
       dc = Math.min(dc, d);
     }
-    const dd = Math.hypot(S.x - v.g.position.x, S.z - v.g.position.z),
+    const dd = Math.hypot(carState.x - v.g.position.x, carState.z - v.g.position.z),
       rb = dd > 80 ? -5 : dd < 25 ? 6 : 0;
     v.bcd = Math.max(0, (v.bcd || 0) - dt);
     v.bst = Math.max(0, (v.bst || 0) - dt);
-    if (dd < VX.trig && v.bcd <= 0) {
+    if (dd < VEX_TUNE.trig && v.bcd <= 0) {
       v.bst = 3;
-      v.bcd = VX.cd;
+      v.bcd = VEX_TUNE.cd;
       radio("VEX", "boost", true);
     }
     const vt = Math.min(
-      v.bst > 0 ? VX.boost : VX.cruise + rb * VX.rb,
-      VX.c0 + dc * VX.c1,
+      v.bst > 0 ? VEX_TUNE.boost : VEX_TUNE.cruise + rb * VEX_TUNE.rb,
+      VEX_TUNE.c0 + dc * VEX_TUNE.c1,
     );
-    v.sp += clamp(vt - v.sp, -VX.dec * dt, (v.bst > 0 ? VX.ab : VX.a) * dt);
+    v.sp += clamp(vt - v.sp, -VEX_TUNE.dec * dt, (v.bst > 0 ? VEX_TUNE.ab : VEX_TUNE.a) * dt);
     v.prog += v.sp * dt;
   }
   const p = pathAtP(CHASE, v.prog),
@@ -40,7 +40,7 @@ function updateChase(dt) {
   v.g.position.set(p.x, 0, p.z);
   v.g.rotation.y = Math.atan2(-(q.x - p.x), -(q.z - p.z));
   v.spin -= (v.sp / 0.36) * dt;
-  Z70.position.set(p.x, 0.32, p.z);
+  CHASE_RING.position.set(p.x, 0.32, p.z);
 }
 function updateRivals(dt) {
   if (CHASE.on) {
@@ -49,8 +49,8 @@ function updateRivals(dt) {
     return;
   }
   if (!RACE.on) return;
-  const run = M && M.def.race && M.rs === "run" && !M.done;
-  const pp = M ? M.pprog || 0 : 0;
+  const run = currentMission && currentMission.def.race && currentMission.rs === "run" && !currentMission.done;
+  const pp = currentMission ? currentMission.pprog || 0 : 0;
   for (const [ri, r] of RIVALS.entries()) {
     if (run) {
       const sm = (((r.prog + RACE.off) % RACE.len) + RACE.len) % RACE.len;
@@ -76,11 +76,11 @@ function updateRivals(dt) {
 }
 
 /* ---------------- story: chapters, markers between them ---------------- */
-const MI = (id) => MIS.findIndex((m) => m.id === id);
-const CH = [
+const missionIndex = (id) => MISSIONS.findIndex((m) => m.id === id);
+const CHAPTERS = [
   {
     t: "OVER THE JAM",
-    mis: MI("jam"),
+    mis: missionIndex("jam"),
     who: "MAE",
     intro: "Plate. Then hold.",
     outro:
@@ -89,7 +89,7 @@ const CH = [
   },
   {
     t: "LIFT OFF",
-    mis: MI("hover"),
+    mis: missionIndex("hover"),
     who: "MAE",
     intro: "Plaza, the painted box. Hover, hold it, then set her down soft.",
     outro: "Soft as a pancake. Launch Control wants a word with you.",
@@ -97,7 +97,7 @@ const CH = [
   },
   {
     t: "ROOFTOPS",
-    mis: MI("pad"),
+    mis: missionIndex("pad"),
     who: "CONTROL",
     intro:
       "Zero, Launch Control. Take her from the Pad A roof to Pad B. Clock's running.",
@@ -106,7 +106,7 @@ const CH = [
   },
   {
     t: "NEON RINGS",
-    mis: MI("rings"),
+    mis: missionIndex("rings"),
     who: "CONTROL",
     intro: "Six rings down the boulevard, then Pad C. Thread them.",
     outro: "Nice lines. Somebody noticed you. Heads up.",
@@ -114,7 +114,7 @@ const CH = [
   },
   {
     t: "SIDEWAYS",
-    mis: MI("drift"),
+    mis: missionIndex("drift"),
     who: "VEX · CHROME KINGS",
     intro: "So you're the new toy. Can you slide, or just float? 4,000 points.",
     outro: "Okay. Okay. The Chrome Kings want a real race.",
@@ -122,7 +122,7 @@ const CH = [
   },
   {
     t: "CHROME KINGS",
-    mis: MI("race"),
+    mis: missionIndex("race"),
     who: "VEX · CHROME KINGS",
     intro:
       "Two laps: boulevard, park, the fab, home. Watch the arrows. Beat me and we'll talk.",
@@ -131,7 +131,7 @@ const CH = [
   },
   {
     t: "SPECIAL DELIVERY",
-    mis: MI("courier"),
+    mis: missionIndex("courier"),
     who: "MAE",
     intro:
       "Three orders, still hot. Drop zones are on your map. Stop inside each one. Don't make me reheat anything.",
@@ -141,7 +141,7 @@ const CH = [
   },
   {
     t: "STUNT YARD",
-    mis: MI("ramps"),
+    mis: missionIndex("ramps"),
     who: "VEX · CHROME KINGS",
     intro:
       "Racing's one thing. Can you fly without the jets? Four ramps. Land every one.",
@@ -150,7 +150,7 @@ const CH = [
   },
   {
     t: "TRUCK JUMP",
-    mis: MI("truck"),
+    mis: missionIndex("truck"),
     who: "VEX · CHROME KINGS",
     intro:
       "Three haulers parked across the street. Hit the ramp hard and fly over them. Don't kiss the trucks.",
@@ -160,7 +160,7 @@ const CH = [
   },
   {
     t: "TAIL VEX",
-    mis: MI("chase"),
+    mis: missionIndex("chase"),
     who: "CONTROL",
     intro:
       "Zero, VEX lifted our telemetry pod. Stay on his tail, inside 70 m. Step outside the ring and he's gone.",
@@ -169,7 +169,7 @@ const CH = [
   },
   {
     t: "ROOFTOP RELAY",
-    mis: MI("relay"),
+    mis: missionIndex("relay"),
     who: "CONTROL",
     intro: "Three rooftops. A, then C, then B. Each pad tops up your air.",
     outro: "Perfect relay. We have a VIP who wants the sky tour.",
@@ -177,7 +177,7 @@ const CH = [
   },
   {
     t: "SKY TOUR",
-    mis: MI("skytour"),
+    mis: missionIndex("skytour"),
     who: "CONTROL",
     intro:
       "VIP on board. Four sky rings: the wheel, the diner, Megafab, the tower. Each ring tops up your air.",
@@ -187,7 +187,7 @@ const CH = [
   },
   {
     t: "BIG AIR",
-    mis: MI("bigair"),
+    mis: missionIndex("bigair"),
     who: "VEX · CHROME KINGS",
     intro: "Mega Ramp. Two seconds in the air or it doesn't count.",
     outro:
@@ -196,7 +196,7 @@ const CH = [
   },
   {
     t: "STUNT SHOW",
-    mis: MI("stuntshow"),
+    mis: missionIndex("stuntshow"),
     who: "VEX · CHROME KINGS",
     intro:
       "Everything counts: air, drifts, near misses. Thirty-five hundred points, one minute.",
@@ -205,7 +205,7 @@ const CH = [
   },
   {
     t: "FRONT ROW SEAT",
-    mis: MI("deck"),
+    mis: missionIndex("deck"),
     who: "CONTROL",
     intro: "Tower deck, 100 metres up, before T-0. Best seat in the house.",
     outro: "Liftoff! Now get down there. It's coming back.",
@@ -213,7 +213,7 @@ const CH = [
   },
   {
     t: "BOOSTER CATCH",
-    mis: MI("catch"),
+    mis: missionIndex("catch"),
     who: "CONTROL",
     intro:
       "The booster is coming home. Viewing field, inside the gold ring, before touchdown. Do not stand on the pad.",
@@ -223,7 +223,7 @@ const CH = [
   },
   {
     t: "LOOP THE LOOP",
-    mis: MI("loop"),
+    mis: missionIndex("loop"),
     who: "VEX · CHROME KINGS",
     intro:
       "We built a loop in the arena. Nobody's gone all the way round yet. Fifty-five miles an hour, minimum.",
@@ -232,15 +232,15 @@ const CH = [
   },
   {
     t: "SHOWDOWN",
-    mis: MI("final"),
+    mis: missionIndex("final"),
     who: "VEX · CHROME KINGS",
     intro: "Last race. The whole Strip, two laps. Winner owns the night.",
     outro: "...You won. Fair and square. The Strip is yours, Zero.",
     at: [3.5, 300],
   },
 ];
-CH[6].at = [DINER.x0 - 4.8, (DINER.z0 + DINER.z1) / 2 + 24];
-const STORY = { done: jget("rfc_story", 0), on: false, cur: -1 };
+CHAPTERS[6].at = [DINER.x0 - 4.8, (DINER.z0 + DINER.z1) / 2 + 24];
+const STORY = { done: jsonGet("rfc_story", 0), on: false, cur: -1 };
 // v14 inserted chapters 7-9 and 11: keep the first six, replay the rest in the new order
 {
   const v = store.get("rfc_story_v");
@@ -255,7 +255,7 @@ const STORY = { done: jget("rfc_story", 0), on: false, cur: -1 };
     store.set("rfc_story_v", "16");
   }
 }
-const MK = (() => {
+const STORY_MARKER = (() => {
   const g = new THREE.Group();
   const m = new THREE.MeshBasicMaterial({
     color: new THREE.Color(3, 2, 0.4),
@@ -312,7 +312,7 @@ const DROPS = [
     [-576, -288],
     [96, -480],
   ],
-  VP = [600, 440];
+  VIEWPOINT = [600, 440];
 const STOUR = [
   [-48, 104, 144, "HALO WHEEL"],
   [200, 78, 300, "SKYLINE DINER"],

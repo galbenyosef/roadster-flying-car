@@ -2,10 +2,10 @@
 // Lines 79909-80193 of readable/index-inline-1.pretty.js (statement-aligned).
 {
   const pts = [];
-  for (let a = 1; a < NBK; a++)
-    for (let b = 1; b < NBK; b++) {
+  for (let a = 1; a < BLOCK_COUNT; a++)
+    for (let b = 1; b < BLOCK_COUNT; b++) {
       if (a >= 4 && a <= 6 && b >= 10 && b <= 12) continue;
-      pts.push([-HALF + a * P, -HALF + b * P]);
+      pts.push([-HALF + a * BLOCK_PITCH, -HALF + b * BLOCK_PITCH]);
     }
   const n = pts.length;
   const pole = new THREE.InstancedMesh(
@@ -24,12 +24,12 @@
     );
   const lns = new THREE.InstancedMesh(
       new THREE.SphereGeometry(0.17, 6, 4),
-      SIG.ns,
+      SIGNALS.ns,
       n,
     ),
     lew = new THREE.InstancedMesh(
       new THREE.SphereGeometry(0.17, 6, 4),
-      SIG.ew,
+      SIGNALS.ew,
       n,
     );
   const M = new THREE.Matrix4();
@@ -49,14 +49,14 @@
   scene.add(pole, box, lns, lew);
 }
 function updateSignals(dt) {
-  SIG.t = (SIG.t + dt) % 24;
-  const t = SIG.t;
-  SIG.state.ns = t < 10 ? "g" : t < 12.5 ? "a" : "r";
-  SIG.state.ew = t >= 12 && t < 22 ? "g" : t >= 22 && t < 24.5 ? "a" : "r";
-  if (t < 0.5) SIG.state.ew = "r";
+  SIGNALS.t = (SIGNALS.t + dt) % 24;
+  const t = SIGNALS.t;
+  SIGNALS.state.ns = t < 10 ? "g" : t < 12.5 ? "a" : "r";
+  SIGNALS.state.ew = t >= 12 && t < 22 ? "g" : t >= 22 && t < 24.5 ? "a" : "r";
+  if (t < 0.5) SIGNALS.state.ew = "r";
   const col = { g: [0.2, 3, 1.2], a: [3, 1.8, 0.1], r: [3, 0.15, 0.12] };
-  SIG.ns.color.setRGB(...col[SIG.state.ns]);
-  SIG.ew.color.setRGB(...col[SIG.state.ew]);
+  SIGNALS.ns.color.setRGB(...col[SIGNALS.state.ns]);
+  SIGNALS.ew.color.setRGB(...col[SIGNALS.state.ew]);
 }
 // neon signs on walls facing the street (made-up names), merged per word
 {
@@ -77,7 +77,7 @@ function updateSignals(dt) {
   const r = rng(55);
   const G = WORDS.map(() => ({ p: [], u: [], i: [] }));
   for (let i = 0; i < 330; i++) {
-    const B = BLD[(r() * BLD.length) | 0];
+    const B = buildings[(r() * buildings.length) | 0];
     if (B.h < 10 || B.style === 3 || B.style < 0 || B.style === 5) continue;
     const side = (r() * 4) | 0,
       y = 5 + r() * Math.min(18, B.h - 7);
@@ -239,8 +239,8 @@ function updateBoards(dt, t) {
   boardT = 0;
   if (
     Math.hypot(
-      S.x - (DINER.x0 + DINER.x1) / 2,
-      S.z - (DINER.z0 + DINER.z1) / 2,
+      carState.x - (DINER.x0 + DINER.x1) / 2,
+      carState.z - (DINER.z0 + DINER.z1) / 2,
     ) < 520
   )
     drawDinerScreen(t);

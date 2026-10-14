@@ -34,17 +34,17 @@ function clipStart(vert) {
   };
   CLIP.rec.onstop = () => {
     CLIP.blob = new Blob(CLIP.chunks, { type: mime.split(";")[0] });
-    const v = $("clipVid");
+    const v = byId("clipVid");
     v.src = URL.createObjectURL(CLIP.blob);
-    $("clipBox").hidden = false;
+    byId("clipBox").hidden = false;
     setT(
       "clipMsg",
       `${CLIP.vert ? "9:16 for Reels, Shorts and X" : "16:9"} · ${(CLIP.blob.size / 1048576).toFixed(1)} MB`,
     );
   };
-  RPL.p = 0;
-  RPL.lastI = -1;
-  RPL.shot = null;
+  REPLAY.p = 0;
+  REPLAY.lastI = -1;
+  REPLAY.shot = null;
   CLIP.on = true;
   document.body.classList.add("rec");
   CLIP.rec.start(250);
@@ -87,23 +87,23 @@ function clipStop() {
     CLIP.rec.stop();
   } catch (e) {}
 }
-$("rplClipH").addEventListener("click", (e) => {
+byId("rplClipH").addEventListener("click", (e) => {
   e.stopPropagation();
   clipStart(false);
 });
-$("rplClipV").addEventListener("click", (e) => {
+byId("rplClipV").addEventListener("click", (e) => {
   e.stopPropagation();
   clipStart(true);
 });
-$("clipX").addEventListener("click", () => {
-  $("clipBox").hidden = true;
+byId("clipX").addEventListener("click", () => {
+  byId("clipBox").hidden = true;
 });
-$("clipDl").addEventListener("click", async () => {
+byId("clipDl").addEventListener("click", async () => {
   if (!CLIP.blob) return;
   const name = `roadster-clip-${Date.now()}.${CLIP.ext}`;
-  if (dlNS) {
+  if (downloadLink) {
     try {
-      await dlNS.save({ filename: name, data: CLIP.blob });
+      await downloadLink.save({ filename: name, data: CLIP.blob });
       setT("clipDl", "SAVED ✓");
       setTimeout(() => setT("clipDl", "DOWNLOAD CLIP"), 1800);
     } catch (e) {}
@@ -126,10 +126,10 @@ function v20Tick(rdt, dt) {
     watchT -= rdt;
     if (watchT <= 0 || phase !== "play") {
       watchK = null;
-      $("watchChip").classList.remove("on");
+      byId("watchChip").classList.remove("on");
     }
   }
-  if (MS.t > 0) MS.t -= rdt;
+  if (MINI_SLOW.t > 0) MINI_SLOW.t -= rdt;
 }
 
 /* ================= V21: love — medals, ghosts, earned skins, golden hour and night ================= */
@@ -156,26 +156,26 @@ const MEDAL = {
   catch: { k: "off", t: 2, s: 4, u: " m from centre" },
 };
 const MNAME = ["", "BRONZE", "SILVER", "GOLD"],
-  MCOL = ["", "#cd8a52", "#d9dde3", "#ffc84a"];
+  MEDAL_COLORS = ["", "#cd8a52", "#d9dde3", "#ffc84a"];
 const medalOf = (id) => +(store.get("rfc_med_" + id) || 0);
 function medalCalc(ok, stats) {
-  if (!M) return;
-  const d = M.def,
+  if (!currentMission) return;
+  const d = currentMission.def,
     R = MEDAL[d.id];
-  M.medal = 0;
-  M.medalTxt = "";
+  currentMission.medal = 0;
+  currentMission.medalTxt = "";
   if (!ok || !R) return;
   let v = stats.time;
-  if (R.k === "air") v = M.best;
-  else if (R.k === "dist") v = M.dN ? M.dSum / M.dN : 99;
-  else if (R.k === "left") v = M.deckLeft || 0;
-  else if (R.k === "off") v = Math.hypot(S.x - VP[0], S.z - VP[1]);
+  if (R.k === "air") v = currentMission.best;
+  else if (R.k === "dist") v = currentMission.dN ? currentMission.dSum / currentMission.dN : 99;
+  else if (R.k === "left") v = currentMission.deckLeft || 0;
+  else if (R.k === "off") v = Math.hypot(carState.x - VIEWPOINT[0], carState.z - VIEWPOINT[1]);
   else if (R.k === "pts") v = stats.pts;
   if (v == null || !isFinite(v)) return;
   const better = (a, b) => (R.hi ? a >= b : a <= b);
   const m = better(v, R.t) ? 3 : better(v, R.s) ? 2 : 1;
-  M.medal = m;
-  M.medalV = v;
+  currentMission.medal = m;
+  currentMission.medalV = v;
   const prev = medalOf(d.id);
   if (m > prev) store.set("rfc_med_" + d.id, String(m));
   const fmt = (x) =>
@@ -185,7 +185,7 @@ function medalCalc(ok, stats) {
         ? `${x.toFixed(R.k === "air" ? 2 : 1)}${R.u}`
         : `${x.toFixed(2)} s`;
   const nxt = m < 3 ? ` · ${MNAME[m + 1]} is ${fmt(m === 1 ? R.s : R.t)}` : "";
-  M.medalTxt = `<b style="color:${MCOL[m]};letter-spacing:.14em">${MNAME[m]}</b> · you ${fmt(v)}${nxt}`;
+  currentMission.medalTxt = `<b style="color:${MEDAL_COLORS[m]};letter-spacing:.14em">${MNAME[m]}</b> · you ${fmt(v)}${nxt}`;
   if (m === 3) audio.seq([[200, "chime"]]);
   checkUnlocks();
 }
@@ -216,7 +216,7 @@ const GHOST = (() => {
       opacity: 0.26,
       depthWrite: false,
     });
-  for (const p of LITE.body) {
+  for (const p of RIVAL_MESH.body) {
     const o = new THREE.Mesh(p.geo, m);
     g.add(o);
   }
@@ -258,9 +258,9 @@ function ghostStart(id) {
   } catch (e) {}
 }
 function ghostTick(dt) {
-  if (!M || M.done || phase !== "play" || (M.def.race && M.rs !== "run"))
+  if (!currentMission || currentMission.done || phase !== "play" || (currentMission.def.race && currentMission.rs !== "run"))
     return;
-  const el = clock - M.t0;
+  const el = clock - currentMission.t0;
   if (GHOST.rec) {
     GHOST.acc += dt;
     if (GHOST.acc >= 0.1) {
@@ -268,10 +268,10 @@ function ghostTick(dt) {
       if (GHOST.rec.length < 9000)
         GHOST.rec.push(
           Math.round(el * 100) / 100,
-          Math.round(S.x * 10) / 10,
-          Math.round(S.y * 10) / 10,
-          Math.round(S.z * 10) / 10,
-          Math.round(S.yaw * 100) / 100,
+          Math.round(carState.x * 10) / 10,
+          Math.round(carState.y * 10) / 10,
+          Math.round(carState.z * 10) / 10,
+          Math.round(carState.yaw * 100) / 100,
         );
     }
   }
@@ -298,16 +298,16 @@ function ghostTick(dt) {
     lerp(p[a + 2], p[b + 2], f),
     lerp(p[a + 3], p[b + 3], f),
   );
-  GHOST.g.rotation.y = p[a + 4] + angD(p[b + 4], p[a + 4]) * f;
-  const near = Math.hypot(GHOST.g.position.x - S.x, GHOST.g.position.z - S.z);
+  GHOST.g.rotation.y = p[a + 4] + angleDelta(p[b + 4], p[a + 4]) * f;
+  const near = Math.hypot(GHOST.g.position.x - carState.x, GHOST.g.position.z - carState.z);
   GHOST.g.children.forEach((o) => {
     if (o.material.opacity != null && !o.isSprite)
       o.material.opacity = near < 5 ? 0.12 : 0.26;
   });
 }
 function ghostSave(ok, stats) {
-  if (!M || !GHOST.rec || !ok || GHOST.rec.length < 200) return;
-  const id = M.def.id,
+  if (!currentMission || !GHOST.rec || !ok || GHOST.rec.length < 200) return;
+  const id = currentMission.def.id,
     tm = stats.time;
   if (tm == null) return;
   let best = null;
@@ -344,8 +344,8 @@ const EARN = {
   },
   diamond: {
     txt: "Win Gold in every test",
-    have: () => MIS.filter((m) => !m.hidden && medalOf(m.id) >= 3).length,
-    need: () => MIS.filter((m) => !m.hidden).length,
+    have: () => MISSIONS.filter((m) => !m.hidden && medalOf(m.id) >= 3).length,
+    need: () => MISSIONS.filter((m) => !m.hidden).length,
   },
 };
 const eNeed = (e) => (typeof e.need === "function" ? e.need() : e.need);

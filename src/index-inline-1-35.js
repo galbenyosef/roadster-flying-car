@@ -20,7 +20,7 @@ const SHOWDOWN = {
       () => {
         vsShow(true);
         audio.hit();
-        const f = $("flash");
+        const f = byId("flash");
         f.classList.remove("fl", "fb");
         void f.offsetWidth;
         f.classList.add("fl");
@@ -92,7 +92,7 @@ function finishCam() {
   const G = RACE.gates[RACE.gates.length - 1],
     p = pathAt(G.s),
     rt = [-p.tz, p.tx],
-    e = easeIO(clamp(cin.t / cin.dur)),
+    e = easeIO(clamp(cinematic.t / cinematic.dur)),
     V = (a, b, c) => new THREE.Vector3(a, b, c);
   return {
     p: V(
@@ -107,7 +107,7 @@ function finishCam() {
 
 /* ================= V18: camera spring, speed lines, combos, air spins, replay, photo mode, radio ================= */
 // smooth noise for camera shake (no per-frame random jitter)
-function snz(t, a, b, c) {
+function smoothNoise(t, a, b, c) {
   return (
     Math.sin(t * a) * 0.6 +
     Math.sin(t * b + 1.7) * 0.3 +
@@ -124,60 +124,60 @@ const camOff = new THREE.Vector3(),
   camOffV = new THREE.Vector3();
 
 /* ---- speed lines + vignette: only when it is genuinely fast ---- */
-const SFX = { cv: $("speedfx"), k: 0, L: [] };
-SFX.x = SFX.cv.getContext("2d");
+const SPEED_FX = { cv: byId("speedfx"), k: 0, L: [] };
+SPEED_FX.x = SPEED_FX.cv.getContext("2d");
 function sfxSize() {
   const s = isTouch ? 0.45 : 0.6;
-  SFX.cv.width = Math.max(2, Math.round(innerWidth * s));
-  SFX.cv.height = Math.max(2, Math.round(innerHeight * s));
+  SPEED_FX.cv.width = Math.max(2, Math.round(innerWidth * s));
+  SPEED_FX.cv.height = Math.max(2, Math.round(innerHeight * s));
 }
 sfxSize();
 addEventListener("resize", sfxSize);
 for (let i = 0; i < 46; i++)
-  SFX.L.push({
+  SPEED_FX.L.push({
     a: Math.random() * 6.283,
     r: 0.25 + Math.random() * 0.75,
     s: 0.6 + Math.random() * 0.8,
     w: Math.random(),
   });
 function speedFx(dt) {
-  const hs = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v);
+  const hs = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v);
   const want =
-    phase === "play" && !cin.on && camMode !== 2
+    phase === "play" && !cinematic.on && camMode !== 2
       ? clamp((hs - 38) / 36) * 0.75 +
-        (S.thrust === 2 ? 0.4 : 0) +
+        (carState.thrust === 2 ? 0.4 : 0) +
         boostKick * 0.35
       : 0;
-  SFX.k += (Math.min(1, want) - SFX.k) * Math.min(1, dt * 5);
-  $("vig").style.opacity = (SFX.k * 0.85).toFixed(3);
-  const x = SFX.x,
-    W = SFX.cv.width,
-    H = SFX.cv.height;
-  if (SFX.k < 0.02) {
-    if (SFX.on) {
+  SPEED_FX.k += (Math.min(1, want) - SPEED_FX.k) * Math.min(1, dt * 5);
+  byId("vig").style.opacity = (SPEED_FX.k * 0.85).toFixed(3);
+  const x = SPEED_FX.x,
+    W = SPEED_FX.cv.width,
+    H = SPEED_FX.cv.height;
+  if (SPEED_FX.k < 0.02) {
+    if (SPEED_FX.on) {
       x.clearRect(0, 0, W, H);
-      SFX.on = false;
+      SPEED_FX.on = false;
     }
     return;
   }
-  SFX.on = true;
+  SPEED_FX.on = true;
   x.clearRect(0, 0, W, H);
   const cx = W / 2,
     cy = H * 0.47,
     R = Math.hypot(W, H) * 0.55;
   x.lineCap = "round";
-  for (const l of SFX.L) {
-    l.r += dt * (1.5 + l.s * 2.2) * (0.6 + SFX.k);
+  for (const l of SPEED_FX.L) {
+    l.r += dt * (1.5 + l.s * 2.2) * (0.6 + SPEED_FX.k);
     if (l.r > 1) {
       l.r = 0.25 + Math.random() * 0.1;
       l.a = Math.random() * 6.283;
       l.w = Math.random();
     }
     const r0 = R * (0.34 + l.r * 0.72),
-      r1 = r0 + R * (0.05 + 0.17 * SFX.k) * l.s,
+      r1 = r0 + R * (0.05 + 0.17 * SPEED_FX.k) * l.s,
       ca = Math.cos(l.a),
       sa = Math.sin(l.a) * 0.6;
-    x.strokeStyle = `rgba(235,245,255,${((0.08 + 0.24 * l.w) * SFX.k * Math.min(1, (l.r - 0.25) * 4)).toFixed(3)})`;
+    x.strokeStyle = `rgba(235,245,255,${((0.08 + 0.24 * l.w) * SPEED_FX.k * Math.min(1, (l.r - 0.25) * 4)).toFixed(3)})`;
     x.lineWidth = (1 + l.w * 1.4) * (W / 900);
     x.beginPath();
     x.moveTo(cx + ca * r0, cy + sa * r0);
@@ -204,9 +204,9 @@ function comboAdd(pts) {
   COMBO.t = COMBO_WIN;
   if (COMBO.n >= 2) {
     audio.shot(420 + COMBO.n * 70, 440 + COMBO.n * 75, 0.14, 0.07, "triangle");
-    $("combo").classList.remove("bump");
-    void $("combo").offsetWidth;
-    $("combo").classList.add("bump");
+    byId("combo").classList.remove("bump");
+    void byId("combo").offsetWidth;
+    byId("combo").classList.add("bump");
   }
   return p;
 }
@@ -236,12 +236,12 @@ function comboEnd(broken) {
   COMBO.bank = 0;
 }
 function comboTick(dt) {
-  const el = $("combo");
+  const el = byId("combo");
   if (phase !== "play") {
     return;
   }
   if (COMBO.n > 0) {
-    if (SCORE.drift > 0 || (S.air && (S.ball || !S.armed)) || S.loop)
+    if (SCORE.drift > 0 || (carState.air && (carState.ball || !carState.armed)) || carState.loop)
       COMBO.t = Math.max(COMBO.t, 0.7);
     COMBO.t -= dt;
     if (COMBO.t <= 0) comboEnd(false);
@@ -252,12 +252,12 @@ function comboTick(dt) {
       "cbT",
       `${COMBO.n} TRICKS · ${COMBO.bank.toLocaleString("en-US")} PTS`,
     );
-    $("cbBar").style.transform =
+    byId("cbBar").style.transform =
       `scaleX(${clamp(COMBO.t / COMBO_WIN).toFixed(3)})`;
     el.classList.add("on");
   } else if (COMBO.show > 0) {
     COMBO.show -= dt;
-    $("cbBar").style.transform = "scaleX(0)";
+    byId("cbBar").style.transform = "scaleX(0)";
     el.classList.add("on");
   } else el.classList.remove("on");
 }
@@ -265,27 +265,27 @@ function comboTick(dt) {
 /* ---- air spins: steer while ballistic to rotate, land it straight (or backwards for 180 / 540) ---- */
 const SPIN_PTS = [0, 400, 900, 1500, 2400, 3500];
 function landSpin(fw) {
-  const hv = Math.hypot(S.vx, S.vz),
-    vh = Math.atan2(-S.vx, -S.vz),
-    slip = hv > 2 ? angD(S.yaw, vh) : 0,
+  const hv = Math.hypot(carState.vx, carState.vz),
+    vh = Math.atan2(-carState.vx, -carState.vz),
+    slip = hv > 2 ? angleDelta(carState.yaw, vh) : 0,
     a = Math.abs(slip),
-    spin = Math.abs(S.spinA || 0),
+    spin = Math.abs(carState.spinA || 0),
     n = Math.round(spin / Math.PI);
-  S.spinA = 0;
+  carState.spinA = 0;
   if (a < 1.25) {
-    S.v = hv * Math.max(0.5, Math.cos(slip));
-    S.vyaw = hv > 2 ? vh : S.yaw;
-    if (a > 0.2) S.dr = Math.min(1, a * 1.3);
+    carState.v = hv * Math.max(0.5, Math.cos(slip));
+    carState.vyaw = hv > 2 ? vh : carState.yaw;
+    if (a > 0.2) carState.dr = Math.min(1, a * 1.3);
   } else if (a < 2.15) {
-    S.v = hv * 0.38;
-    S.vyaw = vh;
-    S.dr = 1;
+    carState.v = hv * 0.38;
+    carState.vyaw = vh;
+    carState.dr = 1;
   } else {
-    S.v = -Math.min(9, hv * 0.3);
-    S.vyaw = S.yaw;
-    S.dr = 0;
+    carState.v = -Math.min(9, hv * 0.3);
+    carState.vyaw = carState.yaw;
+    carState.dr = 0;
   }
-  if (n >= 1 && !S.hovUsed && spin > Math.PI * 0.8) {
+  if (n >= 1 && !carState.hovUsed && spin > Math.PI * 0.8) {
     const err = n % 2 ? Math.PI - a : a,
       k = Math.min(n, 5),
       deg = n * 180;
@@ -311,9 +311,9 @@ const STUNTY = new Set([
 ]);
 function wipeout(v) {
   comboEnd(true);
-  if (!(M && !M.done && STUNTY.has(M.def.id))) return false;
-  S.crash = Math.min(S.crash, 0.9);
-  M.wipes = (M.wipes || 0) + 1;
+  if (!(currentMission && !currentMission.done && STUNTY.has(currentMission.def.id))) return false;
+  carState.crash = Math.min(carState.crash, 0.9);
+  currentMission.wipes = (currentMission.wipes || 0) + 1;
   flash(
     "WIPEOUT",
     `${v.toFixed(1)} m/s · back to the start · clock paused`,

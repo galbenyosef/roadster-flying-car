@@ -56,15 +56,15 @@ function drnAt(s) {
   return a.clone().lerp(b, clamp((s - P.cum[lo]) / Math.max(0.01, seg)));
 }
 function drnSpin(t, red) {
-  DRN.rot.forEach((r, i) => {
+  DRONE.rot.forEach((r, i) => {
     r.rotation.y = t * 40 * (i % 2 ? 1 : -1);
   });
   const blink = Math.floor(t * 4) % 2 === 0;
-  DRN.ledR.emissiveIntensity = red ? (blink ? 9 : 1) : 4;
-  DRN.ledB.emissiveIntensity = red ? 0.5 : blink ? 7 : 2;
+  DRONE.ledR.emissiveIntensity = red ? (blink ? 9 : 1) : 4;
+  DRONE.ledB.emissiveIntensity = red ? 0.5 : blink ? 7 : 2;
 }
 function droneTick(M, dt, ev, el) {
-  const D = DRN,
+  const D = DRONE,
     g = D.g,
     left = 100 - el;
   g.visible = true;
@@ -73,9 +73,9 @@ function droneTick(M, dt, ev, el) {
   if (!D.att) {
     const pos = drnAt(D.s),
       d3 = Math.hypot(
-        S.x - g.position.x,
-        S.y + 0.5 - g.position.y,
-        S.z - g.position.z,
+        carState.x - g.position.x,
+        carState.y + 0.5 - g.position.y,
+        carState.z - g.position.z,
       ),
       close = d3 < 22;
     D.gt = (D.gt || 0) + dt;
@@ -114,9 +114,9 @@ function droneTick(M, dt, ev, el) {
           "You got her! Bring her home, roof of the diner. Gently, those are pies.",
           4.5,
         );
-        DZ.visible = true;
+        DROP_ZONE.visible = true;
         zoneColor(0xffc24a);
-        DZ.position.set(DRN_ROOF[0], DRN_ROOF[1], DRN_ROOF[2]);
+        DROP_ZONE.position.set(DRN_ROOF[0], DRN_ROOF[1], DRN_ROOF[2]);
       }
     } else D.dock = Math.max(0, D.dock - dt * 0.8);
     if (D.att) {
@@ -131,25 +131,25 @@ function droneTick(M, dt, ev, el) {
             : `Catch Mae's drone · ${Math.round(d3)} m · get within 6 m`;
   }
   if (D.att) {
-    const fw = [-Math.sin(S.yaw), -Math.cos(S.yaw)];
+    const fw = [-Math.sin(carState.yaw), -Math.cos(carState.yaw)];
     g.position.set(
-      S.x - fw[0] * 0.2,
-      S.y + 2.4 + Math.sin(clock * 3) * 0.08,
-      S.z - fw[1] * 0.2,
+      carState.x - fw[0] * 0.2,
+      carState.y + 2.4 + Math.sin(clock * 3) * 0.08,
+      carState.z - fw[1] * 0.2,
     );
-    g.rotation.set(0, S.yaw, 0);
+    g.rotation.set(0, carState.yaw, 0);
     drnSpin(clock, false);
-    obj = S.air
+    obj = carState.air
       ? "Land on the DINER ROOF (follow the beam) · softly"
       : `Lift off and land on the DINER ROOF`;
     if (ev && ev.land != null) {
       const b = DINER.b;
       if (
-        S.x > b[0] - 0.5 &&
-        S.x < b[1] + 0.5 &&
-        S.z > b[2] - 0.5 &&
-        S.z < b[3] + 0.5 &&
-        S.y > 6
+        carState.x > b[0] - 0.5 &&
+        carState.x < b[1] + 0.5 &&
+        carState.z > b[2] - 0.5 &&
+        carState.z < b[3] + 0.5 &&
+        carState.y > 6
       ) {
         finish(
           true,
@@ -172,11 +172,11 @@ function droneTick(M, dt, ev, el) {
   return [obj, tt];
 }
 function droneReset() {
-  Object.assign(DRN, { s: 0, y: 0, dock: 0, att: false, gt: 0, st: false });
-  DRN.g.position.copy(drnAt(0));
-  DRN.g.visible = false;
+  Object.assign(DRONE, { s: 0, y: 0, dock: 0, att: false, gt: 0, st: false });
+  DRONE.g.position.copy(drnAt(0));
+  DRONE.g.visible = false;
 }
-MIS.push({
+MISSIONS.push({
   id: "drone",
   r: 700,
   n: "02",
@@ -184,12 +184,12 @@ MIS.push({
   b: "Mae's delivery drone lost its signal with six pies on board. Catch it in the air (it stalls every few seconds), stay within 6 m for 1.2 s to dock, then land on the diner roof. 100 s.",
   spawn: () => {
     droneReset();
-    place(CARP.x, CARP.z, Math.PI / 2);
+    place(CAR_START.x, CAR_START.z, Math.PI / 2);
   },
 });
 MEDAL.drone = { t: 30, s: 50 };
 GHOSTABLE.add("drone");
-FLY.add("drone");
+FLY_MISSIONS.add("drone");
 
 /* ---- route previews: every story chapter opens with a film of where you have to go ---- */
 function filmTargets(id) {
@@ -244,7 +244,7 @@ function filmTargets(id) {
       const o = RAMPS.filter((r) => r.name !== "POND JUMP")
         .sort(
           (a, b) =>
-            Math.hypot(a.x - S.x, a.z - S.z) - Math.hypot(b.x - S.x, b.z - S.z),
+            Math.hypot(a.x - carState.x, a.z - carState.z) - Math.hypot(b.x - carState.x, b.z - carState.z),
         )
         .slice(0, 4);
       return o.map((r) => R(r.name));
@@ -275,9 +275,9 @@ function filmTargets(id) {
     case "deck":
       return [pd("L")];
     case "launchday":
-      return [pd("L"), { x: VP[0], y: 0, z: VP[1], l: "VIEW POINT" }];
+      return [pd("L"), { x: VIEWPOINT[0], y: 0, z: VIEWPOINT[1], l: "VIEW POINT" }];
     case "catch":
-      return [{ x: VP[0], y: 0, z: VP[1], l: "VIEW POINT" }];
+      return [{ x: VIEWPOINT[0], y: 0, z: VIEWPOINT[1], l: "VIEW POINT" }];
     case "jam":
       return [{ x: 96, y: 2, z: 300, l: "THE JAM" }, pd("A")];
     case "hover":

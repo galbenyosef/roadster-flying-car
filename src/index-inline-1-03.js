@@ -50,7 +50,7 @@ const FACADES = [
     if (uv) G.u.push(...uv);
     G.i.push(o, o + 1, o + 2, o, o + 2, o + 3);
   };
-  for (const B of BLD) {
+  for (const B of buildings) {
     if (B.style < 0) continue;
     const G = geo[B.style],
       { x0, x1, z0, z1, h } = B,

@@ -189,7 +189,7 @@ composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
 /* ---------------- input ---------------- */
-const K = {},
+const keyState = {},
   T = {};
 let armPress = false,
   camMode = 0,
@@ -205,7 +205,7 @@ addEventListener("keydown", (e) => {
   if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k))
     e.preventDefault();
   if (typeof v18Key === "function" && v18Key(k)) {
-    K[k] = true;
+    keyState[k] = true;
     return;
   }
   if (phase === "gate") {
@@ -221,16 +221,16 @@ addEventListener("keydown", (e) => {
     return;
   }
   if (phase === "card") return;
-  if (cin.on && k === "enter") {
-    cin.t = cin.dur * 0.9;
+  if (cinematic.on && k === "enter") {
+    cinematic.t = cinematic.dur * 0.9;
   }
   if (k === "v" && phase === "play") {
     showOn = !showOn;
     flash(showOn ? "CINEMATIC MOMENTS ON" : "CINEMATIC MOMENTS OFF", "", 1.2);
   }
-  if (!K[k]) {
+  if (!keyState[k]) {
     if (k === "shift") armPress = true;
-    if ((k === "x" && K[" "]) || (k === " " && K["x"])) armPress = true;
+    if ((k === "x" && keyState[" "]) || (k === " " && keyState["x"])) armPress = true;
     if (k === "q") cycleWing();
     if (k === "c") camMode = (camMode + 1) % 3;
     if (k === "r" && phase === "play") respawn(true);
@@ -241,14 +241,14 @@ addEventListener("keydown", (e) => {
     }
     if (k === "enter" && phase === "result") startMission(lastMission);
   }
-  K[k] = true;
+  keyState[k] = true;
 });
 addEventListener("keyup", (e) => {
   const k = e.key === " " ? " " : e.key.toLowerCase();
-  K[k] = false;
+  keyState[k] = false;
 });
 addEventListener("blur", () => {
-  for (const k in K) K[k] = false;
+  for (const k in keyState) keyState[k] = false;
 });
 renderer.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
 renderer.domElement.addEventListener("pointerdown", (e) => {
@@ -258,7 +258,7 @@ addEventListener("pointerup", (e) => {
   if (e.button === 2) T.boostM = false;
 });
 function bindTouch(id, key, tap) {
-  const el = $(id);
+  const el = byId(id);
   el.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     el.setPointerCapture(e.pointerId);
@@ -276,9 +276,9 @@ function bindTouch(id, key, tap) {
 bindTouch("tbGo", "go");
 // floating analog joystick (left thumb) for steering, like most mobile shooters/racers
 {
-  const Z = $("joyZone"),
-    B = $("joyBase"),
-    Kn = $("joyKnob");
+  const Z = byId("joyZone"),
+    B = byId("joyBase"),
+    Kn = byId("joyKnob");
   let id = null,
     cx = 0,
     cy = 0,
@@ -337,14 +337,14 @@ bindTouch("tbArm", "arm", () => (armPress = true));
 bindTouch("tbHov", "hover");
 bindTouch("tbBst", "boost");
 bindTouch("tbCam", "cam", () => (camMode = (camMode + 1) % 3));
-const inp = () => ({
-  thr: K["w"] || K["arrowup"] || T.go,
-  brk: K["s"] || K["arrowdown"] || T.brake,
-  left: K["a"] || K["arrowleft"] || T.left,
-  right: K["d"] || K["arrowright"] || T.right,
-  hover: K[" "] || T.hover,
-  boost: K["b"] || K["e"] || T.boost || T.boostM,
-  rev: (K["x"] && !K[" "] && performance.now() - xDownT > 80) || T.rev,
+const readInput = () => ({
+  thr: keyState["w"] || keyState["arrowup"] || T.go,
+  brk: keyState["s"] || keyState["arrowdown"] || T.brake,
+  left: keyState["a"] || keyState["arrowleft"] || T.left,
+  right: keyState["d"] || keyState["arrowright"] || T.right,
+  hover: keyState[" "] || T.hover,
+  boost: keyState["b"] || keyState["e"] || T.boost || T.boostM,
+  rev: (keyState["x"] && !keyState[" "] && performance.now() - xDownT > 80) || T.rev,
 });
 
 /* ---------------- audio ---------------- */

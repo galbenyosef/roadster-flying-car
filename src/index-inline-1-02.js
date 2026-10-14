@@ -2,8 +2,8 @@
 // Lines 78930-79257 of readable/index-inline-1.pretty.js (statement-aligned).
 {
   const r = rng(2026);
-  for (let bi = 0; bi < NBK; bi++)
-    for (let bj = 0; bj < NBK; bj++) {
+  for (let bi = 0; bi < BLOCK_COUNT; bi++)
+    for (let bj = 0; bj < BLOCK_COUNT; bj++) {
       const x0 = blockMin(bi) + 3,
         x1 = blockMax(bi) - 3,
         z0 = blockMin(bj) + 3,
@@ -48,7 +48,7 @@
         continue;
       }
       if (sp && sp.fab) {
-        FAB = { x0, x1, z0, z1, h: 32 };
+        MEGAFAB = { x0, x1, z0, z1, h: 32 };
         addB(x0, x1, z0, z1, 32, 6);
         continue;
       }
@@ -223,14 +223,14 @@
 {
   const r = rng(404);
   const RING = isTouch ? 1 : 2;
-  for (let bi = -RING; bi < NBK + RING; bi++)
-    for (let bj = -RING; bj < NBK + RING; bj++) {
-      if (bi >= 0 && bj >= 0 && bi < NBK && bj < NBK) continue;
+  for (let bi = -RING; bi < BLOCK_COUNT + RING; bi++)
+    for (let bj = -RING; bj < BLOCK_COUNT + RING; bj++) {
+      if (bi >= 0 && bj >= 0 && bi < BLOCK_COUNT && bj < BLOCK_COUNT) continue;
       const x0 = blockMin(bi) + 3,
         x1 = blockMax(bi) - 3,
         z0 = blockMin(bj) + 3,
         z1 = blockMax(bj) - 3;
-      const ring = Math.max(-bi, -bj, bi - NBK + 1, bj - NBK + 1);
+      const ring = Math.max(-bi, -bj, bi - BLOCK_COUNT + 1, bj - BLOCK_COUNT + 1);
       const h = Math.round(
         18 + r() * (ring === 1 ? 60 : ring === 2 ? 100 : 150),
       );

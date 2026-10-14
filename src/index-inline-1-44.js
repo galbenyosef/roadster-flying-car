@@ -23,13 +23,13 @@ function launchDayTick(M, dt, ev, el) {
     }
     if (Lc.st === "up" && !M.shown) {
       M.shown = true;
-      if (!cin.on) startShow("launch");
+      if (!cinematic.on) startShow("launch");
     }
     if (Lc.st === "up" && Lc.y > 320) {
       M.step = 1;
-      DZ.visible = true;
+      DROP_ZONE.visible = true;
       zoneColor(0xffc24a);
-      DZ.position.set(VP[0], 0, VP[1]);
+      DROP_ZONE.position.set(VIEWPOINT[0], 0, VIEWPOINT[1]);
       PADS.forEach((p) => (p.beam.visible = false));
       flash(
         "RACE THE BOOSTER",
@@ -46,14 +46,14 @@ function launchDayTick(M, dt, ev, el) {
   }
   const tl = Lc.st === "gone" ? 29 - Lc.t : Lc.st === "down" ? 15 - Lc.t : 0,
     inZ =
-      Math.hypot(S.x - VP[0], S.z - VP[1]) < 6 && !S.air && Math.abs(S.v) < 2.5;
-  if (Lc.st === "down" && Lc.t >= 7.5 && !M.shown2 && !cin.on) {
+      Math.hypot(carState.x - VIEWPOINT[0], carState.z - VIEWPOINT[1]) < 6 && !carState.air && Math.abs(carState.v) < 2.5;
+  if (Lc.st === "down" && Lc.t >= 7.5 && !M.shown2 && !cinematic.on) {
     M.shown2 = true;
     if (inZ) startShow("land");
   }
   if (Lc.st === "landed" && !M.res) {
     M.res = true;
-    if (Math.hypot(S.x - LS.lz.x, S.z - LS.lz.z) < 26)
+    if (Math.hypot(carState.x - LAUNCH_SITE.lz.x, carState.z - LAUNCH_SITE.lz.z) < 26)
       finish(false, "Too close! Never stand on the landing zone.", {
         time: null,
       });
@@ -75,8 +75,8 @@ function launchDayTick(M, dt, ev, el) {
 }
 
 /* ---- the Daily Run: one 60 s score attack per day, the same for everyone ---- */
-const DAY0 = Date.UTC(2026, 9, 1),
-  dayNo = () => Math.floor((Date.now() - DAY0) / 864e5) + 1;
+const DAILY_EPOCH = Date.UTC(2026, 9, 1),
+  dayNo = () => Math.floor((Date.now() - DAILY_EPOCH) / 864e5) + 1;
 const DSPOTS = [
     [-668.8, -20, 0, "STUNT YARD"],
     [-3.5, -300, 0, "THE STRIP"],
@@ -117,8 +117,8 @@ function dailyTick(M, el) {
 }
 function dailyLine() {
   const d = dailyInfo(),
-    pts = Math.round(M.pts),
-    m = M.medal || 1;
+    pts = Math.round(currentMission.pts),
+    m = currentMission.medal || 1;
   return `ROADSTER Daily ${d.n} · ${MNAME[m][0] + MNAME[m].slice(1).toLowerCase()} · ${pts.toLocaleString("en-US")}`;
 }
 
@@ -140,7 +140,7 @@ function chalRead(c) {
     let b = c.slice(3).replace(/-/g, "+").replace(/_/g, "/");
     while (b.length % 4) b += "=";
     const [id, t] = atob(b).split(":");
-    const i = MIS.findIndex((m) => m.id === id && !m.hidden);
+    const i = MISSIONS.findIndex((m) => m.id === id && !m.hidden);
     if (i < 0 || !(+t > 0)) return null;
     return { id, i, t: +t };
   } catch (e) {
@@ -157,9 +157,9 @@ function chalStart(c) {
 }
 
 /* ---- Orbit: the Roadster rides Skyline One; credits over the Earth ---- */
-const ORB = { on: false, space: null };
+const ORBIT_MODE = { on: false, space: null };
 function spaceBuild() {
-  if (ORB.space) return ORB.space;
+  if (ORBIT_MODE.space) return ORBIT_MODE.space;
   const sc = new THREE.Scene();
   sc.background = new THREE.Color(0x000004);
   const cv = document.createElement("canvas");
@@ -255,11 +255,11 @@ function spaceBuild() {
   const rc = car.clone(true);
   rc.position.set(0, 0, 0);
   sc.add(rc);
-  ORB.space = { sc, E, rc };
-  return ORB.space;
+  ORBIT_MODE.space = { sc, E, rc };
+  return ORBIT_MODE.space;
 }
 function orbitCredits(on) {
-  const el = $("credits");
+  const el = byId("credits");
   if (on) {
     el.hidden = false;
     el.classList.remove("roll");

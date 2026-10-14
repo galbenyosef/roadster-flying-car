@@ -1,6 +1,6 @@
-// index-inline-1 55 — math
+// index-inline-1 55 — carstate
 // Lines 95839-96147 of readable/index-inline-1.pretty.js (statement-aligned).
-V26.T.bigair = (M, dt, ev, el) => {
+MISSION_REBUILD.T.bigair = (M, dt, ev, el) => {
   const left = 60 - el;
   if (
     ev &&
@@ -10,8 +10,8 @@ V26.T.bigair = (M, dt, ev, el) => {
     ev.clean
   ) {
     M.best = Math.max(M.best, ev.air);
-    const off = Math.hypot(S.x - BAZ.x, S.z - BAZ.z),
-      inZ = off < BAZ.r;
+    const off = Math.hypot(carState.x - BIG_AIR_ZONE.x, carState.z - BIG_AIR_ZONE.z),
+      inZ = off < BIG_AIR_ZONE.r;
     if (ev.air >= 2 && inZ) {
       finish(
         true,
@@ -21,10 +21,10 @@ V26.T.bigair = (M, dt, ev, el) => {
       return ["", ""];
     }
     flash(
-      `${ev.air.toFixed(2)} s · ${inZ ? "in the zone" : S.z < BAZ.z ? "too long" : "too short"}`,
+      `${ev.air.toFixed(2)} s · ${inZ ? "in the zone" : carState.z < BIG_AIR_ZONE.z ? "too long" : "too short"}`,
       ev.air < 2
         ? "need 2.00 s of air"
-        : S.z < BAZ.z
+        : carState.z < BIG_AIR_ZONE.z
           ? "a little less speed"
           : "a little more speed",
       1.8,
@@ -45,14 +45,14 @@ V26.T.bigair = (M, dt, ev, el) => {
 };
 
 /* ---- 11 LOOP THE LOOP v2: two full loops inside 60 s ---- */
-V26.setup.loop = (d) => {
-  M.loops = 0;
-  M.back = true;
+MISSION_REBUILD.setup.loop = (d) => {
+  currentMission.loops = 0;
+  currentMission.back = true;
 };
-V26.T.loop = (M, dt, ev, el) => {
+MISSION_REBUILD.T.loop = (M, dt, ev, el) => {
   const left = 60 - el,
     L = LOOPS[0];
-  if (M.loops === 1 && !M.back && S.z > L.z + 40) M.back = true;
+  if (M.loops === 1 && !M.back && carState.z > L.z + 40) M.back = true;
   if (ev && ev.loop) {
     M.loops++;
     M.back = false;
@@ -74,7 +74,7 @@ V26.T.loop = (M, dt, ev, el) => {
     return ["", ""];
   }
   return [
-    S.loop
+    carState.loop
       ? "Hold the throttle, keep it rolling"
       : M.loops === 0
         ? "Line up with the yellow chevrons, 55 mph or more"
@@ -86,16 +86,16 @@ V26.T.loop = (M, dt, ev, el) => {
 };
 
 /* ---- 12 SKY TOUR v2: a VIP on board who hates bumps, boost and hard landings ---- */
-V26.setup.skytour = (d) => {
-  M.vip = 100;
-  M.ring = 0;
-  SKYR.visible = true;
-  SKYR.children.forEach((m, k) =>
+MISSION_REBUILD.setup.skytour = (d) => {
+  currentMission.vip = 100;
+  currentMission.ring = 0;
+  TOUR_MARKERS.visible = true;
+  TOUR_MARKERS.children.forEach((m, k) =>
     m.material.emissive.set(k === 0 ? 0xffb35c : 0x28e0ff),
   );
   PADS.forEach((p) => (p.beam.visible = false));
 };
-V26.T.skytour = (M, dt, ev, el) => {
+MISSION_REBUILD.T.skytour = (M, dt, ev, el) => {
   const left = 150 - el;
   const hit = impactTick(dt, ev);
   if (hit) {
@@ -108,7 +108,7 @@ V26.T.skytour = (M, dt, ev, el) => {
     M.vip -= c;
     pop(`HARD LANDING · VIP −${Math.round(c)}%`, 0, true);
   }
-  if (S.thrust === 2 && !cin.on) {
+  if (carState.thrust === 2 && !cinematic.on) {
     M.vip -= 7 * dt;
     M.bw = (M.bw || 0) + dt;
     if (M.bw > 0.6 && !M.bs) {
@@ -116,7 +116,7 @@ V26.T.skytour = (M, dt, ev, el) => {
       showSub("VIP", "Easy on the rocket, please. I just had lunch.", 3);
     }
   }
-  const hs = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v);
+  const hs = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v);
   if (hs > 40) M.vip -= 4 * dt;
   meter("VIP COMFORT", Math.max(0, M.vip), null, M.vip < 30);
   if (M.vip <= 0) {
@@ -129,14 +129,14 @@ V26.T.skytour = (M, dt, ev, el) => {
   }
   if (M.ring < STOUR.length) {
     const R = STOUR[M.ring];
-    if (Math.hypot(S.x - R[0], S.y + 0.5 - R[1], S.z - R[2]) < 6.8) {
-      SKYR.children[M.ring].material.emissive.set(0x3a4a55);
+    if (Math.hypot(carState.x - R[0], carState.y + 0.5 - R[1], carState.z - R[2]) < 6.8) {
+      TOUR_MARKERS.children[M.ring].material.emissive.set(0x3a4a55);
       M.ring++;
-      S.tank = Math.min(100, S.tank + 25);
+      carState.tank = Math.min(100, carState.tank + 25);
       audio.ping();
       pop("SKY RING · +25% AIR", 200);
       if (M.ring < STOUR.length)
-        SKYR.children[M.ring].material.emissive.set(0xffb35c);
+        TOUR_MARKERS.children[M.ring].material.emissive.set(0xffb35c);
       else {
         PADS.forEach((p) => (p.beam.visible = p.label === "L"));
         flash("ALL RINGS", "now land on the tower deck, softly", 1.8);
@@ -163,41 +163,41 @@ V26.T.skytour = (M, dt, ev, el) => {
 };
 
 /* ---- 13 STUNT SHOW v2: 15,000 points AND four different kinds of trick. One trick type caps at 5,000. ---- */
-const SS = { need: 15000, cap: 5000, types: 4, time: 75 },
-  SSN = {
+const STUNT_SHOW = { need: 15000, cap: 5000, types: 4, time: 75 },
+  TRICK_KINDS = {
     AIR: "AIR",
     SPIN: "SPIN",
     DRIFT: "DRIFT",
     NEAR: "NEAR MISS",
     LOOP: "LOOP",
   };
-V26.setup.stuntshow = (d) => {
-  M.tp = {};
-  M.pts = 0;
-  V26.onTrick = (L) => {
-    M.tp[L.ty] = (M.tp[L.ty] || 0) + L.got;
+MISSION_REBUILD.setup.stuntshow = (d) => {
+  currentMission.tp = {};
+  currentMission.pts = 0;
+  MISSION_REBUILD.onTrick = (L) => {
+    currentMission.tp[L.ty] = (currentMission.tp[L.ty] || 0) + L.got;
   };
 };
 function ssScore(M) {
   let s = 0,
     n = 0;
   for (const k in M.tp) {
-    s += Math.min(SS.cap, M.tp[k]);
+    s += Math.min(STUNT_SHOW.cap, M.tp[k]);
     if (M.tp[k] > 0) n++;
   }
   return { s, n };
 }
-V26.T.stuntshow = (M, dt, ev, el) => {
-  const left = SS.time - el,
+MISSION_REBUILD.T.stuntshow = (M, dt, ev, el) => {
+  const left = STUNT_SHOW.time - el,
     { s, n } = ssScore(M),
     live = Math.round(SCORE.drift || 0),
     cur = s;
   meter(
     "SHOW",
-    Math.min(100, (cur / SS.need) * 100),
-    `${cur.toLocaleString("en-US")} / ${SS.need.toLocaleString("en-US")}`,
+    Math.min(100, (cur / STUNT_SHOW.need) * 100),
+    `${cur.toLocaleString("en-US")} / ${STUNT_SHOW.need.toLocaleString("en-US")}`,
   );
-  if (cur >= SS.need && n >= SS.types) {
+  if (cur >= STUNT_SHOW.need && n >= STUNT_SHOW.types) {
     finish(
       true,
       `${cur.toLocaleString("en-US")} points from ${n} kinds of trick. The crowd is on its feet.`,
@@ -208,22 +208,22 @@ V26.T.stuntshow = (M, dt, ev, el) => {
   if (left <= 0) {
     finish(
       false,
-      `${cur.toLocaleString("en-US")} points, ${n} of ${SS.types} trick types. Mix it up: air, spins, drifts, near misses, the loop.`,
+      `${cur.toLocaleString("en-US")} points, ${n} of ${STUNT_SHOW.types} trick types. Mix it up: air, spins, drifts, near misses, the loop.`,
       { time: null },
     );
     return ["", ""];
   }
-  const miss = Object.keys(SSN)
+  const miss = Object.keys(TRICK_KINDS)
     .filter((k) => !(M.tp[k] > 0))
-    .map((k) => SSN[k]);
+    .map((k) => TRICK_KINDS[k]);
   return [
-    `Tricks ${n}/${SS.types}${n < SS.types ? " · try: " + miss.slice(0, 3).join(", ") : ""}${live ? ` · drift +${live}` : ""}`,
+    `Tricks ${n}/${STUNT_SHOW.types}${n < STUNT_SHOW.types ? " · try: " + miss.slice(0, 3).join(", ") : ""}${live ? ` · drift +${live}` : ""}`,
     `${Math.max(0, left).toFixed(1)} s left`,
   ];
 };
 
 /* ---- 14 HOT CELL (new): a prototype cell that only cools in the wind. Under 50 mph it cooks. ---- */
-const HC = {
+const HOT_CELL = {
   x: 99.2,
   z: 560,
   gx: 380,
@@ -234,40 +234,40 @@ const HC = {
   down: 6,
   fan: 45,
 };
-MIS.push({
+MISSIONS.push({
   id: "hotcell",
   r: 2200,
   n: "14",
   t: "Hot Cell",
   b: "Megafab prototype cell on board. It only cools in the wind: under 50 mph it heats up fast. Through the jam, across town, stop at the Megafab gate. 48 s.",
-  spawn: () => place(HC.x, HC.z, 0),
+  spawn: () => place(HOT_CELL.x, HOT_CELL.z, 0),
 });
-V26.setup.hotcell = (d) => {
+MISSION_REBUILD.setup.hotcell = (d) => {
   jamOn();
-  M.heat = 25;
-  M.stop = 0;
-  DZ.visible = true;
+  currentMission.heat = 25;
+  currentMission.stop = 0;
+  DROP_ZONE.visible = true;
   zoneColor(0xff7a2a);
-  DZ.position.set(HC.gx, 0, HC.gz);
+  DROP_ZONE.position.set(HOT_CELL.gx, 0, HOT_CELL.gz);
 };
-V26.T.hotcell = (M, dt, ev, el) => {
-  const left = HC.time - el,
-    hs = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v),
+MISSION_REBUILD.T.hotcell = (M, dt, ev, el) => {
+  const left = HOT_CELL.time - el,
+    hs = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v),
     fast = hs * MPH >= 50;
-  const gd = Math.hypot(HC.gx - S.x, HC.gz - S.z),
-    fan = gd < HC.fan;
+  const gd = Math.hypot(HOT_CELL.gx - carState.x, HOT_CELL.gz - carState.z),
+    fan = gd < HOT_CELL.fan;
   if (fan && !M.fan) {
     M.fan = true;
     pop("MEGAFAB COOLANT · STOP IN THE ZONE", 0);
   }
-  if (!cin.on)
-    M.heat = clamp(M.heat + (fast ? -HC.down : fan ? -2 : HC.up) * dt, 0, 100);
+  if (!cinematic.on)
+    M.heat = clamp(M.heat + (fast ? -HOT_CELL.down : fan ? -2 : HOT_CELL.up) * dt, 0, 100);
   meter("CELL HEAT", M.heat, `${Math.round(M.heat)}%`, M.heat > 70);
   if (M.heat > 80 && !fast) shake = Math.max(shake, 0.06);
   const inZ =
-    Math.hypot(S.x - HC.gx, S.z - HC.gz) < HC.r &&
-    !S.air &&
-    Math.abs(S.v) < 2.5;
+    Math.hypot(carState.x - HOT_CELL.gx, carState.z - HOT_CELL.gz) < HOT_CELL.r &&
+    !carState.air &&
+    Math.abs(carState.v) < 2.5;
   if (inZ) {
     M.stop += dt;
     if (M.stop > 0.6) {
@@ -302,7 +302,7 @@ V26.T.hotcell = (M, dt, ev, el) => {
 };
 
 /* ---- 15 LAUNCH DAY v2: start across town with less time ---- */
-V26.setup.launchday = (d) => {
+MISSION_REBUILD.setup.launchday = (d) => {
   resetLaunch(LAUNCH.cycle - 44);
   place(291.2, 288, -Math.PI / 2);
   PADS.forEach((p) => (p.beam.visible = p.label === "L"));

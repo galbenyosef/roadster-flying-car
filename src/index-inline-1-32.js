@@ -25,8 +25,8 @@ function mkTrack(C, opt) {
   g.visible = false;
   T.group = g;
   T.lines = {
-    z: [...new Set(C.map((c) => Math.round((c[0] + HALF) / P) * P - HALF))],
-    x: [...new Set(C.map((c) => Math.round((c[1] + HALF) / P) * P - HALF))],
+    z: [...new Set(C.map((c) => Math.round((c[0] + HALF) / BLOCK_PITCH) * BLOCK_PITCH - HALF))],
+    x: [...new Set(C.map((c) => Math.round((c[1] + HALF) / BLOCK_PITCH) * BLOCK_PITCH - HALF))],
   };
   const n = Math.round(T.len / 155);
   for (let i = 1; i <= n; i++) {
@@ -101,7 +101,7 @@ let RACE = TRACKS.street;
 const pathAt = (s) => pathAtP(RACE, s),
   projS = (x, z, s0) => projSP(RACE, x, z, s0);
 // rivals: the same Roadster in other skins, merged into a handful of meshes (a full clone costs ~70 draw calls each)
-const LITE = (() => {
+const RIVAL_MESH = (() => {
   setWing(0, 0);
   bayPose(0, 0);
   car.position.set(0, 0, 0);
@@ -177,14 +177,14 @@ const LITE = (() => {
     wheel: collect(wheels[0].spin, wheels[0].spin),
   };
 })();
-const RW_IM = LITE.wheel.map((p) => {
+const RW_IM = RIVAL_MESH.wheel.map((p) => {
   const im = new THREE.InstancedMesh(p.geo, p.m.clone(), 12);
   im.frustumCulled = false;
   scene.add(im);
   return im;
 });
-const WOFF = wheels.map((w) => w.steer.position.clone()),
-  WR0 = wheels[0].r;
+const WHEEL_OFFSETS = wheels.map((w) => w.steer.position.clone()),
+  WHEEL_RADIUS = wheels[0].r;
 const RIVALS = [
   { n: "VEX", skin: "gold", v: 37 },
   { n: "RAZOR", skin: "ocean", v: 35.5 },
@@ -194,7 +194,7 @@ const RIVALS = [
     g = new THREE.Group(),
     pm = paint.clone();
   skinMat(pm, sk);
-  for (const p of LITE.body) {
+  for (const p of RIVAL_MESH.body) {
     const o = new THREE.Mesh(p.geo, p.k === "paint" ? pm : p.m);
     o.castShadow = o.receiveShadow = p.k === "paint";
     g.add(o);
@@ -245,10 +245,10 @@ function rivalWheels() {
     if (on) r.g.updateMatrixWorld();
     for (let j = 0; j < 4; j++) {
       if (on) {
-        const s = wheels[j].r / WR0;
+        const s = wheels[j].r / WHEEL_RADIUS;
         W.makeRotationX(r.spin)
           .scale(Sv.set(s, s, s))
-          .setPosition(WOFF[j]);
+          .setPosition(WHEEL_OFFSETS[j]);
         M4.multiplyMatrices(r.g.matrixWorld, W);
       } else M4.copy(Z);
       RW_IM.forEach((im) => im.setMatrixAt(k, M4));
@@ -283,7 +283,7 @@ function raceSetup(key = "street") {
   for (const c of TRAFFIC) {
     let k = 0;
     while (bad(c) && k++ < 20) {
-      c.line = -HALF + (2 + ((Math.random() * (NBK - 4)) | 0)) * P;
+      c.line = -HALF + (2 + ((Math.random() * (BLOCK_COUNT - 4)) | 0)) * BLOCK_PITCH;
     }
   }
   RACE.group.visible = true;
@@ -310,7 +310,7 @@ const CHASE = Object.assign(
 scene.add(CHASE.group);
 CHASE.group.visible = false;
 chevrons(CHASE, CHASE.group);
-const Z70 = new THREE.Mesh(
+const CHASE_RING = new THREE.Mesh(
   new THREE.RingGeometry(68.6, 70, 120),
   new THREE.MeshBasicMaterial({
     color: new THREE.Color(0.3, 2.2, 2.6),
@@ -320,18 +320,18 @@ const Z70 = new THREE.Mesh(
     depthWrite: false,
   }),
 );
-Z70.rotation.x = -Math.PI / 2;
-Z70.visible = false;
-scene.add(Z70);
+CHASE_RING.rotation.x = -Math.PI / 2;
+CHASE_RING.visible = false;
+scene.add(CHASE_RING);
 function chaseSetup() {
   CHASE.on = true;
   CHASE.group.visible = true;
-  Z70.visible = true;
+  CHASE_RING.visible = true;
   const v = RIVALS[0];
   RIVALS.forEach((r) => (r.g.visible = r === v));
   const s0 = nearestS(CHASE, -380.8, -30);
   CHASE.s = s0;
-  v.prog = s0 + VX.gap;
+  v.prog = s0 + VEX_TUNE.gap;
   v.sp = 0;
   v.bst = 0;
   v.bcd = 0;
@@ -342,8 +342,8 @@ function chaseSetup() {
       (c.axis === "z" && (c.line === -384 || c.line === 0)) ||
       (c.axis === "x" && (c.line === -576 || c.line === 480))
     ) {
-      c.line = -HALF + (2 + ((Math.random() * (NBK - 4)) | 0)) * P;
-      if ([-384, 0, -576, 480].includes(c.line)) c.line += P;
+      c.line = -HALF + (2 + ((Math.random() * (BLOCK_COUNT - 4)) | 0)) * BLOCK_PITCH;
+      if ([-384, 0, -576, 480].includes(c.line)) c.line += BLOCK_PITCH;
     }
   }
   updateRivals(0);

@@ -1,21 +1,21 @@
-// index-inline-1 43 — math
+// index-inline-1 43 — carstate
 // Lines 92059-92369 of readable/index-inline-1.pretty.js (statement-aligned).
 function freeTick(dt, ev) {
-  if (M || phase !== "play") {
-    evPX = S.x;
-    evPZ = S.z;
+  if (currentMission || phase !== "play") {
+    prevEventX = carState.x;
+    prevEventZ = carState.z;
     return;
   }
-  if (S.y < 4)
-    for (const t of EVT.traps) {
+  if (carState.y < 4)
+    for (const t of FREE_ROAM_EVENTS.traps) {
       const a =
-        t.ax === "z" ? [evPZ, S.z, t.z, S.x, t.x] : [evPX, S.x, t.x, S.z, t.z];
+        t.ax === "z" ? [prevEventZ, carState.z, t.z, carState.x, t.x] : [prevEventX, carState.x, t.x, carState.z, t.z];
       if (
         (a[0] - a[2]) * (a[1] - a[2]) <= 0 &&
         a[0] !== a[1] &&
         Math.abs(a[3] - a[4]) < 8.5
       ) {
-        const mph = Math.abs(S.v) * MPH;
+        const mph = Math.abs(carState.v) * MPH;
         evResult(
           "SPEED TRAP",
           t.id,
@@ -26,20 +26,20 @@ function freeTick(dt, ev) {
         audio.ping();
       }
     }
-  const inZ = EVT.zones.find(
-    (q) => Math.hypot(S.x - q.x, S.z - q.z) < q.r && S.y < 3,
+  const inZ = FREE_ROAM_EVENTS.zones.find(
+    (q) => Math.hypot(carState.x - q.x, carState.z - q.z) < q.r && carState.y < 3,
   );
   if (inZ) {
-    if (!EVT.zone || EVT.zone.q !== inZ) EVT.zone = { q: inZ, pts: 0 };
-    if (!S.air && S.dr > 0.3 && Math.abs(S.slip) > 0.12 && S.v > 11)
-      EVT.zone.pts += S.v * Math.abs(S.slip) * dt * 14;
+    if (!FREE_ROAM_EVENTS.zone || FREE_ROAM_EVENTS.zone.q !== inZ) FREE_ROAM_EVENTS.zone = { q: inZ, pts: 0 };
+    if (!carState.air && carState.dr > 0.3 && Math.abs(carState.slip) > 0.12 && carState.v > 11)
+      FREE_ROAM_EVENTS.zone.pts += carState.v * Math.abs(carState.slip) * dt * 14;
     setT(
       "driftLive",
-      EVT.zone.pts > 0 ? `DRIFT ZONE ${Math.round(EVT.zone.pts)}` : "",
+      FREE_ROAM_EVENTS.zone.pts > 0 ? `DRIFT ZONE ${Math.round(FREE_ROAM_EVENTS.zone.pts)}` : "",
     );
-  } else if (EVT.zone) {
-    const z = EVT.zone;
-    EVT.zone = null;
+  } else if (FREE_ROAM_EVENTS.zone) {
+    const z = FREE_ROAM_EVENTS.zone;
+    FREE_ROAM_EVENTS.zone = null;
     if (z.pts > 120)
       evResult(
         "DRIFT ZONE",
@@ -58,14 +58,14 @@ function freeTick(dt, ev) {
       (v) => `${v.toFixed(2)} s`,
     );
   if (ev && ev.land != null) sigCheck();
-  evPX = S.x;
-  evPZ = S.z;
+  prevEventX = carState.x;
+  prevEventZ = carState.z;
 }
 function drawEvents(c, sc) {
   c.lineWidth = 2;
-  for (const t of EVT.traps) {
-    const x = (t.x - S.x) * sc,
-      z = (t.z - S.z) * sc;
+  for (const t of FREE_ROAM_EVENTS.traps) {
+    const x = (t.x - carState.x) * sc,
+      z = (t.z - carState.z) * sc;
     if (Math.abs(x) > 110 || Math.abs(z) > 110) continue;
     c.strokeStyle = "#28e0ff";
     c.beginPath();
@@ -78,9 +78,9 @@ function drawEvents(c, sc) {
     }
     c.stroke();
   }
-  for (const q of EVT.zones) {
-    const x = (q.x - S.x) * sc,
-      z = (q.z - S.z) * sc;
+  for (const q of FREE_ROAM_EVENTS.zones) {
+    const x = (q.x - carState.x) * sc,
+      z = (q.z - carState.z) * sc;
     if (Math.abs(x) > 110 || Math.abs(z) > 110) continue;
     c.strokeStyle = "#ff4fd8";
     c.beginPath();
@@ -92,7 +92,7 @@ function drawEvents(c, sc) {
 /* ---- signature spots: ten secret landings, each a one-time slow-mo and a photo prompt ---- */
 const SPOTS = (() => {
   const L = [],
-    B = BLD.slice().sort((a, b) => b.h - a.h),
+    B = buildings.slice().sort((a, b) => b.h - a.h),
     roof = (b, n) => ({
       n,
       x: (b.x0 + b.x1) / 2,
@@ -104,7 +104,7 @@ const SPOTS = (() => {
   L.push(roof(B[0], "THE NEEDLE"), roof(B[1], "SECOND SPIRE"));
   const cas = B.find((b) => b.style === 4);
   if (cas) L.push(roof(cas, "CASINO CROWN"));
-  const fab = BLD.filter((b) => b.style === 6).sort(
+  const fab = buildings.filter((b) => b.style === 6).sort(
     (a, b) => (b.x1 - b.x0) * (b.z1 - b.z0) - (a.x1 - a.x0) * (a.z1 - a.z0),
   )[0];
   if (fab) L.push(roof(fab, "MEGAFAB ROOF"));
@@ -114,8 +114,8 @@ const SPOTS = (() => {
   L.push({ n: "TOWER DECK", x: pL.x, z: pL.z, y: pL.y, r: 6 });
   const pC = PADS.find((p) => p.label === "C");
   L.push({ n: "PAD C", x: pC.x, z: pC.z, y: pC.y, r: 6 });
-  L.push({ n: "BOOSTER PAD", x: LS.lz.x, z: LS.lz.z, y: 0, r: 16 });
-  L.push({ n: "VIEW POINT", x: VP[0], z: VP[1], y: 0, r: 6 });
+  L.push({ n: "BOOSTER PAD", x: LAUNCH_SITE.lz.x, z: LAUNCH_SITE.lz.z, y: 0, r: 16 });
+  L.push({ n: "VIEW POINT", x: VIEWPOINT[0], z: VIEWPOINT[1], y: 0, r: 6 });
   const ro = B.find(
     (b) =>
       b.h > 60 &&
@@ -138,13 +138,13 @@ function sigCheck() {
   for (const q of SPOTS) {
     if (SPOTF.has(q.n)) continue;
     const inside = q.b
-      ? S.x > q.b.x0 && S.x < q.b.x1 && S.z > q.b.z0 && S.z < q.b.z1
-      : Math.hypot(S.x - q.x, S.z - q.z) < q.r;
-    if (inside && Math.abs(S.y - q.y) < 2.5) {
+      ? carState.x > q.b.x0 && carState.x < q.b.x1 && carState.z > q.b.z0 && carState.z < q.b.z1
+      : Math.hypot(carState.x - q.x, carState.z - q.z) < q.r;
+    if (inside && Math.abs(carState.y - q.y) < 2.5) {
       SPOTF.add(q.n);
       store.set("rfc_sig", JSON.stringify([...SPOTF]));
       miniSlow();
-      MS.t = 1.2;
+      MINI_SLOW.t = 1.2;
       flash(
         `SIGNATURE SPOT ${SPOTF.size}/${SPOTS.length}`,
         `${q.n} · press P for a photo`,
@@ -152,16 +152,16 @@ function sigCheck() {
       );
       pop("SIGNATURE SPOT", 1000);
       audio.chime();
-      if (isTouch) $("tbPho").classList.add("act");
-      setTimeout(() => $("tbPho").classList.remove("act"), 2500);
+      if (isTouch) byId("tbPho").classList.add("act");
+      setTimeout(() => byId("tbPho").classList.remove("act"), 2500);
       return;
     }
   }
 }
 
 /* ---- story: 15 chapters in three acts, ending in orbit ---- */
-const ACTS = ["NEW IN TOWN", "MAKING A NAME", "THE STRIP"];
-MIS.push(
+const ACT_NAMES = ["NEW IN TOWN", "MAKING A NAME", "THE STRIP"];
+MISSIONS.push(
   {
     id: "launchday",
     r: 2000,
@@ -190,10 +190,10 @@ MIS.push(
   },
 );
 {
-  const old = CH.slice(),
-    byMis = (id) => old.find((c) => MIS[c.mis] && MIS[c.mis].id === id),
+  const old = CHAPTERS.slice(),
+    byMis = (id) => old.find((c) => MISSIONS[c.mis] && MISSIONS[c.mis].id === id),
     mk = (id, t, o) =>
-      Object.assign({}, byMis(id) || {}, { t, mis: MI(id) }, o || {});
+      Object.assign({}, byMis(id) || {}, { t, mis: missionIndex(id) }, o || {});
   const N = [
     mk("jam", "OVER THE JAM", { act: 0 }),
     mk("hover", "LIFT OFF", { act: 0 }),
@@ -218,22 +218,22 @@ MIS.push(
       who: "CONTROL",
       intro: "Deck first, Zero. Then race the booster home.",
       outro: "Deck, liftoff and the catch. Control is impressed.",
-      at: [VP[0] - 30, VP[1] - 60],
+      at: [VIEWPOINT[0] - 30, VIEWPOINT[1] - 60],
     }),
     mk("final", "SHOWDOWN", { act: 2, boss: true }),
     {
       t: "ORBIT",
-      mis: MI("orbit"),
+      mis: missionIndex("orbit"),
       act: 2,
       who: "MAE",
       intro: "",
       outro: "",
-      at: [VP[0] + 10, VP[1] - 24],
+      at: [VIEWPOINT[0] + 10, VIEWPOINT[1] - 24],
       orbit: true,
     },
   ];
-  CH.length = 0;
-  N.forEach((c) => CH.push(c));
+  CHAPTERS.length = 0;
+  N.forEach((c) => CHAPTERS.push(c));
 }
 // progress from the 18-chapter story carries over: a chapter counts if its test was cleared before
 {
@@ -264,7 +264,7 @@ MIS.push(
     if (cleared.has("launch")) cleared.add("jam");
     if (cleared.has("deck") && cleared.has("catch")) cleared.add("launchday");
     let nd = 0;
-    while (nd < CH.length && cleared.has(MIS[CH[nd].mis].id)) nd++;
+    while (nd < CHAPTERS.length && cleared.has(MISSIONS[CHAPTERS[nd].mis].id)) nd++;
     STORY.done = nd;
     store.set("rfc_story", String(nd));
     store.set("rfc_story_v", "22");
@@ -272,25 +272,25 @@ MIS.push(
 }
 
 /* ---- Catch VEX: touch his bumper to win; losing him fades his trail instead of failing ---- */
-MIS.find((m) => m.id === "chase").t = "Catch VEX";
-MIS.find((m) => m.id === "chase").b =
+MISSIONS.find((m) => m.id === "chase").t = "Catch VEX";
+MISSIONS.find((m) => m.id === "chase").b =
   "VEX has the telemetry pod. Touch his rear bumper within 90 s. Lose him and his trail fades, but the chase goes on.";
 MEDAL.chase = { t: 15, s: 30 };
 MEDAL.launchday = { k: "off", t: 2, s: 4, u: " m from centre" };
 MEDAL.daily = { k: "pts", t: 9000, s: 6000, hi: true, u: " pts" };
 function chaseTick(M, dt, el) {
   const v = RIVALS[0],
-    dd = Math.hypot(S.x - v.g.position.x, S.y - 0.4, S.z - v.g.position.z);
-  M.sp = projSP(CHASE, S.x, S.z, M.sp);
+    dd = Math.hypot(carState.x - v.g.position.x, carState.y - 0.4, carState.z - v.g.position.z);
+  M.sp = projSP(CHASE, carState.x, carState.z, M.sp);
   const fade = clamp(1 - (dd - 45) / 90, 0.12, 1);
-  Z70.material.opacity = 0.6 * fade;
+  CHASE_RING.material.opacity = 0.6 * fade;
   CHASE.group.traverse((o) => {
-    if (o.material && o.material.opacity != null && o !== Z70) {
+    if (o.material && o.material.opacity != null && o !== CHASE_RING) {
       o.material.transparent = true;
       o.material.opacity = fade;
     }
   });
-  Z70.material.color.setRGB(...(dd < 15 ? [3, 2.1, 0.4] : [0.3, 2.2, 2.6]));
+  CHASE_RING.material.color.setRGB(...(dd < 15 ? [3, 2.1, 0.4] : [0.3, 2.2, 2.6]));
   const left = 90 - el;
   if (dd < 5.6) {
     finish(true, "Bumper to bumper. He hands over the pod.", { time: el });

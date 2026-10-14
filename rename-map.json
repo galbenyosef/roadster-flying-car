@@ -1,0 +1,1379 @@
+{
+  "note": "Semantic rename map for src/, recovered mechanically by anchor alignment from the committed slices (tools/recover-scoped-map.mjs): the token streams of a slice and its readable range must be identical in every non-identifier position, so every differing identifier pair is a proven rename, not a guess. `files` is a word-boundary map, used only where a name means the same thing everywhere in the slice and is never a property or object key; `scoped` addresses the rest by exact token index as { name: [[i, target], …] }. tools/derive.mjs re-applies this map when it re-cuts src/ (index-validated), tools/verify-rename.mjs and tools/audit.js re-prove every slice from it, and tools/check-chunk.mjs proves cross-slice references still resolve. Regenerate with `node tools/recover-scoped-map.mjs` after any rename batch.",
+  "files": {
+    "index-inline-1-01.js": {
+      "$": "byId",
+      "BLD": "buildings",
+      "FAB": "MEGAFAB",
+      "GK": "cellKey",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "RW": "ROAD_WIDTH",
+      "h2": "hash2",
+      "n2": "valueNoise",
+      "sm": "smoothstep"
+    },
+    "index-inline-1-02.js": {
+      "FAB": "MEGAFAB",
+      "NBK": "BLOCK_COUNT"
+    },
+    "index-inline-1-03.js": {
+      "BLD": "buildings"
+    },
+    "index-inline-1-04.js": {
+      "BLD": "buildings",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "RW": "ROAD_WIDTH",
+      "SIG": "SIGNALS"
+    },
+    "index-inline-1-05.js": {
+      "BLD": "buildings",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "S": "carState",
+      "SIG": "SIGNALS"
+    },
+    "index-inline-1-07.js": {
+      "FAB": "MEGAFAB",
+      "LS": "LAUNCH_SITE"
+    },
+    "index-inline-1-08.js": {
+      "LS": "LAUNCH_SITE",
+      "P": "BLOCK_PITCH",
+      "RW": "ROAD_WIDTH"
+    },
+    "index-inline-1-09.js": {
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "Q0": "scratchQuat",
+      "V2": "scratchVec3",
+      "VT": "VEHICLE_TYPES"
+    },
+    "index-inline-1-10.js": {
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "Q0": "scratchQuat",
+      "S": "carState",
+      "SIG": "SIGNALS",
+      "V2": "scratchVec3",
+      "VT": "VEHICLE_TYPES",
+      "WEV": "walkerEvent",
+      "bc": "blockCenter"
+    },
+    "index-inline-1-11.js": {
+      "P": "BLOCK_PITCH",
+      "RW": "ROAD_WIDTH",
+      "VT": "VEHICLE_TYPES",
+      "bc": "blockCenter"
+    },
+    "index-inline-1-14.js": {
+      "BAYP": "BAY_PORTS",
+      "PH": "PLATE_H",
+      "PW": "PLATE_W",
+      "PY": "PLATE_Y",
+      "PZ": "PLATE_Z"
+    },
+    "index-inline-1-15.js": {
+      "$": "byId",
+      "K": "keyState",
+      "cin": "cinematic",
+      "inp": "readInput"
+    },
+    "index-inline-1-16.js": {
+      "$": "byId",
+      "angD": "angleDelta"
+    },
+    "index-inline-1-17.js": {
+      "$": "byId",
+      "BAYP": "BAY_PORTS",
+      "LS": "LAUNCH_SITE",
+      "M": "currentMission",
+      "S": "carState",
+      "cin": "cinematic",
+      "rco": "calloutState"
+    },
+    "index-inline-1-18.js": {
+      "$": "byId",
+      "M": "currentMission",
+      "S": "carState",
+      "SKIN": "activeSkin",
+      "VEH": "VEHICLES",
+      "cin": "cinematic",
+      "earn": "earnCredits",
+      "jget": "jsonGet",
+      "rco": "calloutState",
+      "tx": "touchText"
+    },
+    "index-inline-1-19.js": {
+      "ECO": "ECONOMY",
+      "SKIN": "activeSkin"
+    },
+    "index-inline-1-20.js": {
+      "$": "byId",
+      "CAL0": "CALIPER_COLOR",
+      "CH": "CHAPTERS",
+      "ECO": "ECONOMY",
+      "M": "currentMission",
+      "MIS": "MISSIONS",
+      "P": "BLOCK_PITCH",
+      "RIM0": "RIM_COLOR",
+      "S": "carState",
+      "SKIN": "activeSkin",
+      "U": "upgradeLevel",
+      "UPG": "UPGRADES",
+      "VEH": "VEHICLES",
+      "VSEL": "SELECTED_VEHICLE",
+      "tx": "touchText",
+      "veh": "activeVehicle"
+    },
+    "index-inline-1-21.js": {
+      "$": "byId",
+      "CARP": "CAR_START",
+      "CH": "CHAPTERS",
+      "DZ": "DROP_ZONE",
+      "ECO": "ECONOMY",
+      "KY": "KEY_LABELS",
+      "M": "currentMission",
+      "MIS": "MISSIONS",
+      "S": "carState",
+      "SKIN": "activeSkin",
+      "SKYR": "TOUR_MARKERS",
+      "TUT": "TUTORIAL",
+      "U": "upgradeLevel",
+      "UPG": "UPGRADES",
+      "VEH": "VEHICLES",
+      "VSEL": "SELECTED_VEHICLE"
+    },
+    "index-inline-1-22.js": {
+      "$": "byId",
+      "CH": "CHAPTERS",
+      "DZ": "DROP_ZONE",
+      "M": "currentMission",
+      "PF": "PHOTO_FINISH",
+      "S": "carState",
+      "SKYR": "TOUR_MARKERS",
+      "VSEL": "SELECTED_VEHICLE",
+      "cin": "cinematic",
+      "cut": "activeCut",
+      "earn": "earnCredits",
+      "tx": "touchText",
+      "veh": "activeVehicle"
+    },
+    "index-inline-1-23.js": {
+      "DZ": "DROP_ZONE",
+      "LS": "LAUNCH_SITE",
+      "M": "currentMission",
+      "S": "carState",
+      "SKYR": "TOUR_MARKERS",
+      "V26": "MISSION_REBUILD",
+      "VP": "VIEWPOINT",
+      "cin": "cinematic",
+      "tx": "touchText"
+    },
+    "index-inline-1-24.js": {
+      "$": "byId",
+      "BLD": "buildings",
+      "FAB": "MEGAFAB",
+      "LS": "LAUNCH_SITE",
+      "M": "currentMission",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "S": "carState",
+      "earn": "earnCredits",
+      "mctx": "mapCtx"
+    },
+    "index-inline-1-25.js": {
+      "CH": "CHAPTERS",
+      "M": "currentMission",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "RW": "ROAD_WIDTH",
+      "S": "carState",
+      "SKID": "SKID_MARKS",
+      "VP": "VIEWPOINT",
+      "_se": "scratchEulerSkid",
+      "_sm": "scratchMatrixSkid",
+      "_sq": "scratchQuatSkid",
+      "_ss": "scratchVecSkidB",
+      "_sv": "scratchVecSkidA",
+      "mctx": "mapCtx"
+    },
+    "index-inline-1-26.js": {
+      "GK": "cellKey",
+      "S": "carState",
+      "SKID": "SKID_MARKS",
+      "U": "upgradeLevel",
+      "_se": "scratchEulerSkid",
+      "_sm": "scratchMatrixSkid",
+      "_sq": "scratchQuatSkid",
+      "_ss": "scratchVecSkidB",
+      "_sv": "scratchVecSkidA",
+      "angD": "angleDelta",
+      "veh": "activeVehicle"
+    },
+    "index-inline-1-27.js": {
+      "BAYP": "BAY_PORTS",
+      "M": "currentMission",
+      "S": "carState",
+      "U": "upgradeLevel",
+      "V26": "MISSION_REBUILD",
+      "angD": "angleDelta",
+      "cin": "cinematic",
+      "inp": "readInput",
+      "veh": "activeVehicle"
+    },
+    "index-inline-1-28.js": {
+      "$": "byId",
+      "LS": "LAUNCH_SITE",
+      "S": "carState",
+      "_tc": "textCache",
+      "cin": "cinematic",
+      "fmtT": "formatTime",
+      "fovK": "fovKick",
+      "gctx": "gballCtx",
+      "snz": "smoothNoise",
+      "veh": "activeVehicle"
+    },
+    "index-inline-1-29.js": {
+      "$": "byId",
+      "ICAM": "INTRO_CAMS",
+      "ICUT": "INTRO_CUTS",
+      "ISND": "INTRO_SOUNDS",
+      "ITXT": "INTRO_TITLES",
+      "IZ0": "INTRO_Z0",
+      "LV": "lerpVec3",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "S": "carState",
+      "V3": "vec3FromArray",
+      "_tc": "textCache",
+      "_wv": "wingVizSpans",
+      "icut": "introCut",
+      "keyL": "keyLight"
+    },
+    "index-inline-1-30.js": {
+      "$": "byId",
+      "ACTS": "ACT_NAMES",
+      "BAYP": "BAY_PORTS",
+      "CH": "CHAPTERS",
+      "ICAM": "INTRO_CAMS",
+      "ICUT": "INTRO_CUTS",
+      "ISND": "INTRO_SOUNDS",
+      "ITXT": "INTRO_TITLES",
+      "LV": "lerpVec3",
+      "MIS": "MISSIONS",
+      "S": "carState",
+      "V3": "vec3FromArray",
+      "cut": "activeCut",
+      "icut": "introCut",
+      "tx": "touchText"
+    },
+    "index-inline-1-31.js": {
+      "$": "byId",
+      "CARP": "CAR_START",
+      "CHEV": "CHEVRONS",
+      "DN": "DINER_BOUNDS",
+      "S": "carState",
+      "VEH": "VEHICLES",
+      "VSEL": "SELECTED_VEHICLE",
+      "cin": "cinematic",
+      "cut": "activeCut"
+    },
+    "index-inline-1-32.js": {
+      "LITE": "RIVAL_MESH",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "VX": "VEX_TUNE",
+      "WOFF": "WHEEL_OFFSETS",
+      "WR0": "WHEEL_RADIUS",
+      "Z70": "CHASE_RING"
+    },
+    "index-inline-1-33.js": {
+      "CH": "CHAPTERS",
+      "M": "currentMission",
+      "MI": "missionIndex",
+      "MIS": "MISSIONS",
+      "MK": "STORY_MARKER",
+      "S": "carState",
+      "VP": "VIEWPOINT",
+      "VX": "VEX_TUNE",
+      "Z70": "CHASE_RING",
+      "jget": "jsonGet"
+    },
+    "index-inline-1-34.js": {
+      "$": "byId",
+      "CARP": "CAR_START",
+      "CH": "CHAPTERS",
+      "DZ": "DROP_ZONE",
+      "M": "currentMission",
+      "MK": "STORY_MARKER",
+      "S": "carState",
+      "SKIN": "activeSkin",
+      "SKYR": "TOUR_MARKERS",
+      "VSEL": "SELECTED_VEHICLE",
+      "cin": "cinematic"
+    },
+    "index-inline-1-35.js": {
+      "$": "byId",
+      "M": "currentMission",
+      "S": "carState",
+      "SFX": "SPEED_FX",
+      "angD": "angleDelta",
+      "cin": "cinematic",
+      "snz": "smoothNoise"
+    },
+    "index-inline-1-36.js": {
+      "$": "byId",
+      "M": "currentMission",
+      "Q0": "scratchQuat",
+      "RPL": "REPLAY",
+      "S": "carState",
+      "V2": "scratchVec3",
+      "cin": "cinematic"
+    },
+    "index-inline-1-37.js": {
+      "$": "byId",
+      "BAYP": "BAY_PORTS",
+      "K": "keyState",
+      "M": "currentMission",
+      "PHO": "PHOTO",
+      "RPL": "REPLAY",
+      "S": "carState",
+      "angD": "angleDelta",
+      "cin": "cinematic"
+    },
+    "index-inline-1-38.js": {
+      "$": "byId",
+      "K": "keyState",
+      "LS": "LAUNCH_SITE",
+      "M": "currentMission",
+      "RPL": "REPLAY",
+      "S": "carState",
+      "SKIN": "activeSkin",
+      "dlNS": "downloadLink"
+    },
+    "index-inline-1-39.js": {
+      "$": "byId",
+      "CEV": "COUNTDOWN_STATE",
+      "DIG": "COUNTDOWN",
+      "DIGM": "DIGIT_MATERIAL",
+      "DIGS": "DIGIT_MESHES",
+      "JAM": "TRAFFIC_JAM",
+      "LS": "LAUNCH_SITE",
+      "M": "currentMission",
+      "MS": "MINI_SLOW",
+      "PF": "PHOTO_FINISH",
+      "S": "carState",
+      "WEV": "walkerEvent",
+      "ZTAG": "ZONE_TAG"
+    },
+    "index-inline-1-40.js": {
+      "$": "byId",
+      "BAT": "BATTERY_SAVER",
+      "K": "keyState",
+      "M": "currentMission",
+      "S": "carState",
+      "cin": "cinematic"
+    },
+    "index-inline-1-41.js": {
+      "$": "byId",
+      "LITE": "RIVAL_MESH",
+      "M": "currentMission",
+      "MCOL": "MEDAL_COLORS",
+      "MIS": "MISSIONS",
+      "MS": "MINI_SLOW",
+      "RPL": "REPLAY",
+      "S": "carState",
+      "VP": "VIEWPOINT",
+      "angD": "angleDelta",
+      "dlNS": "downloadLink"
+    },
+    "index-inline-1-42.js": {
+      "ECO": "ECONOMY",
+      "EVT": "FREE_ROAM_EVENTS",
+      "M": "currentMission",
+      "MCOL": "MEDAL_COLORS",
+      "NBK": "BLOCK_COUNT",
+      "S": "carState",
+      "TOD": "TIME_OF_DAY",
+      "TODP": "TOD_PRESETS",
+      "_c3": "scratchColor",
+      "evPX": "prevEventX",
+      "evPZ": "prevEventZ"
+    },
+    "index-inline-1-43.js": {
+      "$": "byId",
+      "ACTS": "ACT_NAMES",
+      "BLD": "buildings",
+      "CH": "CHAPTERS",
+      "EVT": "FREE_ROAM_EVENTS",
+      "LS": "LAUNCH_SITE",
+      "MI": "missionIndex",
+      "MIS": "MISSIONS",
+      "MS": "MINI_SLOW",
+      "S": "carState",
+      "VP": "VIEWPOINT",
+      "Z70": "CHASE_RING",
+      "evPX": "prevEventX",
+      "evPZ": "prevEventZ"
+    },
+    "index-inline-1-44.js": {
+      "$": "byId",
+      "DAY0": "DAILY_EPOCH",
+      "DZ": "DROP_ZONE",
+      "LS": "LAUNCH_SITE",
+      "MIS": "MISSIONS",
+      "ORB": "ORBIT_MODE",
+      "S": "carState",
+      "VP": "VIEWPOINT",
+      "cin": "cinematic"
+    },
+    "index-inline-1-45.js": {
+      "$": "byId",
+      "BAYP": "BAY_PORTS",
+      "KY": "KEY_LABELS",
+      "LS": "LAUNCH_SITE",
+      "M": "currentMission",
+      "MIS": "MISSIONS",
+      "ORB": "ORBIT_MODE",
+      "PH": "PLATE_H",
+      "PW": "PLATE_W",
+      "PY": "PLATE_Y",
+      "PZ": "PLATE_Z",
+      "S": "carState",
+      "TOD": "TIME_OF_DAY",
+      "TODP": "TOD_PRESETS",
+      "TUT": "TUTORIAL",
+      "VP": "VIEWPOINT",
+      "VSEL": "SELECTED_VEHICLE"
+    },
+    "index-inline-1-46.js": {
+      "$": "byId",
+      "BAYP": "BAY_PORTS",
+      "DRN": "DRONE",
+      "FLY": "FLY_MISSIONS",
+      "KY": "KEY_LABELS",
+      "M": "currentMission",
+      "PH": "PLATE_H",
+      "PW": "PLATE_W",
+      "PY": "PLATE_Y",
+      "PZ": "PLATE_Z",
+      "RCUE": "REVEAL_CUES",
+      "S": "carState",
+      "TBTN": "TOUCH_BUTTONS",
+      "TG1": "TUTORIAL_PAD",
+      "VP": "VIEWPOINT",
+      "cin": "cinematic",
+      "rco": "calloutState"
+    },
+    "index-inline-1-47.js": {
+      "$": "byId",
+      "CARP": "CAR_START",
+      "CH": "CHAPTERS",
+      "DRN": "DRONE",
+      "DZ": "DROP_ZONE",
+      "KY": "KEY_LABELS",
+      "MI": "missionIndex",
+      "MIS": "MISSIONS",
+      "S": "carState",
+      "TBTN": "TOUCH_BUTTONS",
+      "TG1": "TUTORIAL_PAD",
+      "TUT": "TUTORIAL",
+      "VT": "VEHICLE_TYPES",
+      "cin": "cinematic"
+    },
+    "index-inline-1-48.js": {
+      "CARP": "CAR_START",
+      "DRN": "DRONE",
+      "DZ": "DROP_ZONE",
+      "FLY": "FLY_MISSIONS",
+      "MIS": "MISSIONS",
+      "S": "carState",
+      "VP": "VIEWPOINT"
+    },
+    "index-inline-1-49.js": {
+      "$": "byId",
+      "CARP": "CAR_START",
+      "CH": "CHAPTERS",
+      "DRN": "DRONE",
+      "M": "currentMission",
+      "MI": "missionIndex",
+      "MIS": "MISSIONS",
+      "S": "carState",
+      "V26": "MISSION_REBUILD",
+      "V3x": "vec3"
+    },
+    "index-inline-1-50.js": {
+      "$": "byId",
+      "DZ": "DROP_ZONE",
+      "M": "currentMission",
+      "NBK": "BLOCK_COUNT",
+      "P": "BLOCK_PITCH",
+      "S": "carState",
+      "V26": "MISSION_REBUILD",
+      "V3x": "vec3"
+    },
+    "index-inline-1-51.js": {
+      "$": "byId",
+      "DRN": "DRONE",
+      "DRN2": "DRONE_RING",
+      "DRNV": "DRONE_SPEEDS",
+      "KY": "KEY_LABELS",
+      "S": "carState",
+      "V26": "MISSION_REBUILD",
+      "V3x": "vec3",
+      "cin": "cinematic"
+    },
+    "index-inline-1-52.js": {
+      "BLD": "buildings",
+      "DRN": "DRONE",
+      "DRNV": "DRONE_SPEEDS",
+      "DZ": "DROP_ZONE",
+      "FT": "FOOD_TRUCK",
+      "KY": "KEY_LABELS",
+      "RR": "RING_RUN",
+      "RRT": "RING_RUN_TUNE",
+      "S": "carState",
+      "V26": "MISSION_REBUILD",
+      "V3x": "vec3",
+      "cin": "cinematic"
+    },
+    "index-inline-1-53.js": {
+      "DZ": "DROP_ZONE",
+      "FT": "FOOD_TRUCK",
+      "FTP": "FOOD_TRUCK_PATH",
+      "S": "carState",
+      "SY": "STUNT_YARD",
+      "V26": "MISSION_REBUILD",
+      "V3x": "vec3",
+      "VAN": "VAN_MODEL",
+      "VANK": "VAN_SCALE"
+    },
+    "index-inline-1-54.js": {
+      "BAZ": "BIG_AIR_ZONE",
+      "DZ": "DROP_ZONE",
+      "FUME": "FUME_TUNE",
+      "KY": "KEY_LABELS",
+      "S": "carState",
+      "SY": "STUNT_YARD",
+      "TJZ": "TRUCK_JUMP_ZONE",
+      "V26": "MISSION_REBUILD",
+      "VX": "VEX_TUNE",
+      "cin": "cinematic"
+    },
+    "index-inline-1-55.js": {
+      "BAZ": "BIG_AIR_ZONE",
+      "DZ": "DROP_ZONE",
+      "HC": "HOT_CELL",
+      "MIS": "MISSIONS",
+      "S": "carState",
+      "SKYR": "TOUR_MARKERS",
+      "SS": "STUNT_SHOW",
+      "SSN": "TRICK_KINDS",
+      "V26": "MISSION_REBUILD",
+      "cin": "cinematic"
+    },
+    "index-inline-1-56.js": {
+      "CH": "CHAPTERS",
+      "FLY": "FLY_MISSIONS",
+      "MI": "missionIndex",
+      "MIS": "MISSIONS"
+    },
+    "index-inline-1-57.js": {
+      "$": "byId",
+      "CH": "CHAPTERS",
+      "DRNV": "DRONE_SPEEDS",
+      "HC": "HOT_CELL",
+      "KY": "KEY_LABELS",
+      "MIS": "MISSIONS",
+      "RR": "RING_RUN",
+      "RRT": "RING_RUN_TUNE",
+      "S": "carState",
+      "SY": "STUNT_YARD",
+      "V3x": "vec3",
+      "VAN": "VAN_MODEL",
+      "cin": "cinematic",
+      "cut": "activeCut",
+      "keyL": "keyLight"
+    },
+    "index-inline-1-58.js": {
+      "$": "byId",
+      "CH": "CHAPTERS",
+      "MIS": "MISSIONS"
+    },
+    "index-inline-1-59.js": {
+      "CH": "CHAPTERS",
+      "ECO": "ECONOMY",
+      "LS": "LAUNCH_SITE",
+      "MIS": "MISSIONS",
+      "ORB": "ORBIT_MODE",
+      "S": "carState",
+      "V3x": "vec3",
+      "VP": "VIEWPOINT",
+      "VSEL": "SELECTED_VEHICLE",
+      "dlNS": "downloadLink"
+    },
+    "index-inline-1-60.js": {
+      "$": "byId",
+      "M": "currentMission",
+      "RPL": "REPLAY"
+    },
+    "index-inline-1-61.js": {
+      "$": "byId",
+      "MIS": "MISSIONS",
+      "MS": "MINI_SLOW",
+      "PF": "PHOTO_FINISH",
+      "RPL": "REPLAY",
+      "S": "carState",
+      "SKID": "SKID_MARKS",
+      "V26": "MISSION_REBUILD",
+      "VAN": "VAN_MODEL",
+      "cin": "cinematic",
+      "v27T": "v27Timer"
+    },
+    "index-inline-1-62.js": {
+      "pvx": "prevVx",
+      "pvz": "prevVz"
+    },
+    "index-inline-1-63.js": {
+      "$": "byId",
+      "BAT": "BATTERY_SAVER",
+      "BAYP": "BAY_PORTS",
+      "M": "currentMission",
+      "MS": "MINI_SLOW",
+      "PF": "PHOTO_FINISH",
+      "RPL": "REPLAY",
+      "S": "carState",
+      "VSEL": "SELECTED_VEHICLE",
+      "WEV": "walkerEvent",
+      "cin": "cinematic",
+      "inp": "readInput",
+      "keyL": "keyLight",
+      "pvx": "prevVx",
+      "pvz": "prevVz"
+    }
+  },
+  "scoped": {
+    "index-inline-1-18.js": {
+      "ECO": [
+        [
+          2180,
+          "ECONOMY"
+        ],
+        [
+          2271,
+          "ECONOMY"
+        ],
+        [
+          2280,
+          "ECONOMY"
+        ],
+        [
+          2302,
+          "ECONOMY"
+        ],
+        [
+          2308,
+          "ECONOMY"
+        ],
+        [
+          2313,
+          "ECONOMY"
+        ],
+        [
+          2328,
+          "ECONOMY"
+        ],
+        [
+          2342,
+          "ECONOMY"
+        ],
+        [
+          2347,
+          "ECONOMY"
+        ],
+        [
+          2351,
+          "ECONOMY"
+        ],
+        [
+          2388,
+          "ECONOMY"
+        ],
+        [
+          2404,
+          "ECONOMY"
+        ],
+        [
+          2424,
+          "ECONOMY"
+        ],
+        [
+          2454,
+          "ECONOMY"
+        ],
+        [
+          2467,
+          "ECONOMY"
+        ],
+        [
+          2488,
+          "ECONOMY"
+        ],
+        [
+          2511,
+          "ECONOMY"
+        ]
+      ]
+    },
+    "index-inline-1-21.js": {
+      "VP": [
+        [
+          2261,
+          "VIEWPOINT"
+        ]
+      ]
+    },
+    "index-inline-1-31.js": {
+      "P": [
+        [
+          3027,
+          "BLOCK_PITCH"
+        ],
+        [
+          3030,
+          "BLOCK_PITCH"
+        ],
+        [
+          3046,
+          "BLOCK_PITCH"
+        ],
+        [
+          3049,
+          "BLOCK_PITCH"
+        ]
+      ]
+    },
+    "index-inline-1-38.js": {
+      "PHO": [
+        [
+          95,
+          "PHOTO"
+        ],
+        [
+          141,
+          "PHOTO"
+        ],
+        [
+          225,
+          "PHOTO"
+        ],
+        [
+          612,
+          "PHOTO"
+        ],
+        [
+          618,
+          "PHOTO"
+        ],
+        [
+          651,
+          "PHOTO"
+        ],
+        [
+          669,
+          "PHOTO"
+        ],
+        [
+          795,
+          "PHOTO"
+        ],
+        [
+          836,
+          "PHOTO"
+        ],
+        [
+          858,
+          "PHOTO"
+        ],
+        [
+          867,
+          "PHOTO"
+        ],
+        [
+          922,
+          "PHOTO"
+        ],
+        [
+          938,
+          "PHOTO"
+        ],
+        [
+          951,
+          "PHOTO"
+        ],
+        [
+          962,
+          "PHOTO"
+        ],
+        [
+          980,
+          "PHOTO"
+        ],
+        [
+          999,
+          "PHOTO"
+        ],
+        [
+          1022,
+          "PHOTO"
+        ],
+        [
+          1044,
+          "PHOTO"
+        ],
+        [
+          1082,
+          "PHOTO"
+        ],
+        [
+          1088,
+          "PHOTO"
+        ],
+        [
+          1093,
+          "PHOTO"
+        ],
+        [
+          1099,
+          "PHOTO"
+        ],
+        [
+          1118,
+          "PHOTO"
+        ],
+        [
+          1129,
+          "PHOTO"
+        ],
+        [
+          1183,
+          "PHOTO"
+        ],
+        [
+          1226,
+          "PHOTO"
+        ],
+        [
+          1254,
+          "PHOTO"
+        ],
+        [
+          1259,
+          "PHOTO"
+        ],
+        [
+          1267,
+          "PHOTO"
+        ],
+        [
+          1317,
+          "PHOTO"
+        ],
+        [
+          1323,
+          "PHOTO"
+        ],
+        [
+          1351,
+          "PHOTO"
+        ],
+        [
+          1357,
+          "PHOTO"
+        ],
+        [
+          1498,
+          "PHOTO"
+        ],
+        [
+          1514,
+          "PHOTO"
+        ],
+        [
+          1525,
+          "PHOTO"
+        ],
+        [
+          1544,
+          "PHOTO"
+        ],
+        [
+          1663,
+          "PHOTO"
+        ],
+        [
+          1671,
+          "PHOTO"
+        ],
+        [
+          2034,
+          "PHOTO"
+        ],
+        [
+          2059,
+          "PHOTO"
+        ],
+        [
+          2064,
+          "PHOTO"
+        ],
+        [
+          2072,
+          "PHOTO"
+        ]
+      ]
+    },
+    "index-inline-1-42.js": {
+      "P": [
+        [
+          1713,
+          "BLOCK_PITCH"
+        ],
+        [
+          1796,
+          "BLOCK_PITCH"
+        ],
+        [
+          1798,
+          "BLOCK_PITCH"
+        ]
+      ]
+    },
+    "index-inline-1-43.js": {
+      "M": [
+        [
+          10,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-44.js": {
+      "M": [
+        [
+          1041,
+          "currentMission"
+        ],
+        [
+          1048,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-47.js": {
+      "M": [
+        [
+          320,
+          "currentMission"
+        ],
+        [
+          331,
+          "currentMission"
+        ],
+        [
+          462,
+          "currentMission"
+        ],
+        [
+          468,
+          "currentMission"
+        ],
+        [
+          680,
+          "currentMission"
+        ],
+        [
+          683,
+          "currentMission"
+        ],
+        [
+          695,
+          "currentMission"
+        ],
+        [
+          703,
+          "currentMission"
+        ],
+        [
+          709,
+          "currentMission"
+        ],
+        [
+          1542,
+          "currentMission"
+        ],
+        [
+          1546,
+          "currentMission"
+        ],
+        [
+          1551,
+          "currentMission"
+        ],
+        [
+          1579,
+          "currentMission"
+        ],
+        [
+          1863,
+          "currentMission"
+        ],
+        [
+          1867,
+          "currentMission"
+        ],
+        [
+          1872,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-51.js": {
+      "M": [
+        [
+          2487,
+          "currentMission"
+        ],
+        [
+          2489,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-52.js": {
+      "M": [
+        [
+          2032,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-53.js": {
+      "M": [
+        [
+          1426,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-54.js": {
+      "M": [
+        [
+          138,
+          "currentMission"
+        ],
+        [
+          903,
+          "currentMission"
+        ],
+        [
+          1528,
+          "currentMission"
+        ],
+        [
+          1993,
+          "currentMission"
+        ],
+        [
+          2012,
+          "currentMission"
+        ],
+        [
+          2620,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-55.js": {
+      "M": [
+        [
+          312,
+          "currentMission"
+        ],
+        [
+          318,
+          "currentMission"
+        ],
+        [
+          580,
+          "currentMission"
+        ],
+        [
+          586,
+          "currentMission"
+        ],
+        [
+          1388,
+          "currentMission"
+        ],
+        [
+          1395,
+          "currentMission"
+        ],
+        [
+          1411,
+          "currentMission"
+        ],
+        [
+          1421,
+          "currentMission"
+        ],
+        [
+          1942,
+          "currentMission"
+        ],
+        [
+          1948,
+          "currentMission"
+        ]
+      ]
+    },
+    "index-inline-1-57.js": {
+      "BAZ": [
+        [
+          403,
+          "BIG_AIR_ZONE"
+        ],
+        [
+          1294,
+          "BIG_AIR_ZONE"
+        ],
+        [
+          1304,
+          "BIG_AIR_ZONE"
+        ]
+      ],
+      "M": [
+        [
+          50,
+          "currentMission"
+        ],
+        [
+          89,
+          "currentMission"
+        ],
+        [
+          110,
+          "currentMission"
+        ],
+        [
+          140,
+          "currentMission"
+        ],
+        [
+          185,
+          "currentMission"
+        ],
+        [
+          224,
+          "currentMission"
+        ],
+        [
+          229,
+          "currentMission"
+        ],
+        [
+          263,
+          "currentMission"
+        ],
+        [
+          317,
+          "currentMission"
+        ],
+        [
+          327,
+          "currentMission"
+        ],
+        [
+          349,
+          "currentMission"
+        ],
+        [
+          371,
+          "currentMission"
+        ],
+        [
+          379,
+          "currentMission"
+        ],
+        [
+          397,
+          "currentMission"
+        ],
+        [
+          419,
+          "currentMission"
+        ],
+        [
+          429,
+          "currentMission"
+        ],
+        [
+          530,
+          "currentMission"
+        ],
+        [
+          546,
+          "currentMission"
+        ],
+        [
+          570,
+          "currentMission"
+        ],
+        [
+          581,
+          "currentMission"
+        ],
+        [
+          597,
+          "currentMission"
+        ],
+        [
+          607,
+          "currentMission"
+        ],
+        [
+          617,
+          "currentMission"
+        ],
+        [
+          621,
+          "currentMission"
+        ],
+        [
+          629,
+          "currentMission"
+        ],
+        [
+          645,
+          "currentMission"
+        ],
+        [
+          653,
+          "currentMission"
+        ],
+        [
+          665,
+          "currentMission"
+        ],
+        [
+          677,
+          "currentMission"
+        ],
+        [
+          687,
+          "currentMission"
+        ],
+        [
+          1498,
+          "currentMission"
+        ],
+        [
+          1502,
+          "currentMission"
+        ],
+        [
+          1507,
+          "currentMission"
+        ],
+        [
+          2057,
+          "currentMission"
+        ],
+        [
+          2061,
+          "currentMission"
+        ],
+        [
+          2620,
+          "currentMission"
+        ],
+        [
+          2624,
+          "currentMission"
+        ],
+        [
+          2634,
+          "currentMission"
+        ]
+      ],
+      "TJZ": [
+        [
+          353,
+          "TRUCK_JUMP_ZONE"
+        ],
+        [
+          1195,
+          "TRUCK_JUMP_ZONE"
+        ],
+        [
+          1205,
+          "TRUCK_JUMP_ZONE"
+        ]
+      ]
+    },
+    "index-inline-1-61.js": {
+      "M": [
+        [
+          282,
+          "currentMission"
+        ],
+        [
+          285,
+          "currentMission"
+        ],
+        [
+          1563,
+          "currentMission"
+        ],
+        [
+          1567,
+          "currentMission"
+        ],
+        [
+          1571,
+          "currentMission"
+        ],
+        [
+          1596,
+          "currentMission"
+        ],
+        [
+          1634,
+          "currentMission"
+        ],
+        [
+          1637,
+          "currentMission"
+        ],
+        [
+          1674,
+          "currentMission"
+        ],
+        [
+          1676,
+          "currentMission"
+        ],
+        [
+          1703,
+          "currentMission"
+        ],
+        [
+          1705,
+          "currentMission"
+        ]
+      ]
+    }
+  }
+}

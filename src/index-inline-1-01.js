@@ -6,7 +6,7 @@ const { RenderPass } = __req("jsm/postprocessing/RenderPass.js");
 const { UnrealBloomPass } = __req("jsm/postprocessing/UnrealBloomPass.js");
 const { OutputPass } = __req("jsm/postprocessing/OutputPass.js");
 
-const $ = (id) => document.getElementById(id);
+const byId = (id) => document.getElementById(id);
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)),
   lerp = (a, b, t) => a + (b - a) * t,
   smooth = (a, b, v) => {
@@ -37,8 +37,8 @@ try {
     powerPreference: "high-performance",
   });
 } catch (e) {
-  $("nogl").hidden = false;
-  $("title").hidden = true;
+  byId("nogl").hidden = false;
+  byId("title").hidden = true;
   throw e;
 }
 renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));
@@ -47,7 +47,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-$("app").appendChild(renderer.domElement);
+byId("app").appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   60,
@@ -57,21 +57,21 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 /* ---------------- noise ---------------- */
-function h2(x, y) {
+function hash2(x, y) {
   let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   h ^= h >>> 16;
   return (h >>> 0) / 4294967296;
 }
-const sm = (t) => t * t * (3 - 2 * t);
-function n2(x, y) {
+const smoothstep = (t) => t * t * (3 - 2 * t);
+function valueNoise(x, y) {
   const xi = Math.floor(x),
     yi = Math.floor(y),
-    xf = sm(x - xi),
-    yf = sm(y - yi);
+    xf = smoothstep(x - xi),
+    yf = smoothstep(y - yi);
   return lerp(
-    lerp(h2(xi, yi), h2(xi + 1, yi), xf),
-    lerp(h2(xi, yi + 1), h2(xi + 1, yi + 1), xf),
+    lerp(hash2(xi, yi), hash2(xi + 1, yi), xf),
+    lerp(hash2(xi, yi + 1), hash2(xi + 1, yi + 1), xf),
     yf,
   );
 }
@@ -81,7 +81,7 @@ function fbm(x, y, o = 5) {
     f = 1,
     n = 0;
   for (let i = 0; i < o; i++) {
-    s += a * n2(x * f, y * f);
+    s += a * valueNoise(x * f, y * f);
     n += a;
     a *= 0.5;
     f *= 2.03;
@@ -149,23 +149,23 @@ sun.shadow.normalBias = 0.03;
 scene.add(sun, sun.target);
 
 /* ---------------- the city: 16 x 16 blocks, five districts ---------------- */
-const P = 96,
-  RW = 16,
-  NBK = 24,
-  HALF = (NBK * P) / 2,
+const BLOCK_PITCH = 96,
+  ROAD_WIDTH = 16,
+  BLOCK_COUNT = 24,
+  HALF = (BLOCK_COUNT * BLOCK_PITCH) / 2,
   EDGE = HALF - 6;
-const GK = (a, b) => a * 100003 + b,
+const cellKey = (a, b) => a * 100003 + b,
   CELL = 48;
-const BLD = [],
+const buildings = [],
   bgrid = new Map(),
   PROPS = new Map();
 function addProp(x, z, r, h) {
-  const k = GK(Math.floor(x / CELL), Math.floor(z / CELL));
+  const k = cellKey(Math.floor(x / CELL), Math.floor(z / CELL));
   (PROPS.get(k) || PROPS.set(k, []).get(k)).push([x, z, r, h]);
 }
 function addB(x0, x1, z0, z1, h, style) {
   const b = { x0, x1, z0, z1, h, style };
-  BLD.push(b);
+  buildings.push(b);
   for (
     let cx = Math.floor((x0 - 3) / CELL);
     cx <= Math.floor((x1 + 3) / CELL);
@@ -176,25 +176,25 @@ function addB(x0, x1, z0, z1, h, style) {
       cz <= Math.floor((z1 + 3) / CELL);
       cz++
     ) {
-      const k = GK(cx, cz);
+      const k = cellKey(cx, cz);
       (bgrid.get(k) || bgrid.set(k, []).get(k)).push(b);
     }
   return b;
 }
 function bldAt(x, z, m = 0) {
-  const c = bgrid.get(GK(Math.floor(x / CELL), Math.floor(z / CELL)));
+  const c = bgrid.get(cellKey(Math.floor(x / CELL), Math.floor(z / CELL)));
   if (!c) return null;
   for (const b of c)
     if (x > b.x0 - m && x < b.x1 + m && z > b.z0 - m && z < b.z1 + m) return b;
   return null;
 }
-const blockOf = (v) => Math.floor((v + HALF) / P);
-const blockMin = (i) => -HALF + i * P + RW / 2,
-  blockMax = (i) => -HALF + (i + 1) * P - RW / 2;
+const blockOf = (v) => Math.floor((v + HALF) / BLOCK_PITCH);
+const blockMin = (i) => -HALF + i * BLOCK_PITCH + ROAD_WIDTH / 2,
+  blockMax = (i) => -HALF + (i + 1) * BLOCK_PITCH - ROAD_WIDTH / 2;
 function inBlock(x, z) {
   const bi = blockOf(x),
     bj = blockOf(z);
-  if (bi < 0 || bj < 0 || bi >= NBK || bj >= NBK) return false;
+  if (bi < 0 || bj < 0 || bi >= BLOCK_COUNT || bj >= BLOCK_COUNT) return false;
   return (
     x > blockMin(bi) && x < blockMax(bi) && z > blockMin(bj) && z < blockMax(bj)
   );
@@ -215,7 +215,7 @@ function rampH(x, z) {
   return null;
 }
 function groundH(x, z, y = 1e9) {
-  const c = bgrid.get(GK(Math.floor(x / CELL), Math.floor(z / CELL)));
+  const c = bgrid.get(cellKey(Math.floor(x / CELL), Math.floor(z / CELL)));
   let best = null;
   if (c)
     for (const b of c)
@@ -238,7 +238,7 @@ function groundH(x, z, y = 1e9) {
 }
 // building that (x,z,y) is inside of, with a horizontal margin
 function hitB(x, z, y, m = 0) {
-  const c = bgrid.get(GK(Math.floor(x / CELL), Math.floor(z / CELL)));
+  const c = bgrid.get(cellKey(Math.floor(x / CELL), Math.floor(z / CELL)));
   if (!c) return null;
   for (const b of c)
     if (
@@ -264,7 +264,7 @@ const SPECIAL = {
 };
 const LAUNCHB = new Set(["17,17", "18,17", "17,18", "18,18", "17,16", "18,16"]);
 let DINER = null,
-  FAB = null,
+  MEGAFAB = null,
   WHEEL = null;
 const PARK = new Set(["15,9", "16,9", "15,10", "16,10"]);
 const STUNT = new Set();

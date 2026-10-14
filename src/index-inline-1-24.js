@@ -1,7 +1,7 @@
-// index-inline-1 24 — math
+// index-inline-1 24 — currentmission
 // Lines 85625-85960 of readable/index-inline-1.pretty.js (statement-aligned).
 function failCrash(v, lim = LIMIT) {
-  if (M && !M.done && M.def.id === "tutorial") {
+  if (currentMission && !currentMission.done && currentMission.def.id === "tutorial") {
     comboEnd(true);
     flash(
       "TOO HARD",
@@ -11,7 +11,7 @@ function failCrash(v, lim = LIMIT) {
     return;
   }
   if (wipeout(v)) return;
-  if (M && !M.done)
+  if (currentMission && !currentMission.done)
     finish(
       false,
       lim === LIMIT
@@ -29,7 +29,7 @@ function resetLaunch(t) {
   Object.assign(LAUNCH, { st: "idle", t: t || 0, y: 0, v: 0 });
   ROCKET.g.visible = true;
   ROCKET.g.rotation.set(0, 0, 0);
-  ROCKET.g.position.set(LS.mount.x, ROCKET.base, LS.mount.z);
+  ROCKET.g.position.set(LAUNCH_SITE.mount.x, ROCKET.base, LAUNCH_SITE.mount.z);
 }
 function emitPlume(k) {
   const R = ROCKET.g.position,
@@ -79,7 +79,7 @@ function updateLaunch(dt) {
   const L = LAUNCH,
     R = ROCKET;
   L.t += dt;
-  const d = Math.hypot(S.x - LS.mount.x, S.z - LS.mount.z);
+  const d = Math.hypot(carState.x - LAUNCH_SITE.mount.x, carState.z - LAUNCH_SITE.mount.z);
   if (L.st === "idle" && L.t >= L.cycle - 10) {
     L.st = "count";
     L.t = 0;
@@ -90,7 +90,7 @@ function updateLaunch(dt) {
       L.t = 0;
       L.v = 0;
       setTimeout(() => audio.launch(d), Math.min(4, d / 343) * 1000);
-      if (phase === "play" && d < 650 && (!M || M.done || M.def.id === "deck"))
+      if (phase === "play" && d < 650 && (!currentMission || currentMission.done || currentMission.def.id === "deck"))
         maybeShow("launch");
     }
   } else if (L.st === "up") {
@@ -98,7 +98,7 @@ function updateLaunch(dt) {
     L.y += L.v * dt;
     R.g.position.y = R.base + L.y;
     R.g.rotation.z = -clamp((L.y - 300) / 2200) * 0.55;
-    R.g.position.x = LS.mount.x + Math.max(0, L.y - 300) * 0.12;
+    R.g.position.x = LAUNCH_SITE.mount.x + Math.max(0, L.y - 300) * 0.12;
     emitPlume(1);
     {
       const dl = Math.min(4, d / 343);
@@ -117,7 +117,7 @@ function updateLaunch(dt) {
       L.half = false;
       R.g.visible = true;
       R.g.rotation.set(0, 0, 0);
-      R.g.position.set(LS.lz.x, 1300, LS.lz.z);
+      R.g.position.set(LAUNCH_SITE.lz.x, 1300, LAUNCH_SITE.lz.z);
     }
   } else if (L.st === "down") {
     const u = clamp(L.t / 15);
@@ -125,7 +125,7 @@ function updateLaunch(dt) {
     if (u > 0.3) emitPlume(0.7);
     if (!L.half && u >= 0.5) {
       L.half = true;
-      if (phase === "play" && d < 800 && (!M || M.done || M.def.id === "deck"))
+      if (phase === "play" && d < 800 && (!currentMission || currentMission.done || currentMission.def.id === "deck"))
         maybeShow("land");
     }
     if (u >= 1) {
@@ -140,11 +140,11 @@ function updateLaunch(dt) {
   R.arm.rotation.y +=
     ((L.st === "idle" ? 0 : -1.35) - R.arm.rotation.y) * Math.min(1, dt * 1.5);
   R.beacon.visible = Math.floor(clock * 1.6) % 2 === 0;
-  const ui = $("launchUI");
+  const ui = byId("launchUI");
   let txt = "";
-  if (phase === "play" && !M && L.st === "idle" && L.cycle - L.t <= 30)
+  if (phase === "play" && !currentMission && L.st === "idle" && L.cycle - L.t <= 30)
     txt = `LIFTOFF IN ${Math.ceil(L.cycle - L.t)}`;
-  if (phase === "play" && (d < 1200 || (M && M.def.id === "deck"))) {
+  if (phase === "play" && (d < 1200 || (currentMission && currentMission.def.id === "deck"))) {
     if (L.st === "count") txt = `LAUNCH · T-${Math.ceil(10 - L.t)}`;
     else if (L.st === "up" && L.t < 6) txt = "LIFTOFF";
     else if (L.st === "down") txt = "BOOSTER LANDING";
@@ -173,40 +173,40 @@ const SCORE = {
 function pop(a, pts, bad) {
   if (phase !== "play") return;
   const cm = pts > 0 && !bad;
-  if (cm && M && !M.done && M.def.id === "daily" && dailyMatch(a)) pts *= 2;
+  if (cm && currentMission && !currentMission.done && currentMission.def.id === "daily" && dailyMatch(a)) pts *= 2;
   if (cm) {
     pts = comboAdd(pts);
-    S.tank = Math.min(100, S.tank + pts / 100);
+    carState.tank = Math.min(100, carState.tank + pts / 100);
   }
   SCORE.total += pts || 0;
   if (
-    M &&
-    !M.done &&
-    (M.def.id === "stuntshow" || M.def.id === "daily") &&
+    currentMission &&
+    !currentMission.done &&
+    (currentMission.def.id === "stuntshow" || currentMission.def.id === "daily") &&
     pts > 0
   )
-    M.pts += pts;
-  earn((pts || 0) / 5);
+    currentMission.pts += pts;
+  earnCredits((pts || 0) / 5);
   const el = document.createElement("div");
   el.className = "pop" + (bad ? " bad" : "");
   el.innerHTML = `<b>${a}</b>${pts ? `<span>+${pts.toLocaleString("en-US")}</span>` : ""}${cm && COMBO.mult > 1 ? `<em>×${COMBO.mult.toFixed(1).replace(".0", "")}</em>` : ""}`;
-  $("pops").prepend(el);
+  byId("pops").prepend(el);
   setTimeout(() => el.remove(), 1900);
-  while ($("pops").children.length > 4) $("pops").lastChild.remove();
+  while (byId("pops").children.length > 4) byId("pops").lastChild.remove();
 }
 function driftScore(dt) {
   if (phase !== "play") return;
-  if (!S.air && S.dr > 0.3 && Math.abs(S.slip) > 0.12 && S.v > 11) {
-    SCORE.drift += S.v * Math.abs(S.slip) * dt * 14;
+  if (!carState.air && carState.dr > 0.3 && Math.abs(carState.slip) > 0.12 && carState.v > 11) {
+    SCORE.drift += carState.v * Math.abs(carState.slip) * dt * 14;
     SCORE.idle = 0;
   } else if (SCORE.drift > 0) {
     SCORE.idle += dt;
-    if (SCORE.idle > 0.8 || S.air) {
+    if (SCORE.idle > 0.8 || carState.air) {
       const p = Math.round(SCORE.drift);
       SCORE.drift = 0;
       if (p >= 80) {
         pop("DRIFT", p);
-        if (M && !M.done && M.def.id === "drift") M.pts += p;
+        if (currentMission && !currentMission.done && currentMission.def.id === "drift") currentMission.pts += p;
       }
     }
   }
@@ -214,7 +214,7 @@ function driftScore(dt) {
 const TOKENS = [];
 {
   const r = rng(777);
-  const tall = BLD.filter(
+  const tall = buildings.filter(
     (b) =>
       b.style >= 0 &&
       b.style !== 3 &&
@@ -231,9 +231,9 @@ const TOKENS = [];
     TOKENS.push({ x: (b.x0 + b.x1) / 2, z: (b.z0 + b.z1) / 2, y: b.h + 2.4 });
   }
   for (let i = 0; i < 5; i++) {
-    const l = -HALF + (1 + ((r() * (NBK - 1)) | 0)) * P,
+    const l = -HALF + (1 + ((r() * (BLOCK_COUNT - 1)) | 0)) * BLOCK_PITCH,
       s =
-        -HALF + P * 0.5 + (1 + ((r() * (NBK - 2)) | 0)) * P + (r() - 0.5) * 40,
+        -HALF + BLOCK_PITCH * 0.5 + (1 + ((r() * (BLOCK_COUNT - 2)) | 0)) * BLOCK_PITCH + (r() - 0.5) * 40,
       onx = r() < 0.5,
       up = r() < 0.4 ? 8 + r() * 16 : 0;
     TOKENS.push({
@@ -253,7 +253,7 @@ const TOKENS = [];
   for (let i = 0; i < 2; i++) {
     const bi = [4, 20][i],
       bj = [6, 17][i];
-    TOKENS.push({ x: -HALF + bi * P, z: -HALF + bj * P + P / 2, y: 1.4 });
+    TOKENS.push({ x: -HALF + bi * BLOCK_PITCH, z: -HALF + bj * BLOCK_PITCH + BLOCK_PITCH / 2, y: 1.4 });
   }
   for (const rp of RAMPS) {
     if (rp.name === "POND JUMP") continue;
@@ -298,7 +298,7 @@ function updateTokens(t) {
     if (
       !got &&
       phase === "play" &&
-      Math.hypot(S.x - k.x, S.y + 0.5 - k.y, S.z - k.z) < 3.4
+      Math.hypot(carState.x - k.x, carState.y + 0.5 - k.y, carState.z - k.z) < 3.4
     ) {
       SCORE.tokens.add(i);
       store.set("rfc_tokens4", JSON.stringify([...SCORE.tokens]));
@@ -323,16 +323,16 @@ function updateTokens(t) {
   });
   TOKENS.mesh.instanceMatrix.needsUpdate = true;
 }
-const mctx = $("mmap").getContext("2d");
+const mapCtx = byId("mmap").getContext("2d");
 const LANDMARKS = [
   { n: "HALO WHEEL", x: WHEEL.x, z: WHEEL.z },
-  { n: "STUNT YARD", x: -HALF + 5 * P, z: -HALF + 11 * P },
+  { n: "STUNT YARD", x: -HALF + 5 * BLOCK_PITCH, z: -HALF + 11 * BLOCK_PITCH },
   {
     n: "DINER",
     x: (DINER.b[0] + DINER.b[1]) / 2,
     z: (DINER.b[2] + DINER.b[3]) / 2,
   },
-  { n: "MEGAFAB", x: (FAB.x0 + FAB.x1) / 2, z: (FAB.z0 + FAB.z1) / 2 },
-  { n: "LAUNCH", x: LS.mount.x, z: LS.mount.z + 14 },
+  { n: "MEGAFAB", x: (MEGAFAB.x0 + MEGAFAB.x1) / 2, z: (MEGAFAB.z0 + MEGAFAB.z1) / 2 },
+  { n: "LAUNCH", x: LAUNCH_SITE.mount.x, z: LAUNCH_SITE.mount.z + 14 },
   { n: "PARK", x: 384, z: -240 },
 ];

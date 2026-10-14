@@ -13,7 +13,7 @@ function modeOpen(key) {
 }
 function lockPaint() {
   for (const k in MODELOCK) {
-    const b = $(k);
+    const b = byId(k);
     if (!b) continue;
     const open = modeOpen(k),
       ch = chapterOf(MODELOCK[k].ch);
@@ -57,7 +57,7 @@ document.addEventListener(
 // progress lost to the old reload bug comes back from what was actually cleared
 {
   let nd = 0;
-  while (nd < CH.length && MIS[CH[nd].mis] && clearedId(MIS[CH[nd].mis].id))
+  while (nd < CHAPTERS.length && MISSIONS[CHAPTERS[nd].mis] && clearedId(MISSIONS[CHAPTERS[nd].mis].id))
     nd++;
   if (nd > STORY.done) {
     STORY.done = nd;

@@ -1,6 +1,6 @@
 // index-inline-1 17 — three
 // Lines 83479-83813 of readable/index-inline-1.pretty.js (statement-aligned).
-const S = {
+const carState = {
   x: 0,
   z: 0,
   y: 0,
@@ -44,14 +44,14 @@ let phase = "gate",
   lastS = 0,
   mission = null,
   lastMission = null,
-  M = null,
+  currentMission = null,
   prevZ = 0;
-const cin = { on: false, t: 0, dur: 0, full: false, k0: 0, lit: false };
+const cinematic = { on: false, t: 0, dur: 0, full: false, k0: 0, lit: false };
 function startArmCin() {
   const full = revealOK();
   if (full) ONCE.arm = true;
-  rco = null;
-  Object.assign(cin, {
+  calloutState = null;
+  Object.assign(cinematic, {
     on: true,
     t: 0,
     kind: "arm",
@@ -59,26 +59,26 @@ function startArmCin() {
     rev: full,
     rt: !full,
     dur: full ? REVEAL_DUR : 1.3,
-    k0: S.bayK,
+    k0: carState.bayK,
     lit: false,
     cue: 0,
     shot: null,
-    mv: Math.abs(S.v) > 3,
+    mv: Math.abs(carState.v) > 3,
   });
-  $("cinK").textContent = "SYSTEM 04 · REAR BAY";
-  $("cinT").textContent = "ROCKET MODE";
-  $("cinS").textContent = "PLATE UNLOCK · SPOOL 1.2 S";
-  $("cinS2").textContent = "4 × COLD-GAS THRUSTERS · ONLINE";
-  $("slowx").textContent = full
-    ? Math.abs(S.v) > 3
+  byId("cinK").textContent = "SYSTEM 04 · REAR BAY";
+  byId("cinT").textContent = "ROCKET MODE";
+  byId("cinS").textContent = "PLATE UNLOCK · SPOOL 1.2 S";
+  byId("cinS2").textContent = "4 × COLD-GAS THRUSTERS · ONLINE";
+  byId("slowx").textContent = full
+    ? Math.abs(carState.v) > 3
       ? "0.12×"
       : "0.30×"
     : "0.22×";
   document.body.classList.toggle("cine", full);
-  $("cinS2").classList.remove("on");
-  $("cinT").classList.remove("go");
-  void $("cinT").offsetWidth;
-  $("cinT").classList.add("go");
+  byId("cinS2").classList.remove("on");
+  byId("cinT").classList.remove("go");
+  void byId("cinT").offsetWidth;
+  byId("cinT").classList.add("go");
   if (full) {
   } else
     audio.seq([
@@ -138,7 +138,7 @@ const vecs = LIFTN.map(([x, z]) => {
   body.add(g);
   return g;
 });
-const rvecs = BAYP.map(([x, y]) => {
+const rvecs = BAY_PORTS.map(([x, y]) => {
   const g = new THREE.Group();
   g.position.set(x, y, 2.42);
   const shaft = new THREE.Mesh(
@@ -187,7 +187,7 @@ const SHOW = {
       },
       {
         at: 0.3,
-        a: () => new THREE.Vector3(S.x, groundH(S.x, S.z, S.y).h + 0.05, S.z),
+        a: () => new THREE.Vector3(carState.x, groundH(carState.x, carState.z, carState.y).h + 0.05, carState.z),
         dx: 170,
         dy: 70,
         t: "GROUND EFFECT",
@@ -231,7 +231,7 @@ const SHOW = {
       },
       {
         at: 0.5,
-        a: () => new THREE.Vector3(LS.tower.x, LS.tower.h, LS.tower.z),
+        a: () => new THREE.Vector3(LAUNCH_SITE.tower.x, LAUNCH_SITE.tower.h, LAUNCH_SITE.tower.z),
         dx: 170,
         dy: -60,
         t: "LAUNCH TOWER",
@@ -257,7 +257,7 @@ const SHOW = {
       },
       {
         at: 0.42,
-        a: () => new THREE.Vector3(LS.lz.x, 0.4, LS.lz.z),
+        a: () => new THREE.Vector3(LAUNCH_SITE.lz.x, 0.4, LAUNCH_SITE.lz.z),
         dx: -170,
         dy: 30,
         t: "LANDING ZONE",

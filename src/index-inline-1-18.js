@@ -1,7 +1,7 @@
 // index-inline-1 18 — kind
 // Lines 83814-84086 of readable/index-inline-1.pretty.js (statement-aligned).
 function maybeShow(kind) {
-  if (!showOn || cin.on || phase !== "play") return;
+  if (!showOn || cinematic.on || phase !== "play") return;
   if (kind === "hover") {
     if (ONCE.hover) return;
     ONCE.hover = true;
@@ -17,14 +17,14 @@ function maybeShow(kind) {
     else if (kind === "jump" && sessMini()) miniSlow();
     return;
   }
-  if (kind !== "jump" || (S.jumpR && S.jumpR.H >= 3.2)) {
+  if (kind !== "jump" || (carState.jumpR && carState.jumpR.H >= 3.2)) {
     SEEN.add(kind);
     saveSeen();
   }
   const now = performance.now() / 1000;
   if (kind === "jump") {
-    if (M && !M.done && (M.def.race || M.def.id === "chase")) return;
-    const big = S.jumpR && S.jumpR.H >= 3.2;
+    if (currentMission && !currentMission.done && (currentMission.def.race || currentMission.def.id === "chase")) return;
+    const big = carState.jumpR && carState.jumpR.H >= 3.2;
     if (
       (!seen.jump ||
         (now - lastShow > (big ? 8 : 20) && Math.random() < (big ? 1 : 0.4))) &&
@@ -47,31 +47,31 @@ function maybeShow(kind) {
 }
 function startShow(kind) {
   const D = SHOW[kind];
-  Object.assign(cin, {
+  Object.assign(cinematic, {
     on: true,
     t: 0,
     kind,
     full: true,
     dur: D.dur,
-    k0: S.bayK,
+    k0: carState.bayK,
     lit: true,
   });
   document.body.classList.add("cine", "show");
-  $("cinK").textContent = D.k;
-  $("cinT").textContent = D.title;
-  $("cinS2").textContent = D.sub;
-  $("cinS2").classList.add("on");
-  $("cinT").classList.remove("go");
-  void $("cinT").offsetWidth;
-  $("cinT").classList.add("go");
-  $("slowx").textContent = D.slow || "0.20×";
+  byId("cinK").textContent = D.k;
+  byId("cinT").textContent = D.title;
+  byId("cinS2").textContent = D.sub;
+  byId("cinS2").classList.add("on");
+  byId("cinT").classList.remove("go");
+  void byId("cinT").offsetWidth;
+  byId("cinT").classList.add("go");
+  byId("slowx").textContent = D.slow || "0.20×";
   document.querySelector("#cine .tag").style.visibility =
     D.ts && !D.slow ? "hidden" : "";
-  cin.freeze = !!D.freeze;
-  if (cin.freeze) $("cutUI").hidden = false;
-  const L = $("callouts");
+  cinematic.freeze = !!D.freeze;
+  if (cinematic.freeze) byId("cutUI").hidden = false;
+  const L = byId("callouts");
   L.innerHTML = '<svg id="coSvg" width="100%" height="100%"></svg>';
-  cin.calls = D.call.map((c) => {
+  cinematic.calls = D.call.map((c) => {
     const d = document.createElement("div");
     d.className = "co";
     d.innerHTML = `<b>${c.t}</b><span>${c.v}</span>`;
@@ -82,14 +82,14 @@ function startShow(kind) {
       "circle",
     );
     dot.setAttribute("r", "0");
-    $("coSvg").append(ln, dot);
+    byId("coSvg").append(ln, dot);
     return { ...c, d, ln, dot, on: false };
   });
   if (kind === "hover") {
-    const g = groundH(S.x, S.z, S.y).h;
-    shock.position.set(S.x, g + 0.06, S.z);
+    const g = groundH(carState.x, carState.z, carState.y).h;
+    shock.position.set(carState.x, g + 0.06, carState.z);
     shock.visible = true;
-    cin.shock = 0;
+    cinematic.shock = 0;
     audio.seq([
       [0, "whoosh"],
       [120, "hit"],
@@ -102,20 +102,20 @@ function startShow(kind) {
     ]);
 }
 function showTick() {
-  if (!cin.on || cin.kind === "arm") return;
-  const p = clamp(cin.t / cin.dur),
+  if (!cinematic.on || cinematic.kind === "arm") return;
+  const p = clamp(cinematic.t / cinematic.dur),
     env = clamp(Math.min(p / 0.12, (1 - p) / 0.14));
   vecMat.opacity = 0.9 * env;
   plumeMat.opacity = 0.13 * env;
-  (cin.kind === "hover" ? vecs : cin.kind === "boost" ? rvecs : []).forEach(
+  (cinematic.kind === "hover" ? vecs : cinematic.kind === "boost" ? rvecs : []).forEach(
     (g, i) => {
       g.visible = true;
       const pulse = 1 + 0.12 * Math.sin(clock * 40 + i);
       g.scale.set(1, pulse, 1);
-      if (cin.kind === "boost") g.scale.set(1, 1, pulse);
+      if (cinematic.kind === "boost") g.scale.set(1, 1, pulse);
     },
   );
-  if (cin.kind === "hover") {
+  if (cinematic.kind === "hover") {
     const u = clamp(p / 0.5);
     shock.scale.setScalar(1 + u * 9);
     shock.material.opacity = 0.7 * (1 - u);
@@ -124,7 +124,7 @@ function showTick() {
   const W = innerWidth,
     H = innerHeight,
     placed = [];
-  cin.calls.forEach((c) => {
+  cinematic.calls.forEach((c) => {
     if (!c.on && p >= c.at) {
       c.on = true;
       c.d.classList.add("on");
@@ -159,32 +159,32 @@ function showTick() {
     c.d.classList.toggle("l", c.dx < 0);
     c.d.style.opacity = c.on ? Math.min(1, (1 - p) / 0.12) : 0;
   });
-  const agl = S.y - groundH(S.x, S.z, S.y).h,
-    hs = Math.hypot(S.vx, S.vz);
-  $("cinS").textContent =
-    cin.kind === "launch"
+  const agl = carState.y - groundH(carState.x, carState.z, carState.y).h,
+    hs = Math.hypot(carState.vx, carState.vz);
+  byId("cinS").textContent =
+    cinematic.kind === "launch"
       ? `ROCKET ALT ${Math.round(LAUNCH.y)} m · ${Math.round(LAUNCH.v * 3.6)} KM/H`
-      : cin.kind === "hover"
-        ? `ALT ${agl.toFixed(1)} m · V·Z ${S.vy.toFixed(1)} m/s · AIR ${Math.round(S.tank)}%`
-        : `${Math.round(hs * (metric ? 3.6 : MPH))} ${metric ? "KM/H" : "MPH"} · HEAT ${Math.round(S.heat)}° · AIR ${Math.round(S.tank)}%`;
+      : cinematic.kind === "hover"
+        ? `ALT ${agl.toFixed(1)} m · V·Z ${carState.vy.toFixed(1)} m/s · AIR ${Math.round(carState.tank)}%`
+        : `${Math.round(hs * (metric ? 3.6 : MPH))} ${metric ? "KM/H" : "MPH"} · HEAT ${Math.round(carState.heat)}° · AIR ${Math.round(carState.tank)}%`;
 }
 function endCin() {
-  cin.rev = false;
-  rco = null;
+  cinematic.rev = false;
+  calloutState = null;
   vecs.concat(rvecs).forEach((g) => (g.visible = false));
   shock.visible = false;
   vecMat.opacity = 0;
   plumeMat.opacity = 0;
-  $("callouts").innerHTML = "";
+  byId("callouts").innerHTML = "";
   document.body.classList.remove("show");
-  cin.on = false;
+  cinematic.on = false;
   document.body.classList.remove("cine");
   document.querySelector("#cine .tag").style.visibility = "";
-  if (cin.freeze) {
-    cin.freeze = false;
-    $("cutUI").hidden = true;
+  if (cinematic.freeze) {
+    cinematic.freeze = false;
+    byId("cutUI").hidden = true;
     snapCam();
-    const f = $("flash");
+    const f = byId("flash");
     f.classList.remove("fl", "fb");
     void f.offsetWidth;
     f.classList.add("fb");
@@ -192,16 +192,16 @@ function endCin() {
 }
 function snapCam() {
   camPos.set(
-    S.x + Math.sin(S.yaw) * 5.6,
-    S.y + 1.8,
-    S.z + Math.cos(S.yaw) * 5.6,
+    carState.x + Math.sin(carState.yaw) * 5.6,
+    carState.y + 1.8,
+    carState.z + Math.cos(carState.yaw) * 5.6,
   );
-  look.set(S.x - Math.sin(S.yaw) * 6, S.y + 0.75, S.z - Math.cos(S.yaw) * 6);
+  look.set(carState.x - Math.sin(carState.yaw) * 6, carState.y + 0.75, carState.z - Math.cos(carState.yaw) * 6);
   camera.position.copy(camPos);
   camera.lookAt(look);
 }
 // on phones, speak in button names instead of keys
-function tx(s) {
+function touchText(s) {
   if (!isTouch || !s) return s;
   return s
     .replace(/(Hit|Press) SPACE \+ X for ROCKET MODE/g, "Tap ROCKET")
@@ -217,7 +217,7 @@ function tx(s) {
     .replace(/\bSPACE\b/g, "HOVER");
 }
 /* ---------------- economy: credits, garage, boosters ---------------- */
-const jget = (k, d) => {
+const jsonGet = (k, d) => {
   try {
     const v = JSON.parse(store.get(k));
     return v == null ? d : v;
@@ -225,42 +225,42 @@ const jget = (k, d) => {
     return d;
   }
 };
-const ECO = {
-  cr: jget("rfc_cr", 3000),
-  upg: jget("rfc_upg", {}),
-  owned: new Set(jget("rfc_own", ["roadster"])),
+const ECONOMY = {
+  cr: jsonGet("rfc_cr", 3000),
+  upg: jsonGet("rfc_upg", {}),
+  owned: new Set(jsonGet("rfc_own", ["roadster"])),
   sel: "roadster",
-  skins: new Set(jget("rfc_skins", ["red", "white", "midnight"])),
+  skins: new Set(jsonGet("rfc_skins", ["red", "white", "midnight"])),
   skin: store.get("rfc_skin") || "red",
   refund: 0,
 };
 // one car now: the Roadster. Cars bought in older versions become a skin or a refund.
 if (!store.get("rfc_mig14")) {
-  if (ECO.owned.has("carbon")) ECO.skins.add("carbon");
-  if (store.get("rfc_sel") === "carbon") ECO.skin = "carbon";
-  ECO.refund =
-    (ECO.owned.has("cab") ? 1500 : 0) + (ECO.owned.has("pickup") ? 2500 : 0);
-  ECO.cr += ECO.refund;
-  ECO.owned = new Set(["roadster"]);
+  if (ECONOMY.owned.has("carbon")) ECONOMY.skins.add("carbon");
+  if (store.get("rfc_sel") === "carbon") ECONOMY.skin = "carbon";
+  ECONOMY.refund =
+    (ECONOMY.owned.has("cab") ? 1500 : 0) + (ECONOMY.owned.has("pickup") ? 2500 : 0);
+  ECONOMY.cr += ECONOMY.refund;
+  ECONOMY.owned = new Set(["roadster"]);
   store.set("rfc_mig14", "1");
 }
 function saveEco() {
-  store.set("rfc_cr", JSON.stringify(ECO.cr));
-  store.set("rfc_upg", JSON.stringify(ECO.upg));
-  store.set("rfc_own", JSON.stringify([...ECO.owned]));
+  store.set("rfc_cr", JSON.stringify(ECONOMY.cr));
+  store.set("rfc_upg", JSON.stringify(ECONOMY.upg));
+  store.set("rfc_own", JSON.stringify([...ECONOMY.owned]));
   store.set("rfc_sel", "roadster");
-  store.set("rfc_skins", JSON.stringify([...ECO.skins]));
-  store.set("rfc_skin", ECO.skin);
-  const c = $("crv");
-  if (c) c.textContent = ECO.cr.toLocaleString("en-US");
+  store.set("rfc_skins", JSON.stringify([...ECONOMY.skins]));
+  store.set("rfc_skin", ECONOMY.skin);
+  const c = byId("crv");
+  if (c) c.textContent = ECONOMY.cr.toLocaleString("en-US");
 }
-function earn(n) {
+function earnCredits(n) {
   if (n > 0) {
-    ECO.cr += Math.round(n * (1 + (SKIN().perk || 0)));
+    ECONOMY.cr += Math.round(n * (1 + (activeSkin().perk || 0)));
     saveEco();
   }
 }
-const VEH = [
+const VEHICLES = [
   {
     id: "roadster",
     n: "ROADSTER",

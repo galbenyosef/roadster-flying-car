@@ -1,4 +1,4 @@
-// index-inline-1 47 — three
+// index-inline-1 47 — carstate
 // Lines 93265-93610 of readable/index-inline-1.pretty.js (statement-aligned).
 const TSTEP = [
   {
@@ -6,7 +6,7 @@ const TSTEP = [
     hl: ["gas"],
     say: null,
     obj: () =>
-      `Hold ${KY("gas")} to drive · ${Math.round(Math.max(0, S.v) * MPH)} / 30 mph`,
+      `Hold ${KEY_LABELS("gas")} to drive · ${Math.round(Math.max(0, carState.v) * MPH)} / 30 mph`,
   },
   {
     t: "STEER",
@@ -20,64 +20,64 @@ const TSTEP = [
     hl: ["brake"],
     say: "Brakes. She stops harder than you think.",
     obj: () =>
-      `Hold ${KY("brake")} to stop · ${Math.round(Math.abs(S.v) * MPH)} mph`,
+      `Hold ${KEY_LABELS("brake")} to stop · ${Math.round(Math.abs(carState.v) * MPH)} mph`,
   },
   {
     t: "ROCKET MODE",
     hl: ["rocket"],
     say: "Here comes the good part. Open the plate.",
     obj: () =>
-      S.armed
-        ? S.spool < 1.2
+      carState.armed
+        ? carState.spool < 1.2
           ? "Spooling the thrusters…"
           : ""
-        : `Press ${KY("rocket")}: ROCKET MODE`,
+        : `Press ${KEY_LABELS("rocket")}: ROCKET MODE`,
   },
   {
     t: "HOVER",
     hl: ["hover"],
     say: "Hold to lift. Let go and she sinks, slow and safe.",
     obj: () =>
-      `Hold ${KY("hover")} to climb · ${Math.max(0, S.y - groundH(S.x, S.z, S.y).h).toFixed(1)} / 6 m`,
+      `Hold ${KEY_LABELS("hover")} to climb · ${Math.max(0, carState.y - groundH(carState.x, carState.z, carState.y).h).toFixed(1)} / 6 m`,
   },
   {
     t: "FLY",
     hl: ["hover", "gas", "steer"],
     say: "Gas still means forward, even up here. Tap hover to keep your height.",
     obj: () =>
-      S.air
-        ? `${KY("gas")} flies forward · ${Math.min(40, Math.round(Math.hypot(S.x - M.p0[0], S.z - M.p0[1])))} / 40 m`
-        : `Hold ${KY("hover")} to lift again`,
+      carState.air
+        ? `${KEY_LABELS("gas")} flies forward · ${Math.min(40, Math.round(Math.hypot(carState.x - currentMission.p0[0], carState.z - currentMission.p0[1])))} / 40 m`
+        : `Hold ${KEY_LABELS("hover")} to lift again`,
   },
   {
     t: "LAND",
     hl: [],
     say: "Hands off. She sets you down by herself, nice and soft.",
-    obj: () => (S.air ? "Let go of everything · she lands herself" : "Landed"),
+    obj: () => (carState.air ? "Let go of everything · she lands herself" : "Landed"),
   },
   {
     t: "BOOST",
     hl: ["boost", "gas"],
     say: "And this is the rocket. Hold boost with the gas. Hold on.",
     obj: () =>
-      `Hold ${KY("boost")} + ${KY("gas")} · ${Math.round(Math.max(0, S.v) * MPH)} mph`,
+      `Hold ${KEY_LABELS("boost")} + ${KEY_LABELS("gas")} · ${Math.round(Math.max(0, carState.v) * MPH)} mph`,
   },
 ];
 function tutTarget() {
-  if (!M) return null;
-  return M.step === 1 ? { x: TG1[0], z: TG1[1] } : null;
+  if (!currentMission) return null;
+  return currentMission.step === 1 ? { x: TUTORIAL_PAD[0], z: TUTORIAL_PAD[1] } : null;
 }
 function tutHide() {
   if (TUTR) TUTR.visible = false;
   tutHL([]);
-  if (DRN) DRN.g.visible = false;
+  if (DRONE) DRONE.g.visible = false;
 }
 function tutHL(list) {
-  for (const k in TBTN) {
-    const e = $(TBTN[k]);
+  for (const k in TOUCH_BUTTONS) {
+    const e = byId(TOUCH_BUTTONS[k]);
     if (e) e.classList.toggle("hl", list.includes(k));
   }
-  const h = $("ctlHint");
+  const h = byId("ctlHint");
   if (!h) return;
   if (isTouch || !list.length) {
     h.classList.remove("on");
@@ -89,39 +89,39 @@ function tutHL(list) {
   h.classList.add("on");
 }
 function tutSpawn() {
-  if (TUT.live && M && M.def.id === "tutorial" && !M.done) {
-    const k = M.step,
-      c = M.cp;
+  if (TUTORIAL.live && currentMission && currentMission.def.id === "tutorial" && !currentMission.done) {
+    const k = currentMission.step,
+      c = currentMission.cp;
     if (k <= 3 || !c) {
-      place(CARP.x, CARP.z, Math.PI / 2);
+      place(CAR_START.x, CAR_START.z, Math.PI / 2);
     } else place(c[0], c[1], c[2]);
     if (k >= 4) {
-      S.armed = true;
-      S.spool = 1.2;
-      S.bayK = 1;
+      carState.armed = true;
+      carState.spool = 1.2;
+      carState.bayK = 1;
     }
-    S.tank = 100;
-    S.heat = 25;
+    carState.tank = 100;
+    carState.heat = 25;
     if (flashT <= 0) flash("TRY AGAIN", "same step · no rush", 1.6);
     return;
   }
-  place(CARP.x, CARP.z, Math.PI / 2);
+  place(CAR_START.x, CAR_START.z, Math.PI / 2);
 }
 function tutEnter(M, k) {
   M.step = k;
   M.st = clock;
   M.acc = 0;
-  M.p0 = [S.x, S.z];
-  if (k === 4) M.cp = [S.x, S.z, S.yaw];
+  M.p0 = [carState.x, carState.z];
+  if (k === 4) M.cp = [carState.x, carState.z, carState.yaw];
   const T = TSTEP[k];
-  DZ.visible = k === 1;
-  if (DZ.visible) {
+  DROP_ZONE.visible = k === 1;
+  if (DROP_ZONE.visible) {
     zoneColor(0xffc24a);
-    DZ.position.set(TG1[0], 0, TG1[1]);
+    DROP_ZONE.position.set(TUTORIAL_PAD[0], 0, TUTORIAL_PAD[1]);
   }
   if (k === 7) {
-    S.tank = 100;
-    S.heat = Math.min(S.heat, 40);
+    carState.tank = 100;
+    carState.heat = Math.min(carState.heat, 40);
   }
   tutHL(T.hl);
   if (k > 0) {
@@ -138,22 +138,22 @@ function tutEnter(M, k) {
 function tutTick(M, dt, ev, el) {
   if (!M.tutOn) {
     M.tutOn = true;
-    TUT.live = true;
+    TUTORIAL.live = true;
     tutEnter(M, 0);
   }
   const k = M.step,
-    agl = S.y - groundH(S.x, S.z, S.y).h;
+    agl = carState.y - groundH(carState.x, carState.z, carState.y).h;
   let next = false;
-  if (k === 0) next = S.v * MPH >= 30;
-  else if (k === 1) next = Math.hypot(S.x - TG1[0], S.z - TG1[1]) < 7;
-  else if (k === 2) next = Math.abs(S.v) < 0.4 && !S.air;
-  else if (k === 3) next = S.armed && S.spool >= 1.2 && !cin.on;
-  else if (k === 4) next = S.air && agl >= 6;
+  if (k === 0) next = carState.v * MPH >= 30;
+  else if (k === 1) next = Math.hypot(carState.x - TUTORIAL_PAD[0], carState.z - TUTORIAL_PAD[1]) < 7;
+  else if (k === 2) next = Math.abs(carState.v) < 0.4 && !carState.air;
+  else if (k === 3) next = carState.armed && carState.spool >= 1.2 && !cinematic.on;
+  else if (k === 4) next = carState.air && agl >= 6;
   else if (k === 5)
-    next = S.air && Math.hypot(S.x - M.p0[0], S.z - M.p0[1]) >= 40;
+    next = carState.air && Math.hypot(carState.x - M.p0[0], carState.z - M.p0[1]) >= 40;
   else if (k === 6) next = !!(ev && ev.land != null);
   else if (k === 7) {
-    if (S.thrust === 2) M.acc += dt;
+    if (carState.thrust === 2) M.acc += dt;
     if (M.acc >= 1.1) {
       tutHL([]);
       finish(
@@ -167,23 +167,23 @@ function tutTick(M, dt, ev, el) {
   if (next && k < 7) tutEnter(M, k + 1);
   const n = M.step;
   let o = TSTEP[n].obj();
-  if (n >= 4 && !S.armed && !M.done) {
-    o = `Press ${KY("rocket")} again: ROCKET MODE is off`;
+  if (n >= 4 && !carState.armed && !M.done) {
+    o = `Press ${KEY_LABELS("rocket")} again: ROCKET MODE is off`;
     tutHL(["rocket"]);
   }
   return [o, `STEP ${n + 1} / ${TSTEP.length}`];
 }
-$("tutSkip").addEventListener("click", (e) => {
+byId("tutSkip").addEventListener("click", (e) => {
   e.stopPropagation();
-  if (M && !M.done && M.def.id === "tutorial" && phase === "play")
+  if (currentMission && !currentMission.done && currentMission.def.id === "tutorial" && phase === "play")
     finish(
       true,
       "Tutorial skipped. Replay it any time: it is TEST 00 in the list.",
-      { time: clock - M.t0 },
+      { time: clock - currentMission.t0 },
     );
 });
-MIS.find((m) => m.id === "jam").n = "20";
-MIS.push({
+MISSIONS.find((m) => m.id === "jam").n = "20";
+MISSIONS.push({
   id: "tutorial",
   r: 200,
   n: "00",
@@ -191,27 +191,27 @@ MIS.push({
   b: "The controls, one at a time: gas, steer, brake, Rocket Mode, hover, fly, land and boost. No clock, no fail.",
   spawn: () => tutSpawn(),
 });
-CH[0] = Object.assign({}, CH[0], {
+CHAPTERS[0] = Object.assign({}, CHAPTERS[0], {
   t: "FIRST DRIVE",
-  mis: MI("tutorial"),
+  mis: missionIndex("tutorial"),
   who: "MAE",
   intro: "New car, new rules. One control at a time, I'll talk you through it.",
   outro: "Look at you. Drives, flies, lands. Oh no. Zero, my drone!",
 });
 EARN.diamond.have = () =>
-  MIS.filter((m) => !m.hidden && m.id !== "tutorial" && medalOf(m.id) >= 3)
+  MISSIONS.filter((m) => !m.hidden && m.id !== "tutorial" && medalOf(m.id) >= 3)
     .length;
 EARN.diamond.need = () =>
-  MIS.filter((m) => !m.hidden && m.id !== "tutorial").length;
+  MISSIONS.filter((m) => !m.hidden && m.id !== "tutorial").length;
 
 /* ---- per-frame hook ---- */
 function v23Tick(rdt, dt) {
-  if (cin.on && cin.rev) revealTick(dt);
-  const sk = phase === "play" && cin.on && (cin.rev || cin.kind === "hover");
-  if ($("cinSkip").hidden === sk) $("cinSkip").hidden = !sk;
+  if (cinematic.on && cinematic.rev) revealTick(dt);
+  const sk = phase === "play" && cinematic.on && (cinematic.rev || cinematic.kind === "hover");
+  if (byId("cinSkip").hidden === sk) byId("cinSkip").hidden = !sk;
   const ts =
-    phase === "play" && M && !M.done && M.def.id === "tutorial" && !cin.on;
-  if ($("tutSkip").hidden === ts) $("tutSkip").hidden = !ts;
+    phase === "play" && currentMission && !currentMission.done && currentMission.def.id === "tutorial" && !cinematic.on;
+  if (byId("tutSkip").hidden === ts) byId("tutSkip").hidden = !ts;
 }
 MEDAL.rings = { t: 42, s: 55 }; // hover is slower since V23
 MEDAL.launch = { t: 0.65, s: 0.8 }; // boost is a rocket since V24
@@ -219,7 +219,7 @@ MEDAL.launch = { t: 0.65, s: 0.8 }; // boost is a rocket since V24
 /* ================= V25: story missions with films · Rogue Drone · route previews ================= */
 // moving instanced meshes kept a bounding sphere from before they were placed, so traffic and CrewBots vanished
 // whenever the city origin was off screen while still colliding. Never cull them.
-for (const T of Object.values(VT))
+for (const T of Object.values(VEHICLE_TYPES))
   if (T.meshes)
     T.meshes.forEach((m) => {
       m.frustumCulled = false;
@@ -230,7 +230,7 @@ if (TRAFFIC.wheels) TRAFFIC.wheels.frustumCulled = false;
 });
 
 /* ---- the drone ---- */
-var DRN = (() => {
+var DRONE = (() => {
   const g = new THREE.Group(),
     dark = new THREE.MeshStandardMaterial({
       color: 0x1b1e24,

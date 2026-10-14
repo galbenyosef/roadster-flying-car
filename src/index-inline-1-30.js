@@ -1,40 +1,40 @@
-// index-inline-1 30 — three
+// index-inline-1 30 — carstate
 // Lines 87858-88198 of readable/index-inline-1.pretty.js (statement-aligned).
 function introTick(dt) {
   const t0 = introT;
   introT += dt;
   const t = introT;
-  if (t >= ICUT[ICUT.length - 1]) {
+  if (t >= INTRO_CUTS[INTRO_CUTS.length - 1]) {
     endIntro();
     return;
   }
   let s = 0;
-  while (t >= ICUT[s + 1]) s++;
+  while (t >= INTRO_CUTS[s + 1]) s++;
   if (s !== introShot) {
     introShot = s;
-    icut(s === 0);
-    $("ilines").classList.toggle("on", s === 1 || s === 2);
+    introCut(s === 0);
+    byId("ilines").classList.toggle("on", s === 1 || s === 2);
     if (s === 5) {
-      $("itext").classList.remove("slam");
-      $("itext").innerHTML = "";
-      $("ihero").classList.add("on");
+      byId("itext").classList.remove("slam");
+      byId("itext").innerHTML = "";
+      byId("ihero").classList.add("on");
     }
   }
-  ITXT.forEach(([at, a, b]) => {
+  INTRO_TITLES.forEach(([at, a, b]) => {
     if (t0 < at && t >= at) itext(a, b);
   });
-  ISND.forEach(([at, fn]) => {
+  INTRO_SOUNDS.forEach(([at, fn]) => {
     if (t0 < at && t >= at) audio[fn]();
   });
-  const u = (t - ICUT[s]) / (ICUT[s + 1] - ICUT[s]),
+  const u = (t - INTRO_CUTS[s]) / (INTRO_CUTS[s + 1] - INTRO_CUTS[s]),
     e = easeIO(u);
   let hy = 0,
     bk = 0;
   introGlow = 0;
-  S.x = 3.5;
-  S.z = introZ(t);
-  S.v = introV(t);
-  S.yaw = 0;
+  carState.x = 3.5;
+  carState.z = introZ(t);
+  carState.v = introV(t);
+  carState.yaw = 0;
   if (s === 3) {
     bk = clamp((u - 0.3) / 0.5);
     introGlow = u > 0.7 ? 2 + 9 * clamp((u - 0.7) / 0.25) : 0;
@@ -49,15 +49,15 @@ function introTick(dt) {
     bk = 1 - clamp((u - 0.84) / 0.16);
     introGlow = 9 * bk;
   }
-  S.y = hy;
-  S.bayK = bk;
+  carState.y = hy;
+  carState.bayK = bk;
   const r = Math.random;
   if (introGlow > 3 && r() < 0.5) {
-    const n = BAYP[(r() * 4) | 0];
+    const n = BAY_PORTS[(r() * 4) | 0];
     gas.emit(
-      S.x + n[0],
-      S.y + n[1],
-      S.z + 2.5,
+      carState.x + n[0],
+      carState.y + n[1],
+      carState.z + 2.5,
       (r() - 0.5) * 0.6,
       0.2 + r() * 0.4,
       3 + r() * 2,
@@ -66,12 +66,12 @@ function introTick(dt) {
       1.4,
     );
   }
-  if (S.v > 20 && r() < 0.5) {
+  if (carState.v > 20 && r() < 0.5) {
     for (const sx of [-0.9, 0.9])
       dust.emit(
-        S.x + sx,
+        carState.x + sx,
         0.25,
-        S.z + 1.6,
+        carState.z + 1.6,
         (r() - 0.5) * 2,
         0.3 + r() * 0.5,
         8 + r() * 6,
@@ -83,9 +83,9 @@ function introTick(dt) {
   if (s === 3 && u < 0.35 && r() < 0.7) {
     for (const sx of [-0.9, 0.9])
       smoke.emit(
-        S.x + sx,
+        carState.x + sx,
         0.2,
-        S.z + 1.4,
+        carState.z + 1.4,
         (r() - 0.5) * 1.5,
         0.4 + r(),
         3 + r() * 3,
@@ -103,9 +103,9 @@ function introTick(dt) {
         [0.7, 1.2],
       ][(r() * 4) | 0];
       gas.emit(
-        S.x + c[0],
-        S.y + 0.1,
-        S.z + c[1],
+        carState.x + c[0],
+        carState.y + 0.1,
+        carState.z + c[1],
         (r() - 0.5) * 1.5,
         -9 - r() * 5,
         (r() - 0.5) * 1.5,
@@ -119,9 +119,9 @@ function introTick(dt) {
         const an = r() * 6.283,
           rr = 1.5 + r();
         dust.emit(
-          S.x + Math.cos(an) * rr,
+          carState.x + Math.cos(an) * rr,
           0.2,
-          S.z + Math.sin(an) * rr,
+          carState.z + Math.sin(an) * rr,
           Math.cos(an) * (7 + r() * 5),
           0.3 + r(),
           Math.sin(an) * (7 + r() * 5),
@@ -131,21 +131,21 @@ function introTick(dt) {
         );
       }
   }
-  const C = ICAM[s];
-  car.position.set(S.x, S.y, S.z);
+  const C = INTRO_CAMS[s];
+  car.position.set(carState.x, carState.y, carState.z);
   car.rotation.set(0, 0, 0);
   car.updateMatrixWorld();
   let P, Tg;
   if (C.aerial) {
     P = new THREE.Vector3(
-      S.x + lerp(-34, -12, e),
+      carState.x + lerp(-34, -12, e),
       lerp(120, 30, e),
-      S.z + lerp(170, 62, e),
+      carState.z + lerp(170, 62, e),
     );
-    Tg = new THREE.Vector3(S.x, lerp(0, 2, e), S.z - lerp(80, 28, e));
+    Tg = new THREE.Vector3(carState.x, lerp(0, 2, e), carState.z - lerp(80, 28, e));
   } else if (C.byWorld) {
     P = new THREE.Vector3(-5.4, 0.55, introZ(3.55));
-    Tg = new THREE.Vector3(S.x, 0.6, S.z);
+    Tg = new THREE.Vector3(carState.x, 0.6, carState.z);
   } else {
     let pl, tl;
     if (C.orbit) {
@@ -154,11 +154,11 @@ function introTick(dt) {
       pl = [Math.sin(a) * rr, lerp(2.4, 1.5, e), Math.cos(a) * rr];
       tl = [0, lerp(1.25, 0.95, e), 0];
     } else {
-      pl = LV(C.p0, C.p1, e);
-      tl = LV(C.t0, C.t1, e);
+      pl = lerpVec3(C.p0, C.p1, e);
+      tl = lerpVec3(C.t0, C.t1, e);
     }
-    P = car.localToWorld(V3(pl));
-    Tg = car.localToWorld(V3(tl));
+    P = car.localToWorld(vec3FromArray(pl));
+    Tg = car.localToWorld(vec3FromArray(tl));
   }
   camera.position.copy(P);
   if (ishake > 0) {
@@ -171,13 +171,13 @@ function introTick(dt) {
   camera.fov = lerp(C.f0, C.f1, e) - 8 * ipunch * ipunch;
   camera.updateProjectionMatrix();
 }
-$("ignite").addEventListener("click", startIntro);
-$("gate").addEventListener("pointerdown", (e) => {
+byId("ignite").addEventListener("click", startIntro);
+byId("gate").addEventListener("pointerdown", (e) => {
   if (e.target.id !== "ignite") startIntro();
 });
-$("skip").addEventListener("click", endIntro);
+byId("skip").addEventListener("click", endIntro);
 {
-  const h = $("ihero").querySelector(".hr");
+  const h = byId("ihero").querySelector(".hr");
   h.innerHTML = "ROADSTER"
     .split("")
     .map((c, i) => `<span style="--i:${i}">${c}</span>`)
@@ -194,7 +194,7 @@ $("skip").addEventListener("click", endIntro);
     d.data[i + 3] = 255;
   }
   x.putImageData(d, 0, 0);
-  $("grain").style.backgroundImage = `url(${c.toDataURL()})`;
+  byId("grain").style.backgroundImage = `url(${c.toDataURL()})`;
 }
 
 /* ---------------- ZERO: the crash-test mannequin who drives the Roadster ---------------- */
@@ -279,9 +279,9 @@ scene.add(ZERO);
 /* ---------------- subtitles + chapter cards ---------------- */
 let subTok = 0;
 function showSub(who, txt, dur = 4.5) {
-  const el = $("sub");
-  $("subWho").textContent = who || "";
-  $("subTxt").textContent = txt;
+  const el = byId("sub");
+  byId("subWho").textContent = who || "";
+  byId("subTxt").textContent = txt;
   el.classList.remove("on");
   void el.offsetWidth;
   el.classList.add("on");
@@ -292,15 +292,15 @@ function showSub(who, txt, dur = 4.5) {
 }
 function hideSub() {
   subTok++;
-  $("sub").classList.remove("on");
+  byId("sub").classList.remove("on");
 }
 function chapterCard(k, done) {
-  const C = CH[k];
-  $("cardN").textContent =
-    `ACT ${(C.act || 0) + 1} · ${ACTS[C.act || 0]} · CHAPTER ${k + 1} OF ${CH.length}`;
-  $("cardT").textContent = C.t;
-  $("cardO").textContent = tx(MIS[C.mis].b);
-  const el = $("card");
+  const C = CHAPTERS[k];
+  byId("cardN").textContent =
+    `ACT ${(C.act || 0) + 1} · ${ACT_NAMES[C.act || 0]} · CHAPTER ${k + 1} OF ${CHAPTERS.length}`;
+  byId("cardT").textContent = C.t;
+  byId("cardO").textContent = touchText(MISSIONS[C.mis].b);
+  const el = byId("card");
   el.hidden = false;
   el.classList.remove("on");
   void el.offsetWidth;
@@ -316,27 +316,27 @@ function chapterCard(k, done) {
 }
 
 /* ---------------- cutscenes (letterboxed, skippable) ---------------- */
-let cut = null;
+let activeCut = null;
 function startCut(def, onEnd) {
   audio.init();
-  cut = { t: 0, def, onEnd, fired: new Set() };
+  activeCut = { t: 0, def, onEnd, fired: new Set() };
   phase = "cut";
   document.body.classList.add("intro");
-  $("cutUI").hidden = false;
-  $("title").hidden = true;
-  $("result").hidden = true;
+  byId("cutUI").hidden = false;
+  byId("title").hidden = true;
+  byId("result").hidden = true;
   ["side", "console", "menubtn", "mission", "mm"].forEach(
-    (id) => ($(id).hidden = true),
+    (id) => (byId(id).hidden = true),
   );
-  $("touch").hidden = true;
+  byId("touch").hidden = true;
   def.setup && def.setup();
 }
 function endCut() {
-  if (!cut) return;
-  const f = cut.onEnd;
-  cut = null;
+  if (!activeCut) return;
+  const f = activeCut.onEnd;
+  activeCut = null;
   document.body.classList.remove("intro");
-  $("cutUI").hidden = true;
+  byId("cutUI").hidden = true;
   hideSub();
   ZERO.visible = false;
   f && f();

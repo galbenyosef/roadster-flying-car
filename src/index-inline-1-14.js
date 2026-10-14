@@ -88,10 +88,10 @@ const steel = new THREE.MeshStandardMaterial({
   side: THREE.DoubleSide,
 });
 // rear licence plate on a hinge; behind it a 2x2 cluster of thrusters
-const PW = 0.56,
-  PH = 0.26,
-  PY = 0.575,
-  PZ = 2.318;
+const PLATE_W = 0.56,
+  PLATE_H = 0.26,
+  PLATE_Y = 0.575,
+  PLATE_Z = 2.318;
 function plateTex() {
   const c = document.createElement("canvas");
   c.width = 512;
@@ -135,27 +135,27 @@ function plateTex() {
   return t;
 }
 const bayBack = new THREE.Mesh(
-  new THREE.BoxGeometry(PW + 0.07, PH + 0.05, 0.03),
+  new THREE.BoxGeometry(PLATE_W + 0.07, PLATE_H + 0.05, 0.03),
   new THREE.MeshStandardMaterial({
     color: 0x06070a,
     roughness: 0.45,
     metalness: 0.7,
   }),
 );
-bayBack.position.set(0, PY - PH / 2, 2.296);
+bayBack.position.set(0, PLATE_Y - PLATE_H / 2, 2.296);
 body.add(bayBack);
 const bayCoreMat = new THREE.MeshStandardMaterial({
   color: 0x000,
   emissive: 0x8fdcff,
   emissiveIntensity: 0,
 });
-const BAYP = [
-  [-0.135, PY - PH / 2 + 0.066],
-  [0.135, PY - PH / 2 + 0.066],
-  [-0.135, PY - PH / 2 - 0.066],
-  [0.135, PY - PH / 2 - 0.066],
+const BAY_PORTS = [
+  [-0.135, PLATE_Y - PLATE_H / 2 + 0.066],
+  [0.135, PLATE_Y - PLATE_H / 2 + 0.066],
+  [-0.135, PLATE_Y - PLATE_H / 2 - 0.066],
+  [0.135, PLATE_Y - PLATE_H / 2 - 0.066],
 ];
-const bayNoz = BAYP.map(([x, y]) => {
+const bayNoz = BAY_PORTS.map(([x, y]) => {
   const g = new THREE.Group();
   g.position.set(x, y, 2.24);
   const n = new THREE.Mesh(
@@ -189,14 +189,14 @@ const bayNoz = BAYP.map(([x, y]) => {
   return g;
 });
 const platePivot = new THREE.Group();
-platePivot.position.set(0, PY, PZ);
+platePivot.position.set(0, PLATE_Y, PLATE_Z);
 body.add(platePivot);
 const plateSide = new THREE.MeshStandardMaterial({
   color: 0x14161a,
   metalness: 0.6,
   roughness: 0.4,
 });
-const plate = new THREE.Mesh(new THREE.BoxGeometry(PW, PH, 0.018), [
+const plate = new THREE.Mesh(new THREE.BoxGeometry(PLATE_W, PLATE_H, 0.018), [
   plateSide,
   plateSide,
   plateSide,
@@ -208,15 +208,15 @@ const plate = new THREE.Mesh(new THREE.BoxGeometry(PW, PH, 0.018), [
   }),
   plateSide,
 ]);
-plate.position.set(0, -PH / 2, 0);
+plate.position.set(0, -PLATE_H / 2, 0);
 plate.castShadow = true;
 platePivot.add(plate);
 const hingeBar = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.012, 0.012, PW * 0.9, 10),
+  new THREE.CylinderGeometry(0.012, 0.012, PLATE_W * 0.9, 10),
   steel,
 );
 hingeBar.rotation.z = Math.PI / 2;
-hingeBar.position.set(0, PY + 0.004, PZ - 0.006);
+hingeBar.position.set(0, PLATE_Y + 0.004, PLATE_Z - 0.006);
 body.add(hingeBar);
 const revMat = new THREE.MeshStandardMaterial({
   color: 0x222,
@@ -240,8 +240,8 @@ function bayPose(k, glow) {
   const s = clamp(k / 0.16),
     h = clamp((k - 0.14) / 0.5),
     e = clamp((k - 0.5) / 0.4);
-  platePivot.position.z = PZ + 0.04 * easeIO(s);
-  platePivot.position.y = PY + 0.012 * easeIO(s);
+  platePivot.position.z = PLATE_Z + 0.04 * easeIO(s);
+  platePivot.position.y = PLATE_Y + 0.012 * easeIO(s);
   platePivot.rotation.x = -2.25 * easeBack(h);
   bayNoz.forEach((n, i) => {
     n.position.z = lerp(2.24, 2.35, easeIO(clamp(e * 1.25 - i * 0.08)));

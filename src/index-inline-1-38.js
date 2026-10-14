@@ -1,4 +1,4 @@
-// index-inline-1 38 — pho
+// index-inline-1 38 — photo
 // Lines 90407-90731 of readable/index-inline-1.pretty.js (statement-aligned).
 function photoSave() {
   composer.render();
@@ -10,27 +10,27 @@ function photoSave() {
   cv.width = W;
   cv.height = H;
   const x = cv.getContext("2d");
-  const fl = FILTERS[PHO.fil][1];
+  const fl = FILTERS[PHOTO.fil][1];
   if (fl && "filter" in x) x.filter = fl;
   x.drawImage(src, 0, 0, W, H);
   x.filter = "none";
-  if (PHO.card) {
+  if (PHOTO.card) {
     const u = H / 1080,
       g = x.createLinearGradient(0, H * 0.62, 0, H);
     g.addColorStop(0, "rgba(0,0,0,0)");
     g.addColorStop(1, "rgba(0,0,0,.72)");
     x.fillStyle = g;
     x.fillRect(0, H * 0.62, W, H * 0.38);
-    const sk = SKIN(),
+    const sk = activeSkin(),
       hsp = Math.round(
-        (PHO.prev === "replay"
-          ? RPL.hs
-          : S.air
-            ? Math.hypot(S.vx, S.vz)
-            : Math.abs(S.v)) * MPH,
+        (PHOTO.prev === "replay"
+          ? REPLAY.hs
+          : carState.air
+            ? Math.hypot(carState.vx, carState.vz)
+            : Math.abs(carState.v)) * MPH,
       ),
-      where = M
-        ? `TEST ${M.def.n} · ${M.def.t.toUpperCase()}`
+      where = currentMission
+        ? `TEST ${currentMission.def.n} · ${currentMission.def.t.toUpperCase()}`
         : "FREE ROAM · THE STRIP";
     x.textBaseline = "alphabetic";
     x.fillStyle = "#fff";
@@ -61,23 +61,23 @@ function photoSave() {
     flash("PHOTO", "could not export on this device", 2);
     return;
   }
-  $("phoImg").src = url;
-  $("phoPrev").hidden = false;
-  PHO.url = url;
-  PHO.name = `roadster-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.jpg`;
-  PHO.blob = null;
+  byId("phoImg").src = url;
+  byId("phoPrev").hidden = false;
+  PHOTO.url = url;
+  PHOTO.name = `roadster-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.jpg`;
+  PHOTO.blob = null;
   try {
     cv.toBlob(
       (bl) => {
-        PHO.blob = bl;
+        PHOTO.blob = bl;
       },
       "image/jpeg",
       0.92,
     );
   } catch (e) {}
-  $("phoFlash").classList.remove("go");
-  void $("phoFlash").offsetWidth;
-  $("phoFlash").classList.add("go");
+  byId("phoFlash").classList.remove("go");
+  void byId("phoFlash").offsetWidth;
+  byId("phoFlash").classList.add("go");
   audio.noise(5000, 2000, 0.12, 0.25, "highpass");
 }
 {
@@ -88,33 +88,33 @@ function photoSave() {
       return;
     }
     if (phase !== "photo") return;
-    PHO.ptr.set(e.pointerId, [e.clientX, e.clientY]);
+    PHOTO.ptr.set(e.pointerId, [e.clientX, e.clientY]);
     try {
       cvs.setPointerCapture(e.pointerId);
     } catch (_) {}
-    if (PHO.ptr.size === 2) {
-      const [p, q] = [...PHO.ptr.values()];
-      PHO.pd = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    if (PHOTO.ptr.size === 2) {
+      const [p, q] = [...PHOTO.ptr.values()];
+      PHOTO.pd = Math.hypot(p[0] - q[0], p[1] - q[1]);
     }
   });
   cvs.addEventListener("pointermove", (e) => {
-    if (phase !== "photo" || !PHO.ptr.has(e.pointerId)) return;
-    const o = PHO.ptr.get(e.pointerId);
-    if (PHO.ptr.size === 1) {
-      PHO.az -= (e.clientX - o[0]) * 0.008;
-      PHO.el += (e.clientY - o[1]) * 0.006;
+    if (phase !== "photo" || !PHOTO.ptr.has(e.pointerId)) return;
+    const o = PHOTO.ptr.get(e.pointerId);
+    if (PHOTO.ptr.size === 1) {
+      PHOTO.az -= (e.clientX - o[0]) * 0.008;
+      PHOTO.el += (e.clientY - o[1]) * 0.006;
     }
-    PHO.ptr.set(e.pointerId, [e.clientX, e.clientY]);
-    if (PHO.ptr.size === 2) {
-      const [p, q] = [...PHO.ptr.values()],
+    PHOTO.ptr.set(e.pointerId, [e.clientX, e.clientY]);
+    if (PHOTO.ptr.size === 2) {
+      const [p, q] = [...PHOTO.ptr.values()],
         d = Math.hypot(p[0] - q[0], p[1] - q[1]);
-      if (PHO.pd > 0) PHO.r *= PHO.pd / d;
-      PHO.pd = d;
+      if (PHOTO.pd > 0) PHOTO.r *= PHOTO.pd / d;
+      PHOTO.pd = d;
     }
   });
   const up = (e) => {
-    PHO.ptr.delete(e.pointerId);
-    PHO.pd = 0;
+    PHOTO.ptr.delete(e.pointerId);
+    PHOTO.pd = 0;
   };
   cvs.addEventListener("pointerup", up);
   cvs.addEventListener("pointercancel", up);
@@ -123,48 +123,48 @@ function photoSave() {
     (e) => {
       if (phase !== "photo") return;
       e.preventDefault();
-      PHO.r *= Math.exp(e.deltaY * 0.0012);
+      PHOTO.r *= Math.exp(e.deltaY * 0.0012);
     },
     { passive: false },
   );
 }
-$("phoF").addEventListener("click", () =>
-  setFilter((PHO.fil + 1) % FILTERS.length),
+byId("phoF").addEventListener("click", () =>
+  setFilter((PHOTO.fil + 1) % FILTERS.length),
 );
-$("phoC").addEventListener("click", () => {
-  PHO.card = !PHO.card;
-  setT("phoC", PHO.card ? "CARD ON" : "CARD OFF");
+byId("phoC").addEventListener("click", () => {
+  PHOTO.card = !PHOTO.card;
+  setT("phoC", PHOTO.card ? "CARD ON" : "CARD OFF");
 });
-$("phoS").addEventListener("click", photoSave);
-$("phoX").addEventListener("click", photoEnd);
-$("phoZi").addEventListener(
+byId("phoS").addEventListener("click", photoSave);
+byId("phoX").addEventListener("click", photoEnd);
+byId("phoZi").addEventListener(
   "click",
-  () => (PHO.fov = clamp(PHO.fov - 6, 14, 80)),
+  () => (PHOTO.fov = clamp(PHOTO.fov - 6, 14, 80)),
 );
-$("phoZo").addEventListener(
+byId("phoZo").addEventListener(
   "click",
-  () => (PHO.fov = clamp(PHO.fov + 6, 14, 80)),
+  () => (PHOTO.fov = clamp(PHOTO.fov + 6, 14, 80)),
 );
-$("phoPrevX").addEventListener("click", () => ($("phoPrev").hidden = true));
+byId("phoPrevX").addEventListener("click", () => (byId("phoPrev").hidden = true));
 // saving goes through the viewer's download prompt when the page runs inside Claude; a plain link otherwise
-let dlNS = null;
+let downloadLink = null;
 const inClaude = !!(window.claude && window.claude.use);
 if (inClaude)
   window.claude
     .use("downloads")
     .then((n) => {
-      dlNS = n;
-      if (!n) $("phoDl").hidden = true;
+      downloadLink = n;
+      if (!n) byId("phoDl").hidden = true;
     })
     .catch(() => {
-      $("phoDl").hidden = true;
+      byId("phoDl").hidden = true;
     });
-$("phoDl").addEventListener("click", async () => {
-  if (!PHO.url) return;
-  if (dlNS) {
+byId("phoDl").addEventListener("click", async () => {
+  if (!PHOTO.url) return;
+  if (downloadLink) {
     try {
-      const data = PHO.blob || (await (await fetch(PHO.url)).blob());
-      await dlNS.save({ filename: PHO.name, data });
+      const data = PHOTO.blob || (await (await fetch(PHOTO.url)).blob());
+      await downloadLink.save({ filename: PHOTO.name, data });
       setT("phoDl", "SAVED ✓");
       setTimeout(() => setT("phoDl", "DOWNLOAD"), 1800);
     } catch (e) {
@@ -174,44 +174,44 @@ $("phoDl").addEventListener("click", async () => {
         flash("PHOTO", "one moment, a save is already open", 1.4);
         return;
       }
-      if (c !== "bad_request") $("phoDl").hidden = true;
+      if (c !== "bad_request") byId("phoDl").hidden = true;
     }
     return;
   }
   if (!inClaude) {
     const a = document.createElement("a");
-    a.href = PHO.url;
-    a.download = PHO.name;
+    a.href = PHOTO.url;
+    a.download = PHOTO.name;
     document.body.appendChild(a);
     a.click();
     a.remove();
   }
 });
-$("rplSkip").addEventListener("click", (e) => {
+byId("rplSkip").addEventListener("click", (e) => {
   e.stopPropagation();
   replayEnd();
 });
-$("rplPho").addEventListener("click", (e) => {
+byId("rplPho").addEventListener("click", (e) => {
   e.stopPropagation();
   photoStart();
 });
-$("rplHint").addEventListener("click", () => replayStart());
-$("rrpl").addEventListener("click", () => {
+byId("rplHint").addEventListener("click", () => replayStart());
+byId("rrpl").addEventListener("click", () => {
   if (phase !== "result") return;
-  $("result").hidden = true;
+  byId("result").hidden = true;
   phase = "play";
-  if (replayStart()) RPL.fromRes = true;
+  if (replayStart()) REPLAY.fromRes = true;
   else {
     phase = "result";
-    $("result").hidden = false;
+    byId("result").hidden = false;
     flash("", "", 0);
   }
 });
-$("tbRpl").addEventListener("pointerdown", (e) => {
+byId("tbRpl").addEventListener("pointerdown", (e) => {
   e.preventDefault();
   if (!replayStart()) flash("REPLAY", "drive a few seconds first", 1.2);
 });
-$("tbPho").addEventListener("pointerdown", (e) => {
+byId("tbPho").addEventListener("pointerdown", (e) => {
   e.preventDefault();
   photoStart();
 });
@@ -232,37 +232,37 @@ function v18Key(k) {
       return true;
     }
     if (k === "f") {
-      setFilter((PHO.fil + 1) % FILTERS.length);
+      setFilter((PHOTO.fil + 1) % FILTERS.length);
       return true;
     }
     if (k === "h") {
-      PHO.card = !PHO.card;
-      setT("phoC", PHO.card ? "CARD ON" : "CARD OFF");
+      PHOTO.card = !PHOTO.card;
+      setT("phoC", PHOTO.card ? "CARD ON" : "CARD OFF");
       return true;
     }
     return false;
   }
   if (phase === "play") {
-    if (k === "t" && !K[k]) {
+    if (k === "t" && !keyState[k]) {
       if (!replayStart()) flash("REPLAY", "drive a few seconds first", 1.2);
       return true;
     }
-    if (k === "p" && !K[k]) {
+    if (k === "p" && !keyState[k]) {
       photoStart();
       return true;
     }
   }
   if (phase === "result") {
     if (k === "r") {
-      $("rretry").click();
+      byId("rretry").click();
       return true;
     }
     if (k === "t") {
-      $("rrpl").click();
+      byId("rrpl").click();
       return true;
     }
     if (k === "enter") {
-      (!$("rnext").hidden ? $("rnext") : $("rretry")).click();
+      (!byId("rnext").hidden ? byId("rnext") : byId("rretry")).click();
       return true;
     }
   }
@@ -271,11 +271,11 @@ function v18Key(k) {
 
 /* ---- free-roam launch event ---- */
 function launchEvent() {
-  if (phase !== "play" || M) return;
+  if (phase !== "play" || currentMission) return;
   const L = LAUNCH;
   if (L.st === "up" && !L.wit) {
     L.wit = true;
-    const d = Math.hypot(S.x - LS.mount.x, S.z - LS.mount.z);
+    const d = Math.hypot(carState.x - LAUNCH_SITE.mount.x, carState.z - LAUNCH_SITE.mount.z);
     if (d < 700) setTimeout(() => pop("LIFTOFF WITNESS", 600), 1600);
   }
   if (L.st !== "up") L.wit = false;
@@ -291,28 +291,28 @@ function v18Tick(rdt, dt) {
   boostKick = Math.max(0, boostKick - rdt * 1.6);
   if (rplHintT > 0) {
     rplHintT -= rdt;
-    if (rplHintT <= 0 || phase !== "play") $("rplHint").classList.remove("on");
+    if (rplHintT <= 0 || phase !== "play") byId("rplHint").classList.remove("on");
   }
   if (
-    M &&
-    !M.done &&
-    M.def.id === "chase" &&
-    M.rs === "run" &&
+    currentMission &&
+    !currentMission.done &&
+    currentMission.def.id === "chase" &&
+    currentMission.rs === "run" &&
     phase === "play"
   ) {
     const v = RIVALS[0],
-      dd = Math.hypot(S.x - v.g.position.x, S.z - v.g.position.z);
-    if (!M.rd0) {
-      M.rd0 = 1;
+      dd = Math.hypot(carState.x - v.g.position.x, carState.z - v.g.position.z);
+    if (!currentMission.rd0) {
+      currentMission.rd0 = 1;
       radio("VEX", "chase", true);
-    } else if (dd > 56 && !M.rdF) {
-      M.rdF = 1;
+    } else if (dd > 56 && !currentMission.rdF) {
+      currentMission.rdF = 1;
       radio("VEX", "far", true);
-    } else if (dd < 18 && clock - M.t0 > 8 && !M.rdC) {
-      M.rdC = 1;
+    } else if (dd < 18 && clock - currentMission.t0 > 8 && !currentMission.rdC) {
+      currentMission.rdC = 1;
       radio("VEX", "close");
     }
-    if (dd < 45) M.rdF = 0;
+    if (dd < 45) currentMission.rdF = 0;
   }
 }
 

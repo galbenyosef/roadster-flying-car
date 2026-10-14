@@ -1,12 +1,12 @@
-// index-inline-1 28 — lerp
+// index-inline-1 28 — carstate
 // Lines 87293-87641 of readable/index-inline-1.pretty.js (statement-aligned).
-const fmtT = (t) =>
+const formatTime = (t) =>
   `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, "0")}`;
 
 /* ---------------- camera ---------------- */
 // launch + landing: wide side-on shots from the open viewing field, so the tower never sits between the camera and the rocket
 function launchCam(t) {
-  const m = LS.mount,
+  const m = LAUNCH_SITE.mount,
     R = ROCKET.g.position,
     V = (a, b, c) => new THREE.Vector3(a, b, c);
   if (t < 2.6) {
@@ -25,7 +25,7 @@ function launchCam(t) {
   };
 }
 function landCam(t) {
-  const z = LS.lz,
+  const z = LAUNCH_SITE.lz,
     R = ROCKET.g.position,
     V = (a, b, c) => new THREE.Vector3(a, b, c);
   if (t < 5) {
@@ -45,7 +45,7 @@ function landCam(t) {
 }
 const camPos = new THREE.Vector3(0, 5, 20),
   look = new THREE.Vector3();
-let fovK = 0,
+let fovKick = 0,
   lens = 0;
 let viewOff = false;
 function setOffset(on) {
@@ -67,43 +67,43 @@ function setOffset(on) {
 }
 function updateCam(dt) {
   setOffset(phase === "title");
-  if (cin.on && cin.kind !== "arm") {
-    const p = clamp(cin.t / cin.dur),
+  if (cinematic.on && cinematic.kind !== "arm") {
+    const p = clamp(cinematic.t / cinematic.dur),
       e = easeIO(clamp(p / 0.9));
     car.updateMatrixWorld();
     let P, Tg;
-    const gy = groundH(S.x, S.z, S.y).h;
-    if (cin.kind === "hover") {
+    const gy = groundH(carState.x, carState.z, carState.y).h;
+    if (cinematic.kind === "hover") {
       const a = lerp(2.55, 0.95, e),
         rr = lerp(5.4, 7.4, e);
       P = car.localToWorld(
         new THREE.Vector3(Math.sin(a) * rr, 0, Math.cos(a) * rr),
       );
-      P.y = lerp(gy + 0.28, S.y + 2.6, easeIO(clamp((p - 0.15) / 0.75)));
+      P.y = lerp(gy + 0.28, carState.y + 2.6, easeIO(clamp((p - 0.15) / 0.75)));
       Tg = car.localToWorld(new THREE.Vector3(0, 0.25, 0));
-    } else if (cin.kind === "jump") {
-      const hv = Math.hypot(S.vx, S.vz) || 1,
-        fx = S.vx / hv,
-        fz = S.vz / hv,
+    } else if (cinematic.kind === "jump") {
+      const hv = Math.hypot(carState.vx, carState.vz) || 1,
+        fx = carState.vx / hv,
+        fz = carState.vz / hv,
         sx = -fz,
         sz = fx,
         a = lerp(-0.7, 0.9, e),
         rr = lerp(8.5, 6.2, e);
       P = new THREE.Vector3(
-        S.x + (sx * Math.cos(a) + fx * Math.sin(a)) * rr,
-        S.y + lerp(0.5, 1.7, e),
-        S.z + (sz * Math.cos(a) + fz * Math.sin(a)) * rr,
+        carState.x + (sx * Math.cos(a) + fx * Math.sin(a)) * rr,
+        carState.y + lerp(0.5, 1.7, e),
+        carState.z + (sz * Math.cos(a) + fz * Math.sin(a)) * rr,
       );
-      Tg = new THREE.Vector3(S.x, S.y + 0.35, S.z);
-    } else if (cin.kind === "finish") {
+      Tg = new THREE.Vector3(carState.x, carState.y + 0.35, carState.z);
+    } else if (cinematic.kind === "finish") {
       const sh = finishCam();
       camera.position.copy(sh.p);
       camera.lookAt(sh.tg);
       camera.fov = sh.fov;
       camera.updateProjectionMatrix();
       return;
-    } else if (cin.kind === "launch" || cin.kind === "land") {
-      const sh = cin.kind === "launch" ? launchCam(cin.t) : landCam(cin.t);
+    } else if (cinematic.kind === "launch" || cinematic.kind === "land") {
+      const sh = cinematic.kind === "launch" ? launchCam(cinematic.t) : landCam(cinematic.t);
       camera.position.copy(sh.p);
       camera.lookAt(sh.tg);
       camera.fov = sh.fov;
@@ -123,19 +123,19 @@ function updateCam(dt) {
     if (tw > 0) {
       P.lerp(
         car.localToWorld(
-          new THREE.Vector3(0, S.air ? 3.4 : 1.7, S.air ? 8 : 5.6),
+          new THREE.Vector3(0, carState.air ? 3.4 : 1.7, carState.air ? 8 : 5.6),
         ),
         easeIO(tw),
       );
     }
     camera.position.copy(P);
     camera.lookAt(Tg);
-    camera.fov = lerp(cin.kind === "hover" ? 44 : 38, 34, e) + tw * 18;
+    camera.fov = lerp(cinematic.kind === "hover" ? 44 : 38, 34, e) + tw * 18;
     camera.updateProjectionMatrix();
     return;
   }
-  if (cin.on && cin.full && camMode !== 2) {
-    const p = clamp(cin.t / cin.dur),
+  if (cinematic.on && cinematic.full && camMode !== 2) {
+    const p = clamp(cinematic.t / cinematic.dur),
       e = easeIO(clamp(p / 0.92));
     const a = lerp(0.8, -0.32, e),
       rr = lerp(5.6, 2.35, e),
@@ -151,13 +151,13 @@ function updateCam(dt) {
     camera.updateProjectionMatrix();
     return;
   }
-  const fw = new THREE.Vector3(-Math.sin(S.yaw), 0, -Math.cos(S.yaw));
-  const cp = new THREE.Vector3(S.x, S.y, S.z);
-  const hs = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v);
+  const fw = new THREE.Vector3(-Math.sin(carState.yaw), 0, -Math.cos(carState.yaw));
+  const cp = new THREE.Vector3(carState.x, carState.y, carState.z);
+  const hs = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v);
   let desired, target;
   if (phase === "title") {
     const a = clock * 0.14 + 2.2,
-      rk = veh.model === "pickup" ? 1.35 : veh.model === "cab" ? 1.1 : 1;
+      rk = activeVehicle.model === "pickup" ? 1.35 : activeVehicle.model === "cab" ? 1.1 : 1;
     desired = cp
       .clone()
       .add(
@@ -168,8 +168,8 @@ function updateCam(dt) {
         ),
       );
     target = cp.clone().add(new THREE.Vector3(0, 0.55, 0));
-  } else if (S.loop && camMode !== 2) {
-    const L = S.loop.L;
+  } else if (carState.loop && camMode !== 2) {
+    const L = carState.loop.L;
     desired = new THREE.Vector3(
       L.x - L.rx * 24 - L.fx * 6,
       0.2 + L.R * 0.85,
@@ -193,8 +193,8 @@ function updateCam(dt) {
     target = cp
       .clone()
       .addScaledVector(fw, 20)
-      .add(new THREE.Vector3(0, 0.9 - (S.air ? 2 : 0), 0));
-  } else if (S.thrust === 2) {
+      .add(new THREE.Vector3(0, 0.9 - (carState.air ? 2 : 0), 0));
+  } else if (carState.thrust === 2) {
     desired = cp
       .clone()
       .addScaledVector(fw, -10.5)
@@ -203,7 +203,7 @@ function updateCam(dt) {
       .clone()
       .addScaledVector(fw, 5)
       .add(new THREE.Vector3(0, 0.9, 0));
-  } else if (S.air) {
+  } else if (carState.air) {
     desired = cp
       .clone()
       .addScaledVector(fw, -8)
@@ -213,24 +213,24 @@ function updateCam(dt) {
       .addScaledVector(fw, 3)
       .add(new THREE.Vector3(0, -0.4, 0));
   } else {
-    const vd = new THREE.Vector3(-Math.sin(S.vyaw), 0, -Math.cos(S.vyaw)),
+    const vd = new THREE.Vector3(-Math.sin(carState.vyaw), 0, -Math.cos(carState.vyaw)),
       cf = fw
         .clone()
-        .lerp(vd, clamp(S.dr * 0.6))
+        .lerp(vd, clamp(carState.dr * 0.6))
         .normalize();
     desired = cp
       .clone()
       .addScaledVector(
         cf,
-        -5.3 - hs * 0.034 - clamp(S.glz || 0, -1.2, 1.6) * 0.42,
+        -5.3 - hs * 0.034 - clamp(carState.glz || 0, -1.2, 1.6) * 0.42,
       )
-      .add(new THREE.Vector3(0, 1.55 + hs * 0.003 + (S.armed ? 0.35 : 0), 0));
+      .add(new THREE.Vector3(0, 1.55 + hs * 0.003 + (carState.armed ? 0.35 : 0), 0));
     target = cp
       .clone()
-      .addScaledVector(S.v >= 0 ? vd : fw, 6 + hs * 0.05)
+      .addScaledVector(carState.v >= 0 ? vd : fw, 6 + hs * 0.05)
       .add(new THREE.Vector3(0, 0.75, 0));
   }
-  const spr = phase === "play" && camMode !== 2 && !S.loop && !S.crash;
+  const spr = phase === "play" && camMode !== 2 && !carState.loop && !carState.crash;
   if (spr) {
     const want = desired.clone().sub(cp);
     if (!camSpring || camOff.distanceTo(want) > 45) {
@@ -239,7 +239,7 @@ function updateCam(dt) {
       camOffV.set(0, 0, 0);
       camSpring = true;
     }
-    const w = S.air ? 5.2 : 7.2,
+    const w = carState.air ? 5.2 : 7.2,
       ac = want
         .sub(camOff)
         .multiplyScalar(w * w)
@@ -257,10 +257,10 @@ function updateCam(dt) {
   if (camPos.y < gy) camPos.y = gy;
   look.lerp(target, camMode === 2 ? 1 : 1 - Math.exp(-dt * 12));
   camera.position.copy(camPos);
-  if (camMode !== 2 && !S.loop) {
-    const ox = S.x,
-      oy = S.y + 1.2,
-      oz = S.z,
+  if (camMode !== 2 && !carState.loop) {
+    const ox = carState.x,
+      oy = carState.y + 1.2,
+      oz = carState.z,
       dx = camPos.x - ox,
       dy = camPos.y - oy,
       dz = camPos.z - oz;
@@ -275,21 +275,21 @@ function updateCam(dt) {
   }
   const tq = performance.now() / 1000;
   if (shake > 0) {
-    camera.position.x += snz(tq, 47, 71, 113) * shake * 0.34;
-    camera.position.y += snz(tq, 53, 79, 131) * shake * 0.34;
+    camera.position.x += smoothNoise(tq, 47, 71, 113) * shake * 0.34;
+    camera.position.y += smoothNoise(tq, 53, 79, 131) * shake * 0.34;
     shake = Math.max(0, shake - dt * 2.5);
   }
-  if (S.thrust === 2)
+  if (carState.thrust === 2)
     camera.position.addScaledVector(
-      new THREE.Vector3(snz(tq, 61, 89, 97), snz(tq, 67, 83, 101), 0),
+      new THREE.Vector3(smoothNoise(tq, 61, 89, 97), smoothNoise(tq, 67, 83, 101), 0),
       0.035,
     );
   camera.lookAt(look);
-  if (phase === "play" && camMode === 0 && !S.loop) {
+  if (phase === "play" && camMode === 0 && !carState.loop) {
     camRoll +=
       (clamp(
-        -S.steer * clamp(hs / 50) * 0.03 -
-          (S.dr || 0) * Math.sign(S.slip || 0) * 0.025,
+        -carState.steer * clamp(hs / 50) * 0.03 -
+          (carState.dr || 0) * Math.sign(carState.slip || 0) * 0.025,
         -0.055,
         0.055,
       ) -
@@ -298,13 +298,13 @@ function updateCam(dt) {
     camera.rotateZ(camRoll);
   } else camRoll = 0;
   lens +=
-    ((S.thrust === 2 && camMode === 0 ? 1 : 0) - lens) * Math.min(1, dt * 3);
-  fovK += ((S.thrust ? 1 : 0) - fovK) * Math.min(1, dt * 4);
+    ((carState.thrust === 2 && camMode === 0 ? 1 : 0) - lens) * Math.min(1, dt * 3);
+  fovKick += ((carState.thrust ? 1 : 0) - fovKick) * Math.min(1, dt * 4);
   camera.fov =
     (phase === "title"
       ? 40
-      : 58 + clamp(hs / 110) * 14 + fovK * 4 - lens * 12 + boostKick * 9) -
-    (cin.on && !cin.full ? 9 * Math.sin(Math.PI * clamp(cin.t / cin.dur)) : 0);
+      : 58 + clamp(hs / 110) * 14 + fovKick * 4 - lens * 12 + boostKick * 9) -
+    (cinematic.on && !cinematic.full ? 9 * Math.sin(Math.PI * clamp(cinematic.t / cinematic.dur)) : 0);
   camera.updateProjectionMatrix();
 }
 
@@ -315,9 +315,9 @@ const STATE_LABEL = {
   LOOP: "360° LOOP",
 };
 car.rotation.order = "YXZ";
-const gctx = $("gball").getContext("2d");
+const gballCtx = byId("gball").getContext("2d");
 function drawG() {
-  const c = gctx,
+  const c = gballCtx,
     w = 148,
     h = 148,
     cx = 74,
@@ -337,8 +337,8 @@ function drawG() {
   c.moveTo(cx, cy - R);
   c.lineTo(cx, cy + R);
   c.stroke();
-  const gx = clamp(S.glx / 3, -1, 1),
-    gz = clamp(-S.glz / 3, -1, 1);
+  const gx = clamp(carState.glx / 3, -1, 1),
+    gz = clamp(-carState.glz / 3, -1, 1);
   c.fillStyle = "#FFB35C";
   c.beginPath();
   c.arc(cx + gx * R, cy + gz * R, 8, 0, 7);
@@ -346,6 +346,6 @@ function drawG() {
   c.fillStyle = "#9BA4B0";
   c.font = "700 18px JetBrains Mono, monospace";
   c.textAlign = "center";
-  c.fillText(`${Math.hypot(S.glx, S.glz).toFixed(1)}g`, cx, h - 6);
+  c.fillText(`${Math.hypot(carState.glx, carState.glz).toFixed(1)}g`, cx, h - 6);
 }
-const _tc = {};
+const textCache = {};

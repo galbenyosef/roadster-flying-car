@@ -24,7 +24,7 @@
     return o;
   };
   const slab = new THREE.InstancedMesh(
-    new THREE.BoxGeometry(P - RW, 0.24, P - RW),
+    new THREE.BoxGeometry(BLOCK_PITCH - ROAD_WIDTH, 0.24, BLOCK_PITCH - ROAD_WIDTH),
     new THREE.MeshStandardMaterial({ color: 0xa4a8ad, roughness: 0.95 }),
     LAUNCHB.size,
   );
@@ -41,12 +41,12 @@
   }
   slab.receiveShadow = true;
   scene.add(slab);
-  const m = LS.mount;
+  const m = LAUNCH_SITE.mount;
   add(new THREE.BoxGeometry(30, 10, 30), concrete, m.x, 5, m.z);
   addB(m.x - 15, m.x + 15, m.z - 15, m.z + 15, 10, -1);
   add(new THREE.CylinderGeometry(6, 7, 1.2, 24), steelD, m.x, 10.6, m.z);
   // lattice tower
-  const T = LS.tower,
+  const T = LAUNCH_SITE.tower,
     tw = 12;
   addB(T.x - tw / 2, T.x + tw / 2, T.z - tw / 2, T.z + tw / 2, T.h, -1);
   for (const sx of [-1, 1])
@@ -178,7 +178,7 @@
     new THREE.MeshStandardMaterial({ map: lzt, roughness: 0.9 }),
   );
   lz.rotation.x = -Math.PI / 2;
-  lz.position.set(LS.lz.x, 0.27, LS.lz.z);
+  lz.position.set(LAUNCH_SITE.lz.x, 0.27, LAUNCH_SITE.lz.z);
   lz.receiveShadow = true;
   scene.add(lz);
   // propellant tanks on legs
@@ -292,9 +292,9 @@
 PADS.push({
   label: "L",
   name: "TOWER DECK",
-  x: LS.tower.x,
-  z: LS.tower.z,
-  y: LS.tower.h,
+  x: LAUNCH_SITE.tower.x,
+  z: LAUNCH_SITE.tower.z,
+  y: LAUNCH_SITE.tower.h,
   r: 6.8,
   color: 0xffffff,
 });

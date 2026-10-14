@@ -2,7 +2,7 @@
 // Lines 96148-96381 of readable/index-inline-1.pretty.js (statement-aligned).
 {
   const set = (id, o) => {
-    const m = MIS.find((q) => q.id === id);
+    const m = MISSIONS.find((q) => q.id === id);
     if (m) Object.assign(m, o);
   };
   set("launch", {
@@ -100,15 +100,15 @@
     stuntshow: { t: 45, s: 60 },
     hotcell: { t: 33, s: 39 },
   });
-  FLY.delete("pad");
+  FLY_MISSIONS.delete("pad");
 }
 
 /* ---- the story: 14 chapters and the orbit, in the same order as the difficulty ---- */
 {
   const C = (id, t, act, who, intro, outro, at, o) =>
-      Object.assign({ t, mis: MI(id), act, who, intro, outro, at }, o || {}),
-    old = CH.slice(),
-    keep = (id) => old.find((c) => MIS[c.mis] && MIS[c.mis].id === id) || {};
+      Object.assign({ t, mis: missionIndex(id), act, who, intro, outro, at }, o || {}),
+    old = CHAPTERS.slice(),
+    keep = (id) => old.find((c) => MISSIONS[c.mis] && MISSIONS[c.mis].id === id) || {};
   const N = [
     keep("tutorial"),
     keep("drone"),
@@ -199,8 +199,8 @@
     keep("final"),
     keep("orbit"),
   ];
-  CH.length = 0;
-  N.forEach((c) => CH.push(c));
+  CHAPTERS.length = 0;
+  N.forEach((c) => CHAPTERS.push(c));
 }
 // progress carries over: a chapter counts if its mission was cleared in the old order
 {
@@ -226,7 +226,7 @@
       ],
       cleared = new Set(oldOrder.slice(0, done));
     let nd = 0;
-    while (nd < CH.length && cleared.has(MIS[CH[nd].mis].id)) nd++;
+    while (nd < CHAPTERS.length && cleared.has(MISSIONS[CHAPTERS[nd].mis].id)) nd++;
     STORY.done = nd;
     store.set("rfc_story", String(nd));
     store.set("rfc_story_v", "26");

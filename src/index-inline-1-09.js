@@ -58,7 +58,7 @@
 
 /* ---------------- traffic: four original vehicle types ---------------- */
 // every type: length L, width W, parts [geometry, material, perInstanceColour?], wheel spots and light offsets
-const VT = {};
+const VEHICLE_TYPES = {};
 {
   const glass = new THREE.MeshStandardMaterial({
       color: 0x0a0c10,
@@ -106,7 +106,7 @@ const VT = {};
     amber = new THREE.MeshBasicMaterial({
       color: new THREE.Color(3, 1.8, 0.3),
     });
-  VT.sedan = {
+  VEHICLE_TYPES.sedan = {
     L: 4.4,
     W: 1.9,
     cols: [
@@ -127,7 +127,7 @@ const VT = {};
       [B(1.6, 0.1, 0.05, 0, 0.8, 2.21), tlM],
     ],
   };
-  VT.cab = {
+  VEHICLE_TYPES.cab = {
     L: 3.9,
     W: 1.8,
     cols: [0xf2f3f5],
@@ -147,7 +147,7 @@ const VT = {};
       [B(1.4, 0.08, 0.05, 0, 0.86, 1.93), tlM],
     ],
   };
-  VT.pickup = {
+  VEHICLE_TYPES.pickup = {
     L: 5.6,
     W: 2.05,
     cols: [0x3b4047, 0x14161a, 0x5c6f86, 0xd9dcdf, 0x7b2a22],
@@ -167,7 +167,7 @@ const VT = {};
       [B(1.8, 0.12, 0.05, 0, 1.1, 2.81), tlM],
     ],
   };
-  VT.hauler = {
+  VEHICLE_TYPES.hauler = {
     L: 16,
     W: 2.6,
     cols: [0xe9ecef, 0xb3121b, 0x1c3f7a, 0x3a3f45, 0x2c6b4f],
@@ -207,7 +207,7 @@ const TRAFFIC = [];
   const r = rng(88);
   const wheelList = [];
   for (const [type, n] of Object.entries(mix)) {
-    const T = VT[type];
+    const T = VEHICLE_TYPES[type];
     T.meshes = T.parts.map(([g, m, pc]) => {
       const im = new THREE.InstancedMesh(g, m, n);
       if (pc)
@@ -220,8 +220,8 @@ const TRAFFIC = [];
     T.n = n;
     for (let i = 0; i < n; i++) {
       const axis = r() < 0.5 ? "x" : "z";
-      let line = -HALF + (1 + ((r() * (NBK - 1)) | 0)) * P;
-      while (NOTRAF(axis, line)) line += P;
+      let line = -HALF + (1 + ((r() * (BLOCK_COUNT - 1)) | 0)) * BLOCK_PITCH;
+      while (NOTRAF(axis, line)) line += BLOCK_PITCH;
       const _l = line,
         dir = r() < 0.5 ? 1 : -1;
       const car = {
@@ -231,7 +231,7 @@ const TRAFFIC = [];
         axis,
         line: _l,
         dir,
-        pos: -HALF + P + r() * (NBK - 2) * P,
+        pos: -HALF + BLOCK_PITCH + r() * (BLOCK_COUNT - 2) * BLOCK_PITCH,
         sp: (type === "hauler" ? 8 : 9) + r() * (type === "hauler" ? 3 : 7),
         v: 0,
         x: 0,
@@ -256,11 +256,11 @@ const TRAFFIC = [];
   scene.add(wheels);
   TRAFFIC.wheels = wheels;
 }
-const Q0 = new THREE.Quaternion(),
-  V2 = new THREE.Vector3();
+const scratchQuat = new THREE.Quaternion(),
+  scratchVec3 = new THREE.Vector3();
 // cars parked at the diner's charging stalls, nosed toward the screen
 function vehicleModel(type, color) {
-  const T = VT[type],
+  const T = VEHICLE_TYPES[type],
     g = new THREE.Group();
   g.userData.paint = [];
   T.parts.forEach(([geo, m, pc]) => {
@@ -291,7 +291,7 @@ function vehicleModel(type, color) {
   const r = rng(4242);
   for (const [x, z] of DINER.parked) {
     const type = r() < 0.4 ? "cab" : "sedan",
-      T = VT[type];
+      T = VEHICLE_TYPES[type];
     const g = vehicleModel(type, T.cols[(r() * T.cols.length) | 0]);
     g.position.set(x, 0.2, z);
     g.rotation.y = -Math.PI / 2;

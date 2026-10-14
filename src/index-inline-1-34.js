@@ -1,6 +1,6 @@
-// index-inline-1 34 — three
+// index-inline-1 34 — currentmission
 // Lines 89207-89480 of readable/index-inline-1.pretty.js (statement-aligned).
-const DZ = (() => {
+const DROP_ZONE = (() => {
   const g = new THREE.Group();
   const m = new THREE.MeshBasicMaterial({
     color: new THREE.Color(0.3, 2.4, 2.8),
@@ -34,10 +34,10 @@ const DZ = (() => {
 })();
 function zoneColor(hex) {
   const c = new THREE.Color(hex);
-  DZ.userData.m.color.copy(c).multiplyScalar(2.6);
-  DZ.userData.bm.color.copy(c);
+  DROP_ZONE.userData.m.color.copy(c).multiplyScalar(2.6);
+  DROP_ZONE.userData.bm.color.copy(c);
 }
-const SKYR = (() => {
+const TOUR_MARKERS = (() => {
   const g = new THREE.Group();
   STOUR.forEach((r, i) => {
     const pv = STOUR[i - 1] || [48, 30, 144];
@@ -61,16 +61,16 @@ function clearMissionProps() {
   jamOff();
   tutHide();
   v26Clear();
-  DZ.visible = false;
-  SKYR.visible = false;
+  DROP_ZONE.visible = false;
+  TOUR_MARKERS.visible = false;
   chaseEnd();
   raceEnd();
   RAMPS.forEach((r) => r.bar.color.setRGB(3, 1.9, 0.3));
 }
 function navLabel() {
-  if (!M && STORY.on) return "Z MARKER";
-  if (!M || M.done) return "";
-  const d = M.def.id;
+  if (!currentMission && STORY.on) return "Z MARKER";
+  if (!currentMission || currentMission.done) return "";
+  const d = currentMission.def.id;
   {
     const x = navLabel23(d);
     if (x) return x;
@@ -79,39 +79,39 @@ function navLabel() {
     {
       hover: "THE BOX",
       pad: "PAD B",
-      rings: M.ring < RINGS.length ? `RING ${M.ring + 1}` : "PAD C",
-      relay: "PAD " + ["A", "C", "B"][Math.min(2, M.step)],
+      rings: currentMission.ring < RINGS.length ? `RING ${currentMission.ring + 1}` : "PAD C",
+      relay: "PAD " + ["A", "C", "B"][Math.min(2, currentMission.step)],
       deck: "TOWER DECK",
-      race: `GATE ${M.cp + 1}/${RACE.gates.length}`,
-      final: `GATE ${M.cp + 1}/${RACE.gates.length}`,
+      race: `GATE ${currentMission.cp + 1}/${RACE.gates.length}`,
+      final: `GATE ${currentMission.cp + 1}/${RACE.gates.length}`,
       truck: "TRUCK JUMP",
       bigair: "MEGA RAMP",
       loop: "THE LOOP",
-      courier: `DROP ${Math.min(M.step + 1, DROPS.length)}/${DROPS.length}`,
+      courier: `DROP ${Math.min(currentMission.step + 1, DROPS.length)}/${DROPS.length}`,
       ramps: "NEXT RAMP",
       chase: "VEX",
-      skytour: M.ring < STOUR.length ? STOUR[M.ring][3] : "TOWER DECK",
+      skytour: currentMission.ring < STOUR.length ? STOUR[currentMission.ring][3] : "TOWER DECK",
       catch: "VIEW POINT",
     }[d] || ""
   );
 }
 function updateNav() {
-  const tg = phase === "play" && !cin.on ? mapTarget() : null,
-    el = $("nav"),
-    tc = $("turnCue");
+  const tg = phase === "play" && !cinematic.on ? mapTarget() : null,
+    el = byId("nav"),
+    tc = byId("turnCue");
   if (!tg) {
     if (!el.hidden) el.hidden = true;
     tc.classList.remove("on");
     return;
   }
   if (el.hidden) el.hidden = false;
-  const dx = tg.x - S.x,
-    dz = tg.z - S.z,
-    fw = [-Math.sin(S.yaw), -Math.cos(S.yaw)],
-    rt = [Math.cos(S.yaw), -Math.sin(S.yaw)],
+  const dx = tg.x - carState.x,
+    dz = tg.z - carState.z,
+    fw = [-Math.sin(carState.yaw), -Math.cos(carState.yaw)],
+    rt = [Math.cos(carState.yaw), -Math.sin(carState.yaw)],
     a = Math.atan2(dx * rt[0] + dz * rt[1], dx * fw[0] + dz * fw[1]),
     dist = Math.hypot(dx, dz);
-  $("navA").style.transform = `rotate(${a.toFixed(2)}rad)`;
+  byId("navA").style.transform = `rotate(${a.toFixed(2)}rad)`;
   setT("navT", navLabel());
   setT(
     "navD",
@@ -120,12 +120,12 @@ function updateNav() {
       : `${(dist / 1000).toFixed(1)} km`,
   );
   let cue = null;
-  if (M && !M.done && (M.def.race || M.def.id === "chase") && M.rs === "run") {
-    const Pa = M.def.race ? RACE : CHASE;
+  if (currentMission && !currentMission.done && (currentMission.def.race || currentMission.def.id === "chase") && currentMission.rs === "run") {
+    const Pa = currentMission.def.race ? RACE : CHASE;
     let bd = 1e9,
       bt = null;
     for (const t of Pa.turns) {
-      let d = t.s - 10 - M.sp;
+      let d = t.s - 10 - currentMission.sp;
       d = ((d % Pa.len) + Pa.len) % Pa.len;
       if (d < bd) {
         bd = d;
@@ -144,44 +144,44 @@ function updateNav() {
   } else tc.classList.remove("on");
 }
 function storyNext() {
-  return STORY.done < CH.length ? STORY.done : -1;
+  return STORY.done < CHAPTERS.length ? STORY.done : -1;
 }
 function updateMarker(t) {
   const k = storyNext(),
-    show = STORY.on && phase === "play" && !M && k >= 0;
-  MK.visible = show;
+    show = STORY.on && phase === "play" && !currentMission && k >= 0;
+  STORY_MARKER.visible = show;
   if (!show) return;
-  const a = CH[k].at;
-  MK.position.set(a[0], 0, a[1]);
-  MK.userData.sp.position.y = 4.5 + Math.sin(t * 2.5) * 0.4;
-  MK.children[0].rotation.z = t;
-  if (Math.hypot(S.x - a[0], S.z - a[1]) < 6 && S.y < 4 && !cin.on)
+  const a = CHAPTERS[k].at;
+  STORY_MARKER.position.set(a[0], 0, a[1]);
+  STORY_MARKER.userData.sp.position.y = 4.5 + Math.sin(t * 2.5) * 0.4;
+  STORY_MARKER.children[0].rotation.z = t;
+  if (Math.hypot(carState.x - a[0], carState.z - a[1]) < 6 && carState.y < 4 && !cinematic.on)
     startChapter(k);
 }
 function startChapter(k) {
   STORY.on = true;
   STORY.cur = k;
-  const C = CH[k];
+  const C = CHAPTERS[k];
   if (C.orbit) {
     startOrbit(k);
     return;
   }
   startMission(C.mis);
-  M.story = k;
-  if (M.def.id === "final") {
-    M.cutEnd = () => showSub(C.who, C.intro, 5);
-    if (!M.cutEnd.played && finalSeen && phase === "play")
+  currentMission.story = k;
+  if (currentMission.def.id === "final") {
+    currentMission.cutEnd = () => showSub(C.who, C.intro, 5);
+    if (!currentMission.cutEnd.played && finalSeen && phase === "play")
       showSub(C.who, C.intro, 5);
     return;
   }
   flashT = 0;
-  $("msgbig").textContent = "";
-  $("msgsmall").textContent = "";
-  if (k === 0) place(CARP.x, CARP.z, Math.PI / 2);
+  byId("msgbig").textContent = "";
+  byId("msgsmall").textContent = "";
+  if (k === 0) place(CAR_START.x, CAR_START.z, Math.PI / 2);
   if (k === 0 || SEEN_CH.has(k)) {
     SEEN_CH.add(k);
     phase = "play";
-    M.t0 = clock;
+    currentMission.t0 = clock;
     showSub(C.who, C.intro, k === 0 ? 6 : 5.5);
     return;
   }
@@ -190,8 +190,8 @@ function startChapter(k) {
 }
 function startStory() {
   STORY.on = true;
-  applyVehicle(VSEL());
-  if (STORY.done >= CH.length) {
+  applyVehicle(SELECTED_VEHICLE());
+  if (STORY.done >= CHAPTERS.length) {
     STORY.done = 0;
     store.set("rfc_story", "0");
   }
@@ -202,24 +202,24 @@ function startStory() {
     return;
   }
   mission = null;
-  M = null;
+  currentMission = null;
   begin();
   clearMissionProps();
   place(DINER.x0 - 8 + 3.2, (DINER.z0 + DINER.z1) / 2, 0);
-  S.tank = 100;
-  S.heat = 25;
-  $("mission").hidden = true;
+  carState.tank = 100;
+  carState.heat = 25;
+  byId("mission").hidden = true;
   PADS.forEach((p) => (p.beam.visible = false));
   RINGS.forEach((r) => (r.m.visible = false));
   const k = storyNext();
   flash(
-    `CHAPTER ${k + 1} · ${CH[k].t}`,
+    `CHAPTER ${k + 1} · ${CHAPTERS[k].t}`,
     "drive to the gold Z marker on your map",
     3.4,
   );
 }
 function storyAfter(ok) {
-  const k = M.story;
+  const k = currentMission.story;
   if (ok) {
     STORY.done = Math.max(STORY.done, k + 1);
     store.set("rfc_story", String(STORY.done));
@@ -227,12 +227,12 @@ function storyAfter(ok) {
 }
 function continueStory() {
   ONCE.arm = ONCE.hover = false;
-  $("result").hidden = true;
+  byId("result").hidden = true;
   mission = null;
-  M = null;
+  currentMission = null;
   clearMissionProps();
   begin();
-  $("mission").hidden = true;
+  byId("mission").hidden = true;
   PADS.forEach((p) => (p.beam.visible = false));
   RINGS.forEach((r) => (r.m.visible = false));
   const k = storyNext();
@@ -246,17 +246,17 @@ function continueStory() {
     return;
   }
   flash(
-    `CHAPTER ${k + 1} · ${CH[k].t}`,
+    `CHAPTER ${k + 1} · ${CHAPTERS[k].t}`,
     "drive to the gold Z marker on your map",
     3.4,
   );
-  setTimeout(() => showSub(CH[k].who, "Meet me at the marker.", 3.5), 1200);
+  setTimeout(() => showSub(CHAPTERS[k].who, "Meet me at the marker.", 3.5), 1200);
 }
 /* ---------------- SHOWDOWN: the final race intro + photo finish ---------------- */
 function vsShow(on) {
-  const el = $("vs");
+  const el = byId("vs");
   if (on) {
-    $("vsL2").textContent = "ROADSTER · " + SKIN().n;
+    byId("vsL2").textContent = "ROADSTER · " + activeSkin().n;
     el.hidden = false;
     el.classList.remove("on");
     void el.offsetWidth;

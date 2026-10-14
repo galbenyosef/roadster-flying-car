@@ -1,6 +1,6 @@
-// index-inline-1 46 — rco
+// index-inline-1 46 — calloutstate
 // Lines 92974-93264 of readable/index-inline-1.pretty.js (statement-aligned).
-const RCUE = [
+const REVEAL_CUES = [
   [
     0.25,
     () => {
@@ -29,14 +29,14 @@ function revealGas(kind) {
   car.updateMatrixWorld();
   const r = Math.random,
     back = new THREE.Vector3(
-      -Math.sin(S.yaw),
+      -Math.sin(carState.yaw),
       0,
-      -Math.cos(S.yaw),
+      -Math.cos(carState.yaw),
     ).multiplyScalar(-1);
   if (kind === 0) {
     for (let i = 0; i < 10; i++) {
       const p = body.localToWorld(
-        new THREE.Vector3((r() - 0.5) * PW, PY - PH * r(), PZ + 0.04),
+        new THREE.Vector3((r() - 0.5) * PLATE_W, PLATE_Y - PLATE_H * r(), PLATE_Z + 0.04),
       );
       gas.emit(
         p.x,
@@ -51,7 +51,7 @@ function revealGas(kind) {
       );
     }
   } else
-    for (const [x, y] of BAYP)
+    for (const [x, y] of BAY_PORTS)
       for (let i = 0; i < 4; i++) {
         const p = body.localToWorld(new THREE.Vector3(x, y, 2.42));
         gas.emit(
@@ -70,8 +70,8 @@ function revealGas(kind) {
 function revealPose(t) {
   const sl = easeIO(clamp((t - 0.25) / 0.35)),
     jit = t > 0.25 && t < 0.45 ? Math.sin(t * 160) * 0.002 : 0;
-  platePivot.position.z = PZ + 0.04 * sl;
-  platePivot.position.y = PY + 0.012 * sl + jit;
+  platePivot.position.z = PLATE_Z + 0.04 * sl;
+  platePivot.position.y = PLATE_Y + 0.012 * sl + jit;
   // a hinge motor with a damped spring: overshoot about 6%, settled in 0.7 s
   let th = 0;
   if (t > 1.15) {
@@ -94,10 +94,10 @@ function revealPose(t) {
         : lerp(11, 5, clamp((t - 4.6) / 0.8));
   nozzleMat.emissiveIntensity = t < 3.8 ? 0 : Math.min(5, (t - 3.8) * 7);
 }
-var rco = null;
+var calloutState = null;
 function revealCallout(sh, t) {
-  const L = $("callouts");
-  if (!rco || rco.sh !== sh) {
+  const L = byId("callouts");
+  if (!calloutState || calloutState.sh !== sh) {
     L.innerHTML = '<svg width="100%" height="100%"></svg>';
     const d = document.createElement("div");
     d.className = "co";
@@ -107,14 +107,14 @@ function revealCallout(sh, t) {
       dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     dot.setAttribute("r", "0");
     L.firstChild.append(ln, dot);
-    rco = { sh, d, ln, dot, on: false };
+    calloutState = { sh, d, ln, dot, on: false };
   }
   const u = (t - sh.t0) / (sh.t1 - sh.t0);
-  if (!rco.on && u > 0.18) {
-    rco.on = true;
-    rco.d.classList.add("on");
-    rco.ln.classList.add("on");
-    rco.dot.setAttribute("r", "4.5");
+  if (!calloutState.on && u > 0.18) {
+    calloutState.on = true;
+    calloutState.d.classList.add("on");
+    calloutState.ln.classList.add("on");
+    calloutState.dot.setAttribute("r", "4.5");
     audio.ping();
   }
   car.updateMatrixWorld();
@@ -126,22 +126,22 @@ function revealCallout(sh, t) {
     left = x > W * 0.55,
     lx = clamp(x + (left ? -150 : 150), 90, W - 90),
     ly = clamp(y - H * 0.16, H * 0.16, H * 0.64);
-  rco.ln.setAttribute("x1", x);
-  rco.ln.setAttribute("y1", y);
-  rco.ln.setAttribute("x2", lx);
-  rco.ln.setAttribute("y2", ly);
-  rco.dot.setAttribute("cx", x);
-  rco.dot.setAttribute("cy", y);
-  rco.d.classList.toggle("l", left);
-  rco.d.style.transform = `translate(${lx}px,${ly}px) translate(${left ? "-100%" : "0"},-50%)`;
-  rco.d.style.opacity = rco.on ? Math.min(1, (1 - u) / 0.1) : 0;
+  calloutState.ln.setAttribute("x1", x);
+  calloutState.ln.setAttribute("y1", y);
+  calloutState.ln.setAttribute("x2", lx);
+  calloutState.ln.setAttribute("y2", ly);
+  calloutState.dot.setAttribute("cx", x);
+  calloutState.dot.setAttribute("cy", y);
+  calloutState.d.classList.toggle("l", left);
+  calloutState.d.style.transform = `translate(${lx}px,${ly}px) translate(${left ? "-100%" : "0"},-50%)`;
+  calloutState.d.style.opacity = calloutState.on ? Math.min(1, (1 - u) / 0.1) : 0;
 }
 function revealTick(dt) {
-  const t = cin.t;
+  const t = cinematic.t;
   revealPose(t);
-  while (cin.cue < RCUE.length && t >= RCUE[cin.cue][0]) {
-    RCUE[cin.cue][1]();
-    cin.cue++;
+  while (cinematic.cue < REVEAL_CUES.length && t >= REVEAL_CUES[cinematic.cue][0]) {
+    REVEAL_CUES[cinematic.cue][1]();
+    cinematic.cue++;
   }
   const sh = RSHOT.find((s) => t < s.t1) || null,
     V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
@@ -153,10 +153,10 @@ function revealTick(dt) {
     P = car.localToWorld(V(sh.P[0]).lerp(V(sh.P[1]), e));
     Lk = car.localToWorld(V(sh.L[0]).lerp(V(sh.L[1]), e));
     fov = lerp(sh.f[0], sh.f[1], e);
-    if (cin.shot !== sh) {
-      cin.shot = sh;
-      $("cinK").textContent = sh.k;
-      $("cinS").textContent = sh.s;
+    if (cinematic.shot !== sh) {
+      cinematic.shot = sh;
+      byId("cinK").textContent = sh.k;
+      byId("cinS").textContent = sh.s;
     }
   } else {
     const u = easeIO(clamp((t - 5) / 0.4)),
@@ -164,9 +164,9 @@ function revealTick(dt) {
     P = car.localToWorld(V(s3.P[1]).lerp(V([0, 1.9, 6.2]), u));
     Lk = car.localToWorld(V(s3.L[1]).lerp(V([0, 0.75, -6]), u));
     fov = lerp(52, 58, u);
-    if (rco) {
-      $("callouts").innerHTML = "";
-      rco = null;
+    if (calloutState) {
+      byId("callouts").innerHTML = "";
+      calloutState = null;
     }
   }
   camera.position.copy(P);
@@ -176,27 +176,27 @@ function revealTick(dt) {
   revealLight();
   camera.updateMatrixWorld();
   if (sh) revealCallout(sh, t);
-  if (M && !M.done) M.t0 += dt;
+  if (currentMission && !currentMission.done) currentMission.t0 += dt;
 }
 function skipCin() {
-  if (!cin.on || phase !== "play") return;
-  if (cin.rev || cin.kind === "hover") {
-    cin.t = cin.dur;
-    if (cin.rev) {
+  if (!cinematic.on || phase !== "play") return;
+  if (cinematic.rev || cinematic.kind === "hover") {
+    cinematic.t = cinematic.dur;
+    if (cinematic.rev) {
       revealPose(REVEAL_DUR);
-      while (cin.cue < RCUE.length) {
-        if (RCUE[cin.cue][0] >= 3.9 && RCUE[cin.cue][0] < 4) audio.ignite();
-        cin.cue++;
+      while (cinematic.cue < REVEAL_CUES.length) {
+        if (REVEAL_CUES[cinematic.cue][0] >= 3.9 && REVEAL_CUES[cinematic.cue][0] < 4) audio.ignite();
+        cinematic.cue++;
       }
     }
   }
 }
-$("cinSkip").addEventListener("click", (e) => {
+byId("cinSkip").addEventListener("click", (e) => {
   e.stopPropagation();
   skipCin();
 });
 addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && cin.on && (cin.rev || cin.kind === "hover"))
+  if (e.key === "Enter" && cinematic.on && (cinematic.rev || cinematic.kind === "hover"))
     skipCin();
 });
 
@@ -204,17 +204,17 @@ addEventListener("keydown", (e) => {
 function mapTarget23(d, pd) {
   if (d === "tutorial") return tutTarget();
   if (d === "drone")
-    return DRN.att
+    return DRONE.att
       ? { x: DRN_ROOF[0], z: DRN_ROOF[2] }
-      : { x: DRN.g.position.x, z: DRN.g.position.z };
+      : { x: DRONE.g.position.x, z: DRONE.g.position.z };
   if (d === "jam") return pd("A");
-  if (d === "launchday") return M.step === 0 ? pd("L") : { x: VP[0], z: VP[1] };
+  if (d === "launchday") return currentMission.step === 0 ? pd("L") : { x: VIEWPOINT[0], z: VIEWPOINT[1] };
   if (d === "stuntshow") {
     let b = null,
       bd = 1e9;
     for (const r of RAMPS) {
       if (r.name === "POND JUMP") continue;
-      const dd = Math.hypot(r.x - S.x, r.z - S.z);
+      const dd = Math.hypot(r.x - carState.x, r.z - carState.z);
       if (dd < bd && dd > 14) {
         bd = dd;
         b = r;
@@ -223,13 +223,13 @@ function mapTarget23(d, pd) {
     return b;
   }
   if (d === "launch")
-    return M.started
+    return currentMission.started
       ? null
-      : { x: S.x - Math.sin(S.yaw) * 200, z: S.z - Math.cos(S.yaw) * 200 };
+      : { x: carState.x - Math.sin(carState.yaw) * 200, z: carState.z - Math.cos(carState.yaw) * 200 };
   return undefined;
 }
 function navLabel23(d) {
-  if (d === "drone") return DRN.att ? "DINER ROOF" : "DRONE";
+  if (d === "drone") return DRONE.att ? "DINER ROOF" : "DRONE";
   if (d === "tutorial")
     return (
       [
@@ -242,18 +242,18 @@ function navLabel23(d) {
         "THE BOX",
         "",
         "PAD A ROOF",
-      ][M.step] || ""
+      ][currentMission.step] || ""
     );
   return (
     {
       jam: "PAD A ROOF",
-      launchday: M.step === 0 ? "TOWER DECK" : "VIEW POINT",
+      launchday: currentMission.step === 0 ? "TOWER DECK" : "VIEW POINT",
       stuntshow: "NEAREST RAMP",
       launch: "STRAIGHT AHEAD",
     }[d] || ""
   );
 }
-const FLY = new Set([
+const FLY_MISSIONS = new Set([
   "jam",
   "hover",
   "pad",
@@ -264,17 +264,17 @@ const FLY = new Set([
   "launchday",
 ]);
 function objHelp(d, obj) {
-  if (!FLY.has(d.id) || M.done || (d.id === "launchday" && M.step > 0))
+  if (!FLY_MISSIONS.has(d.id) || currentMission.done || (d.id === "launchday" && currentMission.step > 0))
     return obj;
-  if (!S.armed && !S.air) return `ROCKET MODE first: ${KY("rocket")} · ${obj}`;
-  if (S.armed && !S.air && S.spool >= 1.2 && !/lift|HOVER|SPACE/.test(obj))
-    return `Hold ${KY("hover")} to lift off · ${obj}`;
+  if (!carState.armed && !carState.air) return `ROCKET MODE first: ${KEY_LABELS("rocket")} · ${obj}`;
+  if (carState.armed && !carState.air && carState.spool >= 1.2 && !/lift|HOVER|SPACE/.test(obj))
+    return `Hold ${KEY_LABELS("hover")} to lift off · ${obj}`;
   return obj;
 }
 
 /* ---- Chapter 1: FIRST DRIVE, a controls tutorial with no clock and no fail ---- */
 // one control per step; the control to press glows (touch) or shows as keycaps (keyboard)
-const TG1 = [50, 378];
+const TUTORIAL_PAD = [50, 378];
 const KEYS = {
   gas: ["W"],
   steer: ["A", "D"],
@@ -283,7 +283,7 @@ const KEYS = {
   hover: ["SPACE"],
   boost: ["B"],
 };
-const TBTN = {
+const TOUCH_BUTTONS = {
   gas: "tbGo",
   brake: "tbBr",
   rocket: "tbArm",

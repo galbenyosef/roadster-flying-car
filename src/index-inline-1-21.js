@@ -1,10 +1,10 @@
-// index-inline-1 21 — eco
+// index-inline-1 21 — byid
 // Lines 84772-85050 of readable/index-inline-1.pretty.js (statement-aligned).
 function renderGarage() {
-  $("glist").innerHTML = SKINS.map((s) => {
-    const own = ECO.skins.has(s.id),
-      sel = ECO.skin === s.id,
-      can = ECO.cr >= s.price;
+  byId("glist").innerHTML = SKINS.map((s) => {
+    const own = ECONOMY.skins.has(s.id),
+      sel = ECONOMY.skin === s.id,
+      can = ECONOMY.cr >= s.price;
     const E = (window.__EARN || {})[s.id];
     const btn = own
       ? sel
@@ -17,12 +17,12 @@ function renderGarage() {
   }).join("");
 }
 function renderBoost() {
-  $("blist").innerHTML = UPG.map((u) => {
-    const l = U(u.id),
+  byId("blist").innerHTML = UPGRADES.map((u) => {
+    const l = upgradeLevel(u.id),
       c = UCOST[l],
       max = l >= 3;
     return `<div class="urow"><div><div class="un">${u.n}</div><div class="ud">${u.d}</div><div class="pips">${[0, 1, 2].map((i) => `<i class="${i < l ? "on" : ""}"></i>`).join("")}</div></div>
-  ${max ? '<button class="gbtn" disabled>MAX</button>' : `<button class="gbtn buy" data-up="${u.id}" ${ECO.cr >= c ? "" : "disabled"}>${c.toLocaleString("en-US")} CR</button>`}</div>`;
+  ${max ? '<button class="gbtn" disabled>MAX</button>' : `<button class="gbtn buy" data-up="${u.id}" ${ECONOMY.cr >= c ? "" : "disabled"}>${c.toLocaleString("en-US")} CR</button>`}</div>`;
   }).join("");
 }
 function renderHome() {
@@ -31,45 +31,45 @@ function renderHome() {
   renderGarage();
   renderBoost();
   const k = storyNext();
-  $("sdots").innerHTML = CH.map(
+  byId("sdots").innerHTML = CHAPTERS.map(
     (c, i) =>
       `<i class="${i < STORY.done ? "on" : i === k ? "cur" : ""}" title="${c.t}"></i>`,
   ).join("");
-  $("stitle").textContent =
+  byId("stitle").textContent =
     k < 0
       ? "Story complete · replay from Chapter 1"
-      : `Chapter ${k + 1} · ${CH[k].t[0] + CH[k].t.slice(1).toLowerCase()}`;
-  $("storyBtn").textContent =
+      : `Chapter ${k + 1} · ${CHAPTERS[k].t[0] + CHAPTERS[k].t.slice(1).toLowerCase()}`;
+  byId("storyBtn").textContent =
     k < 0
       ? "REPLAY STORY"
       : STORY.done === 0
         ? "START STORY"
         : "CONTINUE STORY";
-  const sk = SKIN();
-  $("skinSw").style.background = skinSwatch(sk);
-  $("skinN").textContent = sk.n;
-  $("skinT").textContent =
+  const sk = activeSkin();
+  byId("skinSw").style.background = skinSwatch(sk);
+  byId("skinN").textContent = sk.n;
+  byId("skinT").textContent =
     sk.tier + (sk.perk ? ` · +${Math.round(sk.perk * 100)}% CREDITS` : "");
-  if (ECO.refund) {
-    $("glead").textContent =
-      `One car now: the Roadster. Your old cars were refunded: +${ECO.refund.toLocaleString("en-US")} CR.`;
+  if (ECONOMY.refund) {
+    byId("glead").textContent =
+      `One car now: the Roadster. Your old cars were refunded: +${ECONOMY.refund.toLocaleString("en-US")} CR.`;
   }
 }
-$("storyBtn").addEventListener("click", startStory);
-$("yardBtn").addEventListener("click", () => {
+byId("storyBtn").addEventListener("click", startStory);
+byId("yardBtn").addEventListener("click", () => {
   startFree();
   place(-668.8, -20, 0);
   flash("STUNT YARD", "6 ramps · wheels only · go fast", 2.6);
 });
-$("finalBtn").addEventListener("click", () => {
+byId("finalBtn").addEventListener("click", () => {
   STORY.on = false;
-  startMission(MIS.findIndex((m) => m.id === "final"));
+  startMission(MISSIONS.findIndex((m) => m.id === "final"));
 });
-$("raceBtn").addEventListener("click", () => {
+byId("raceBtn").addEventListener("click", () => {
   STORY.on = false;
-  startMission(MIS.findIndex((m) => m.id === "race"));
+  startMission(MISSIONS.findIndex((m) => m.id === "race"));
 });
-$("home").addEventListener("click", (e) => {
+byId("home").addEventListener("click", (e) => {
   const b = e.target.closest("button,[data-pick]");
   if (!b) return;
   const d = b.dataset;
@@ -80,25 +80,25 @@ $("home").addEventListener("click", (e) => {
     document
       .querySelectorAll("#home .tab")
       .forEach((s) => s.classList.toggle("on", s.id === "tab-" + d.tab));
-    if (d.tab !== "garage") applySkin(SKIN());
+    if (d.tab !== "garage") applySkin(activeSkin());
     audio.servo();
     return;
   }
   if (d.buy) {
     const sk = SKINS.find((x) => x.id === d.buy);
-    if (ECO.cr >= sk.price) {
-      ECO.cr -= sk.price;
-      ECO.skins.add(sk.id);
-      ECO.skin = sk.id;
+    if (ECONOMY.cr >= sk.price) {
+      ECONOMY.cr -= sk.price;
+      ECONOMY.skins.add(sk.id);
+      ECONOMY.skin = sk.id;
       applySkin(sk);
       audio.chime();
       renderHome();
     }
     return;
   }
-  if (d.sel || (d.pick && ECO.skins.has(d.pick))) {
-    ECO.skin = d.sel || d.pick;
-    applySkin(SKIN());
+  if (d.sel || (d.pick && ECONOMY.skins.has(d.pick))) {
+    ECONOMY.skin = d.sel || d.pick;
+    applySkin(activeSkin());
     audio.servo();
     renderHome();
     return;
@@ -111,34 +111,34 @@ $("home").addEventListener("click", (e) => {
     return;
   } // preview a skin you do not own yet
   if (d.up) {
-    const l = U(d.up),
+    const l = upgradeLevel(d.up),
       c = UCOST[l];
-    if (l < 3 && ECO.cr >= c) {
-      ECO.cr -= c;
-      ECO.upg[d.up] = l + 1;
+    if (l < 3 && ECONOMY.cr >= c) {
+      ECONOMY.cr -= c;
+      ECONOMY.upg[d.up] = l + 1;
       audio.chime();
       renderHome();
     }
   }
 });
-MIS.push({
+MISSIONS.push({
   id: "jam",
   r: 300,
   n: "00",
   t: "Over the Jam",
   b: "The road ahead is jammed. Open the plate, lift over the traffic and land on the Pad A roof. 90 s.",
-  spawn: () => place(CARP.x, CARP.z, Math.PI / 2),
+  spawn: () => place(CAR_START.x, CAR_START.z, Math.PI / 2),
 });
 function begin() {
   audio.init();
   document.body.classList.add("playing");
-  $("gate").hidden = true;
-  $("intro").hidden = true;
+  byId("gate").hidden = true;
+  byId("intro").hidden = true;
   document.body.classList.remove("intro");
-  $("title").hidden = true;
-  $("result").hidden = true;
-  ["side", "console", "menubtn", "mm"].forEach((id) => ($(id).hidden = false));
-  $("touch").hidden = !isTouch;
+  byId("title").hidden = true;
+  byId("result").hidden = true;
+  ["side", "console", "menubtn", "mm"].forEach((id) => (byId(id).hidden = false));
+  byId("touch").hidden = !isTouch;
   phase = "play";
 }
 function startFree() {
@@ -148,14 +148,14 @@ function startFree() {
   STORY.on = false;
   clearMissionProps();
   mission = null;
-  M = null;
-  applyVehicle(VSEL());
+  currentMission = null;
+  applyVehicle(SELECTED_VEHICLE());
   begin();
   place(3.5, 440, 0);
-  S.tank = 100;
-  S.heat = 25;
-  $("mission").hidden = true;
-  $("lapcard").hidden = false;
+  carState.tank = 100;
+  carState.heat = 25;
+  byId("mission").hidden = true;
+  byId("lapcard").hidden = false;
   RINGS.forEach((r) => {
     r.m.visible = true;
     r.m.material.emissive.set(0x28e0ff);
@@ -163,7 +163,7 @@ function startFree() {
   PADS.forEach((p) => (p.beam.visible = true));
   flash(
     "FREE ROAM",
-    `${KY("rocket")} = ROCKET MODE · ${KY("hover")} to lift off · ${TOKENS.length} sky tokens · Stunt Yard out west`,
+    `${KEY_LABELS("rocket")} = ROCKET MODE · ${KEY_LABELS("hover")} to lift off · ${TOKENS.length} sky tokens · Stunt Yard out west`,
     3.5,
   );
 }
@@ -171,9 +171,9 @@ function startMission(i) {
   ONCE.arm = ONCE.hover = false;
   mission = i;
   lastMission = i;
-  const d = MIS[i];
-  const pv = VSEL();
-  applyVehicle(pv.fly ? pv : VEH[0]);
+  const d = MISSIONS[i];
+  const pv = SELECTED_VEHICLE();
+  applyVehicle(pv.fly ? pv : VEHICLES[0]);
   begin();
   clearMissionProps();
   if (d.id === "deck" || d.id === "launchday") {
@@ -184,12 +184,12 @@ function startMission(i) {
     Object.assign(LAUNCH, { st: "gone", t: -6, half: false });
     ROCKET.g.visible = false;
   }
-  if (d.id === "tutorial") TUT.live = false;
+  if (d.id === "tutorial") TUTORIAL.live = false;
   d.spawn();
   if (d.id === "jam") jamOn();
-  S.tank = 100;
-  S.heat = 25;
-  M = {
+  carState.tank = 100;
+  carState.heat = 25;
+  currentMission = {
     def: d,
     best: 0,
     t0: clock,
@@ -213,9 +213,9 @@ function startMission(i) {
   };
   ghostStart(d.id);
   SCORE.drift = 0;
-  $("mission").hidden = false;
-  $("lapcard").hidden = true;
-  $("mname").textContent = `TEST ${d.n} · ${d.t.toUpperCase()}`;
+  byId("mission").hidden = false;
+  byId("lapcard").hidden = true;
+  byId("mname").textContent = `TEST ${d.n} · ${d.t.toUpperCase()}`;
   RINGS.forEach((r, k) => {
     r.m.visible = d.id === "rings";
     r.m.material.emissive.set(k === 0 ? 0xffb35c : 0x28e0ff);
@@ -231,15 +231,15 @@ function startMission(i) {
         (d.id === "deck" && p.label === "L") ||
         (d.id === "launchday" && p.label === "L")),
   );
-  SKYR.visible = d.id === "skytour";
-  SKYR.children.forEach((m, k) =>
+  TOUR_MARKERS.visible = d.id === "skytour";
+  TOUR_MARKERS.children.forEach((m, k) =>
     m.material.emissive.set(k === 0 ? 0xffb35c : 0x28e0ff),
   );
   if (d.id === "courier" || d.id === "catch") {
-    DZ.visible = true;
+    DROP_ZONE.visible = true;
     zoneColor(d.id === "catch" ? 0xffc24a : 0x28e0ff);
-    const q = d.id === "catch" ? VP : DROPS[0];
-    DZ.position.set(q[0], 0, q[1]);
+    const q = d.id === "catch" ? VIEWPOINT : DROPS[0];
+    DROP_ZONE.position.set(q[0], 0, q[1]);
   }
   if (d.id === "ramps")
     RAMPS.forEach((r) => {
@@ -252,28 +252,28 @@ function startMission(i) {
     });
   }
   flash(d.t.toUpperCase(), d.b, 3.2);
-  prevZ = S.z;
+  prevZ = carState.z;
   v26Setup(d);
   if (d.id === "final" && finalSeen) {
     flashT = 0;
-    $("msgbig").textContent = "";
-    $("msgsmall").textContent = "";
+    byId("msgbig").textContent = "";
+    byId("msgsmall").textContent = "";
     rivalTags(true);
     flash("SHOWDOWN", "two laps · only a win counts", 2.2);
   } else if (d.id === "final") {
     finalSeen = true;
     flashT = 0;
-    $("msgbig").textContent = "";
-    $("msgsmall").textContent = "";
+    byId("msgbig").textContent = "";
+    byId("msgsmall").textContent = "";
     startCut(SHOWDOWN, () => {
       rivalTags(true);
       begin();
-      $("mission").hidden = false;
+      byId("mission").hidden = false;
       phase = "play";
-      if (M) {
-        M.t0 = clock;
-        M.gt = 0;
-        if (M.cutEnd) M.cutEnd();
+      if (currentMission) {
+        currentMission.t0 = clock;
+        currentMission.gt = 0;
+        if (currentMission.cutEnd) currentMission.cutEnd();
       }
       flash("SHOWDOWN", "two laps · only a win counts", 2.2);
     });

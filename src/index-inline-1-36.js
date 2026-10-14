@@ -1,4 +1,4 @@
-// index-inline-1 36 — rpl
+// index-inline-1 36 — replay
 // Lines 89804-90083 of readable/index-inline-1.pretty.js (statement-aligned).
 const BARKS = {
   VEX: {
@@ -70,10 +70,10 @@ function radio(who, cat, force) {
   const line = L[RADIO.used[k]++ % L.length];
   RADIO.cd = clock + 4.2;
   const R = RIVALS.find((r) => r.n === who);
-  $("radio").style.setProperty("--rc", R ? R.col : "#fff");
+  byId("radio").style.setProperty("--rc", R ? R.col : "#fff");
   setT("rdWho", who);
   setT("rdTxt", line);
-  $("radio").classList.add("on");
+  byId("radio").classList.add("on");
   RADIO.t = 3.6;
   audio.noise(2600, 900, 0.14, 0.13, "bandpass");
   setTimeout(() => audio.noise(2200, 1300, 0.08, 0.07, "bandpass"), 130);
@@ -81,25 +81,25 @@ function radio(who, cat, force) {
 function radioTick(dt) {
   if (RADIO.t > 0) {
     RADIO.t -= dt;
-    if (RADIO.t <= 0) $("radio").classList.remove("on");
+    if (RADIO.t <= 0) byId("radio").classList.remove("on");
   }
 }
 function radioRace(pos) {
-  if (!M || M.rs !== "run") return;
-  if (M.lastPos == null) {
-    M.lastPos = pos;
+  if (!currentMission || currentMission.rs !== "run") return;
+  if (currentMission.lastPos == null) {
+    currentMission.lastPos = pos;
     return;
   }
-  if (pos === M.lastPos) return;
-  const el = clock - M.t0;
-  const was = M.lastPos;
-  M.lastPos = pos;
+  if (pos === currentMission.lastPos) return;
+  const el = clock - currentMission.t0;
+  const was = currentMission.lastPos;
+  currentMission.lastPos = pos;
   if (el < 3) return;
   if (pos < was) {
     let best = null,
       bd = 1e9;
     for (const r of RIVALS) {
-      const d = M.pprog - r.prog;
+      const d = currentMission.pprog - r.prog;
       if (d >= 0 && d < bd) {
         bd = d;
         best = r;
@@ -110,7 +110,7 @@ function radioRace(pos) {
     let best = null,
       bd = 1e9;
     for (const r of RIVALS) {
-      const d = r.prog - M.pprog;
+      const d = r.prog - currentMission.pprog;
       if (d >= 0 && d < bd) {
         bd = d;
         best = r;
@@ -121,7 +121,7 @@ function radioRace(pos) {
 }
 
 /* ---- instant replay: the last 10 s, re-shot with TV cameras and slow motion ---- */
-const RPL = {
+const REPLAY = {
   N: 300,
   hz: 30,
   F: 17,
@@ -134,50 +134,50 @@ const RPL = {
   shotT: 0,
   shot: null,
 };
-RPL.buf = new Float32Array(RPL.N * RPL.F);
-RPL.tb = new Float32Array(RPL.N * TRAFFIC.length * 3);
-RPL.rb = new Float32Array(RPL.N * 12);
+REPLAY.buf = new Float32Array(REPLAY.N * REPLAY.F);
+REPLAY.tb = new Float32Array(REPLAY.N * TRAFFIC.length * 3);
+REPLAY.rb = new Float32Array(REPLAY.N * 12);
 function recTick(dt) {
-  if (phase !== "play" || (cin.on && cin.freeze) || S.crash > 0) return;
-  RPL.acc += dt;
-  if (RPL.acc < 1 / RPL.hz) return;
-  RPL.acc = Math.min(RPL.acc - 1 / RPL.hz, 1 / RPL.hz);
-  const F = RPL.F,
-    o = RPL.i * F,
-    b = RPL.buf;
-  b[o] = S.x;
-  b[o + 1] = S.y;
-  b[o + 2] = S.z;
-  b[o + 3] = S.yaw;
-  b[o + 4] = S.pitch;
-  b[o + 5] = S.roll;
-  b[o + 6] = S.loop ? S.loop.th : 0;
-  b[o + 7] = S.bayK;
-  b[o + 8] = S.thrust || 0;
-  b[o + 9] = S.susp || 0;
-  b[o + 10] = S.steer;
-  b[o + 11] = S.v;
-  b[o + 12] = S.armed ? 1 : 0;
-  b[o + 13] = S.air ? 1 : 0;
+  if (phase !== "play" || (cinematic.on && cinematic.freeze) || carState.crash > 0) return;
+  REPLAY.acc += dt;
+  if (REPLAY.acc < 1 / REPLAY.hz) return;
+  REPLAY.acc = Math.min(REPLAY.acc - 1 / REPLAY.hz, 1 / REPLAY.hz);
+  const F = REPLAY.F,
+    o = REPLAY.i * F,
+    b = REPLAY.buf;
+  b[o] = carState.x;
+  b[o + 1] = carState.y;
+  b[o + 2] = carState.z;
+  b[o + 3] = carState.yaw;
+  b[o + 4] = carState.pitch;
+  b[o + 5] = carState.roll;
+  b[o + 6] = carState.loop ? carState.loop.th : 0;
+  b[o + 7] = carState.bayK;
+  b[o + 8] = carState.thrust || 0;
+  b[o + 9] = carState.susp || 0;
+  b[o + 10] = carState.steer;
+  b[o + 11] = carState.v;
+  b[o + 12] = carState.armed ? 1 : 0;
+  b[o + 13] = carState.air ? 1 : 0;
   b[o + 14] = rplLand;
   rplLand = 0;
-  b[o + 15] = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v);
-  b[o + 16] = S.dr || 0;
-  const to = RPL.i * TRAFFIC.length * 3;
+  b[o + 15] = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v);
+  b[o + 16] = carState.dr || 0;
+  const to = REPLAY.i * TRAFFIC.length * 3;
   TRAFFIC.forEach((c, k) => {
-    RPL.tb[to + k * 3] = c.x;
-    RPL.tb[to + k * 3 + 1] = c.z;
-    RPL.tb[to + k * 3 + 2] = c.yaw;
+    REPLAY.tb[to + k * 3] = c.x;
+    REPLAY.tb[to + k * 3 + 1] = c.z;
+    REPLAY.tb[to + k * 3 + 2] = c.yaw;
   });
-  const ro = RPL.i * 12;
+  const ro = REPLAY.i * 12;
   RIVALS.forEach((r, k) => {
-    RPL.rb[ro + k * 4] = r.g.position.x;
-    RPL.rb[ro + k * 4 + 1] = r.g.position.z;
-    RPL.rb[ro + k * 4 + 2] = r.g.rotation.y;
-    RPL.rb[ro + k * 4 + 3] = r.g.visible ? 1 : 0;
+    REPLAY.rb[ro + k * 4] = r.g.position.x;
+    REPLAY.rb[ro + k * 4 + 1] = r.g.position.z;
+    REPLAY.rb[ro + k * 4 + 2] = r.g.rotation.y;
+    REPLAY.rb[ro + k * 4 + 3] = r.g.visible ? 1 : 0;
   });
-  RPL.i = (RPL.i + 1) % RPL.N;
-  RPL.n = Math.min(RPL.N, RPL.n + 1);
+  REPLAY.i = (REPLAY.i + 1) % REPLAY.N;
+  REPLAY.n = Math.min(REPLAY.N, REPLAY.n + 1);
 }
 function trafPose(get) {
   const Mx = new THREE.Matrix4(),
@@ -194,7 +194,7 @@ function trafPose(get) {
     Mx.compose(V.set(p[0], 0, p[1]), Q, One);
     c.T.meshes.forEach((m) => m.setMatrixAt(c.idx, Mx));
     c.T.wheels.forEach((w, j) => {
-      W.compose(S3.set(w[0], w[1], w[2]), Q0, V2.set(0.3, c.T.wr, c.T.wr));
+      W.compose(S3.set(w[0], w[1], w[2]), scratchQuat, scratchVec3.set(0.3, c.T.wr, c.T.wr));
       W.premultiply(Mx);
       TRAFFIC.wheels.setMatrixAt(c.wb + j, W);
     });
@@ -207,56 +207,56 @@ function trafPose(get) {
 }
 let rplHintT = 0;
 function rplHint() {
-  if (phase !== "play" || RPL.n < 60) return;
+  if (phase !== "play" || REPLAY.n < 60) return;
   rplHintT = 4.5;
-  $("rplHint").classList.add("on");
+  byId("rplHint").classList.add("on");
 }
 function replayStart() {
-  if (phase !== "play" || cin.on || RPL.on || RPL.n < 45 || S.crash > 0)
+  if (phase !== "play" || cinematic.on || REPLAY.on || REPLAY.n < 45 || carState.crash > 0)
     return false;
   if (
-    M &&
-    !M.done &&
-    (M.def.id === "deck" ||
-      M.def.id === "catch" ||
-      (M.def.race && M.rs === "grid"))
+    currentMission &&
+    !currentMission.done &&
+    (currentMission.def.id === "deck" ||
+      currentMission.def.id === "catch" ||
+      (currentMission.def.race && currentMission.rs === "grid"))
   )
     return false;
-  RPL.on = true;
-  RPL.snap = Object.assign({}, S);
-  RPL.rsnap = RIVALS.map((r) => [
+  REPLAY.on = true;
+  REPLAY.snap = Object.assign({}, carState);
+  REPLAY.rsnap = RIVALS.map((r) => [
     r.g.position.x,
     r.g.position.z,
     r.g.rotation.y,
     r.g.visible,
     r.spin,
   ]);
-  RPL.cnt = RPL.n;
-  RPL.start = (RPL.i - RPL.n + RPL.N) % RPL.N;
-  RPL.p = 0;
-  RPL.speed = 0.85;
-  RPL.shot = null;
-  RPL.shotT = 0;
-  RPL.lastI = -1;
-  RPL.cam = camPos.clone();
-  RPL.fov = camera.fov;
+  REPLAY.cnt = REPLAY.n;
+  REPLAY.start = (REPLAY.i - REPLAY.n + REPLAY.N) % REPLAY.N;
+  REPLAY.p = 0;
+  REPLAY.speed = 0.85;
+  REPLAY.shot = null;
+  REPLAY.shotT = 0;
+  REPLAY.lastI = -1;
+  REPLAY.cam = camPos.clone();
+  REPLAY.fov = camera.fov;
   rplHintT = 0;
-  $("rplHint").classList.remove("on");
+  byId("rplHint").classList.remove("on");
   phase = "replay";
   document.body.classList.add("replay");
-  $("rplUI").hidden = false;
-  $("radio").classList.remove("on");
+  byId("rplUI").hidden = false;
+  byId("radio").classList.remove("on");
   audio.whoosh();
   return true;
 }
 function replayEnd() {
-  if (!RPL.on) return;
+  if (!REPLAY.on) return;
   clipStop();
-  RPL.on = false;
-  Object.assign(S, RPL.snap);
+  REPLAY.on = false;
+  Object.assign(carState, REPLAY.snap);
   trafPose((c) => [c.x, c.z, c.yaw]);
   RIVALS.forEach((r, k) => {
-    const q = RPL.rsnap[k];
+    const q = REPLAY.rsnap[k];
     r.g.position.x = q[0];
     r.g.position.z = q[1];
     r.g.rotation.y = q[2];
@@ -264,19 +264,19 @@ function replayEnd() {
     r.spin = q[4];
   });
   rivalWheels();
-  camPos.copy(RPL.cam);
+  camPos.copy(REPLAY.cam);
   camSpring = false;
-  camera.fov = RPL.fov;
+  camera.fov = REPLAY.fov;
   phase = "play";
   document.body.classList.remove("replay");
-  $("rplUI").hidden = true;
+  byId("rplUI").hidden = true;
   last = performance.now();
-  if (RPL.fromRes) {
-    RPL.fromRes = false;
+  if (REPLAY.fromRes) {
+    REPLAY.fromRes = false;
     phase = "result";
-    $("result").hidden = false;
+    byId("result").hidden = false;
   }
 }
 function rplIdx(k) {
-  return (RPL.start + Math.min(RPL.cnt - 1, Math.max(0, k))) % RPL.N;
+  return (REPLAY.start + Math.min(REPLAY.cnt - 1, Math.max(0, k))) % REPLAY.N;
 }

@@ -3,7 +3,7 @@
 function prop(o) {
   o.visible = false;
   scene.add(o);
-  V26.props.push(o);
+  MISSION_REBUILD.props.push(o);
   return o;
 }
 function glowMat(hex, k = 3) {
@@ -76,66 +76,66 @@ function beam(a, b, on, k = 1) {
     L = d.length();
   BEAM.position.copy(a).addScaledVector(d, 0.5);
   BEAM.scale.set(k, L, k);
-  BEAM.quaternion.setFromUnitVectors(V3x(0, 1, 0), d.normalize());
+  BEAM.quaternion.setFromUnitVectors(vec3(0, 1, 0), d.normalize());
   BEAM.material.opacity = 0.55 + 0.35 * Math.sin(clock * 40);
 }
 
 /* ---- hits: a sudden loss of speed that is not a landing ---- */
 function impactTick(dt, ev) {
-  const hs = S.air ? Math.hypot(S.vx, S.vz) : Math.abs(S.v);
-  const p = V26.hs0;
-  V26.hs0 = hs;
+  const hs = carState.air ? Math.hypot(carState.vx, carState.vz) : Math.abs(carState.v);
+  const p = MISSION_REBUILD.hs0;
+  MISSION_REBUILD.hs0 = hs;
   if (p == null || (ev && ev.land != null)) return 0;
   const dv = p - hs;
   return dv > Math.max(3.5, dt * 300) ? dv : 0;
 }
 
 /* ---- traffic keeps off the lines a mission needs ---- */
-V26.lines = null;
+MISSION_REBUILD.lines = null;
 {
   const tb = TRAFBLOCK;
   TRAFBLOCK = (ax, line) =>
     (tb && tb(ax, line)) ||
-    !!(V26.lines && V26.lines[ax] && V26.lines[ax].includes(line));
+    !!(MISSION_REBUILD.lines && MISSION_REBUILD.lines[ax] && MISSION_REBUILD.lines[ax].includes(line));
 }
 function clearLines(L) {
-  V26.lines = L;
+  MISSION_REBUILD.lines = L;
   for (const c of TRAFFIC) {
     if (c.jam) continue;
     let k = 0;
     while (L[c.axis] && L[c.axis].includes(c.line) && k++ < 30) {
-      c.line = -HALF + (2 + ((Math.random() * (NBK - 4)) | 0)) * P;
+      c.line = -HALF + (2 + ((Math.random() * (BLOCK_COUNT - 4)) | 0)) * BLOCK_PITCH;
     }
   }
 }
 
 /* ---- mission set-up and clean-up ---- */
 function v26Setup(d) {
-  V26.hs0 = null;
-  V26.onTrick = null;
+  MISSION_REBUILD.hs0 = null;
+  MISSION_REBUILD.onTrick = null;
   meter(null);
-  const S0 = V26.setup && V26.setup[d.id];
+  const S0 = MISSION_REBUILD.setup && MISSION_REBUILD.setup[d.id];
   if (S0) {
     PADS.forEach((p) => (p.beam.visible = false));
     RINGS.forEach((r) => (r.m.visible = false));
-    DZ.visible = false;
+    DROP_ZONE.visible = false;
     S0(d);
   }
 }
 function v26Clear() {
-  V26.props.forEach((o) => (o.visible = false));
-  V26.noRegen = V26.noServ = false;
-  V26.lines = null;
-  V26.onTrick = null;
+  MISSION_REBUILD.props.forEach((o) => (o.visible = false));
+  MISSION_REBUILD.noRegen = MISSION_REBUILD.noServ = false;
+  MISSION_REBUILD.lines = null;
+  MISSION_REBUILD.onTrick = null;
   BEAM.visible = false;
   meter(null);
-  const t = $("tree");
+  const t = byId("tree");
   if (t) t.classList.remove("on");
   RIVALS.forEach((r) => {
     if (!RACE.on && !CHASE.on) r.g.visible = false;
   });
 }
-V26.setup = {};
+MISSION_REBUILD.setup = {};
 
 /* ---- 01 DRAG STRIP: a quarter mile on the boulevard against RAZOR. Jump the light and you are out. ---- */
 const DRAG = { z0: 440, z1: 38, x: 3.5, rx: -3.5 };
@@ -242,7 +242,7 @@ function treeSet(n, red) {
             ? 9
             : 0;
   });
-  const el = $("tree");
+  const el = byId("tree");
   if (!el) return;
   el.classList.add("on");
   el.querySelectorAll("i").forEach(
@@ -265,7 +265,7 @@ function treeSet(n, red) {
 function razorAcc(v) {
   return v < 27 ? 40 : v < 60 ? 28 : v < 100 ? 18 : v < 106 ? 18 : 0;
 }
-V26.setup.launch = (d) => {
+MISSION_REBUILD.setup.launch = (d) => {
   DRAGP.visible = true;
   clearLines({ z: [0], x: [384, 288, 192, 96] });
   const R = RIVALS[1];
@@ -274,7 +274,7 @@ V26.setup.launch = (d) => {
   R.g.rotation.y = 0;
   R.sp = 0;
   place(DRAG.x, DRAG.z0, 0);
-  Object.assign(M, {
+  Object.assign(currentMission, {
     rs: "stage",
     tr: 0,
     rz: DRAG.z0,

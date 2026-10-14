@@ -1,30 +1,30 @@
-// index-inline-1 59 — lerp
+// index-inline-1 59 — carstate
 // Lines 96974-97290 of readable/index-inline-1.pretty.js (statement-aligned).
 Object.assign(ORBIT, {
   dur: 50,
   setup() {
-    ORB.on = true;
-    applyVehicle(VSEL());
+    ORBIT_MODE.on = true;
+    applyVehicle(SELECTED_VEHICLE());
     resetLaunch(LAUNCH.cycle - 15);
     ROCKET.g.visible = true;
     orbitMode(true);
     fairOpen(1);
     FAIR.ring.material.emissiveIntensity = 3;
     FAIR.locks.forEach((l) => (l.material.emissiveIntensity = 0));
-    const T = LS.tower;
+    const T = LAUNCH_SITE.tower;
     place(T.x + 3.5, T.z, Math.PI / 2);
-    S.y = T.h + 0.2;
-    S.armed = true;
-    S.spool = 1.2;
-    S.bayK = 1;
-    ORB.p0 = V3x(S.x, S.y, S.z);
+    carState.y = T.h + 0.2;
+    carState.armed = true;
+    carState.spool = 1.2;
+    carState.bayK = 1;
+    ORBIT_MODE.p0 = vec3(carState.x, carState.y, carState.z);
     RIVALS[0].g.visible = true;
-    RIVALS[0].g.position.set(VP[0] - 14, 0, VP[1] + 8);
+    RIVALS[0].g.position.set(VIEWPOINT[0] - 14, 0, VIEWPOINT[1] + 8);
     RIVALS[0].g.rotation.y = -0.6;
     rivalTags(true);
     rivalWheels();
-    ORB.space = null;
-    ORB.closed = false;
+    ORBIT_MODE.space = null;
+    ORBIT_MODE.closed = false;
   },
   cues: [
     [0.4, () => showSub("MAE", "Payload seat, sugar. You earned it.", 3.6)],
@@ -85,8 +85,8 @@ Object.assign(ORBIT, {
     [39, () => showSub("MAE", "Look at that view. Come home safe, Zero.", 5)],
   ],
   cam(t, dt) {
-    const V = V3x,
-      m = LS.mount,
+    const V = vec3,
+      m = LAUNCH_SITE.mount,
       R = ROCKET.g.position;
     ROCKET.g.updateMatrixWorld();
     const bay = ROCKET.g.localToWorld(V(0, FAIR_Y + 0.62, 0));
@@ -101,7 +101,7 @@ Object.assign(ORBIT, {
     if (t < 7.9) {
       // hover off the tower deck, over, and down into the bay
       const u = easeIO(clamp((t - 2.4) / 5.2)),
-        a = ORB.p0,
+        a = ORBIT_MODE.p0,
         top = bay.clone().add(V(0, 9, 0));
       let p;
       if (u < 0.6) {
@@ -112,12 +112,12 @@ Object.assign(ORBIT, {
         const w = easeIO((u - 0.6) / 0.4);
         p = top.clone().lerp(bay, w);
       }
-      S.x = p.x;
-      S.y = p.y;
-      S.z = p.z;
-      S.yaw = Math.PI / 2 + u * Math.PI * 0.5;
-      S.thrust = t > 2.4 ? 1 : 0;
-      S.air = true;
+      carState.x = p.x;
+      carState.y = p.y;
+      carState.z = p.z;
+      carState.yaw = Math.PI / 2 + u * Math.PI * 0.5;
+      carState.thrust = t > 2.4 ? 1 : 0;
+      carState.air = true;
       car.visible = true;
       if (t < 2.4)
         return {
@@ -125,7 +125,7 @@ Object.assign(ORBIT, {
           tg: V(m.x, R.y + 60, m.z),
           fov: 40,
         };
-      const c = V(S.x, S.y, S.z),
+      const c = V(carState.x, carState.y, carState.z),
         k = easeIO(clamp((t - 2.4) / 5.5));
       return {
         p: V(
@@ -137,12 +137,12 @@ Object.assign(ORBIT, {
         fov: lerp(40, 44, k),
       };
     }
-    S.x = bay.x;
-    S.y = bay.y;
-    S.z = bay.z;
-    S.yaw = Math.PI;
-    S.thrust = 0;
-    S.air = false;
+    carState.x = bay.x;
+    carState.y = bay.y;
+    carState.z = bay.z;
+    carState.yaw = Math.PI;
+    carState.thrust = 0;
+    carState.air = false;
     if (t < 11.4) {
       car.visible = true;
       const u = easeIO(clamp((t - 7.9) / 3.4));
@@ -172,7 +172,7 @@ Object.assign(ORBIT, {
       sh.tg = V(R.x, R.y + FAIR_Y, R.z);
       return sh;
     }
-    const sp = ORB.space;
+    const sp = ORBIT_MODE.space;
     if (!sp)
       return {
         p: V(R.x - 20, R.y - 10, R.z - 60),
@@ -270,8 +270,8 @@ async function shareOut(text, url, file) {
   return "intent";
 }
 function saveBlob(blob, name) {
-  if (dlNS) {
-    dlNS.save({ filename: name, data: blob }).catch(() => {});
+  if (downloadLink) {
+    downloadLink.save({ filename: name, data: blob }).catch(() => {});
     return;
   }
   if (inClaude) return;
@@ -283,7 +283,7 @@ function saveBlob(blob, name) {
   a.remove();
 }
 function progStats() {
-  const vis = MIS.filter((m) => !m.hidden && !isNaN(parseInt(m.n, 10)));
+  const vis = MISSIONS.filter((m) => !m.hidden && !isNaN(parseInt(m.n, 10)));
   let g = 0,
     s = 0,
     b = 0,
@@ -296,16 +296,16 @@ function progStats() {
     if (clearedId(m.id)) c++;
   });
   return {
-    ch: Math.min(STORY.done, CH.length),
-    chN: CH.length,
+    ch: Math.min(STORY.done, CHAPTERS.length),
+    chN: CHAPTERS.length,
     g,
     s,
     b,
     c,
     n: vis.length,
-    cr: ECO.cr,
+    cr: ECONOMY.cr,
     combo: COMBO.best || 0,
-    done: STORY.done >= CH.length,
+    done: STORY.done >= CHAPTERS.length,
   };
 }
 function progressScore() {

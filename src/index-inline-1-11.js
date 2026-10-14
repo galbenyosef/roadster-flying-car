@@ -211,11 +211,11 @@
   for (const k of STUNT) {
     const [bi, bj] = k.split(",").map(Number);
     const pl = new THREE.Mesh(
-      new THREE.PlaneGeometry(P - RW - 2, P - RW - 2),
+      new THREE.PlaneGeometry(BLOCK_PITCH - ROAD_WIDTH - 2, BLOCK_PITCH - ROAD_WIDTH - 2),
       ym,
     );
     pl.rotation.x = -Math.PI / 2;
-    pl.position.set(bc(bi), 0.215, bc(bj));
+    pl.position.set(blockCenter(bi), 0.215, blockCenter(bj));
     pl.receiveShadow = true;
     scene.add(pl);
   }
@@ -301,7 +301,7 @@
 {
   const r = rng(707);
   for (const z of [-134, -138.2, -142.4]) {
-    const T = VT.hauler,
+    const T = VEHICLE_TYPES.hauler,
       g = vehicleModel("hauler", T.cols[(r() * T.cols.length) | 0]);
     g.position.set(-672, 0, z);
     g.rotation.y = Math.PI / 2;
