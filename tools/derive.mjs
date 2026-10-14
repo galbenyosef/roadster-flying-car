@@ -36,7 +36,10 @@
 // top-level program (no IIFE wrapper here — the app code sits at module top
 // level, so there is nothing to unwrap). Every slice gets the exact 2-line
 // provenance header, is parse-checked with `node --input-type=module
-// --check -` and round-trips byte-exact to its readable line range.
+// --check -` and round-trips byte-exact to its readable line range — through
+// the recorded rename map when rename-map.json carries a record for it
+// (tools/engine/rename-layer.mjs, the same application tools/verify-rename.mjs
+// and tools/audit.js gate on).
 //
 // Non-code payloads (icon-192.png, icon-512.png, og.jpg, manifest.webmanifest)
 // are recorded as hashed notRendered entries — bytes + sha256, no pretty pass —
@@ -45,19 +48,43 @@
 // captured (socker precedent, PLAN §1), so they have no derived layer either;
 // tools/capture.mjs --check keeps them listed as external references.
 //
-// Identifiers in src/ are the bundle's own names — the rename campaign
-// (PLAN §5) is recorded as an open task in README.md. usage:
+// Identifiers in src/ carry the semantic rename campaign (PLAN §5): the script
+// is authored (not minified), so tools/names.json renames only the genuinely
+// opaque chunk-scope bindings; tools/recover-scoped-map.mjs records the map and
+// this tool re-applies it on every re-cut. usage:
 //   node tools/derive.mjs
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { applyRecordedMap, recordCounts } from "./engine/rename-layer.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, "..");
 const PINNED = "3.9.6";
 const MAX_WINDOW = 350;
+
+// ── recorded semantic rename map (the PLAN §5 campaign record) ───────────
+// rename-map.json is recovered from the committed slices by
+// tools/recover-scoped-map.mjs (token alignment: a slice body equals its
+// readable range with identifiers substituted, so every differing pair is a
+// PROVEN rename, never a guess). A re-cut re-applies it here, index-validated,
+// so a drifted readable or a stale map fails loudly instead of silently
+// mis-renaming. tools/verify-rename.mjs and tools/audit.js apply the SAME map
+// (tools/engine/rename-layer.mjs applyRecordedMap) — one application, three
+// readers.
+function loadRenameMap() {
+  const p = path.join(proj, "rename-map.json");
+  if (!fs.existsSync(p)) return { files: {}, scoped: {}, present: false };
+  const rm = JSON.parse(fs.readFileSync(p, "utf8"));
+  return { files: rm.files || {}, scoped: rm.scoped || {}, present: true };
+}
+const recordsFor = (map, file) => {
+  const files = map.files[file];
+  const scoped = map.scoped[file];
+  return files || scoped ? { files, scoped } : null;
+};
 
 const sha256 = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
 const readLines = (abs) => {
@@ -292,6 +319,14 @@ async function main() {
   fs.mkdirSync(srcDir, { recursive: true });
   const written = { readable: new Set(), src: new Set() };
 
+  const renameMap = loadRenameMap();
+  if (renameMap.present) console.log(`rename map: rename-map.json (${Object.keys(renameMap.files).length} word-boundary + ${Object.keys(renameMap.scoped).length} indexed slice record(s))`);
+  else console.log("rename map: none (rename-map.json absent — src/ keeps the bundle's own names)");
+  const bindingsBySource = new Map(); // sourceFile -> { oldName: newName } (the chunk-scope renames, for skipped-section reconstruction)
+  let renamedSlices = 0;
+  const renamedNameSet = new Set();
+  let renamedSplices = 0;
+
   const sources = [];
   const sections = [];
   const notRendered = [];
@@ -469,11 +504,25 @@ async function main() {
       if (b.kind === "slice") {
         nn++;
         const num = String(nn).padStart(2, "0");
-        const body = lines.slice(b.A - 1, b.B).join("\n") + "\n";
+        const raw = lines.slice(b.A - 1, b.B).join("\n") + "\n";
+        const file = `${tag}-${num}.js`;
+        // re-cut through the recorded rename map (index-validated); a slice with
+        // no record keeps its pristine readable range byte for byte
+        const record = recordsFor(renameMap, file);
+        const body = applyRecordedMap(raw, record);
+        if (record) {
+          renamedSlices++;
+          const counts = recordCounts(record, raw);
+          renamedSplices += counts.splices;
+          for (const [oldName, target] of Object.entries(record.files || {})) {
+            renamedNameSet.add(`${oldName}\u0000${target}`);
+            if (!bindingsBySource.has(sourceFile)) bindingsBySource.set(sourceFile, {});
+            bindingsBySource.get(sourceFile)[oldName] = target;
+          }
+        }
         const ms = markers(body);
         const topWord = ms.length ? ms[0][0] : /^\s*['"]use strict['"]/.test(body) ? "use-strict" : tag.toLowerCase();
         const oversized = b.count === 1 && b.B - b.A + 1 > MAX_WINDOW;
-        const file = `${tag}-${num}.js`;
         const sliceText =
           `// ${tag} ${num} — ${topWord}\n` +
           `// Lines ${b.A}-${b.B} of ${sourceFile} (statement-aligned).\n` +
@@ -485,7 +534,7 @@ async function main() {
         sections.push({
           file,
           title: `${tag} ${num} — ${topWord}`,
-          desc: `${oversized ? "Oversized single declaration (kept whole). " : ""}Lines ${b.A}-${b.B}. Markers: ${markerText(ms)}.`,
+          desc: `${oversized ? "Oversized single declaration (kept whole). " : ""}Lines ${b.A}-${b.B}. Markers: ${markerText(ms)}.${record ? " Range re-cut through the recorded semantic rename map." : ""}`,
           startLine: b.A,
           endLine: b.B,
           sourceFile,
@@ -535,6 +584,7 @@ async function main() {
       tag,
       slicingMode,
       slices: nn,
+      renameBindings: bindingsBySource.get(sourceFile) || {},
       derived:
         `readable + ${nn} statement-aligned slice(s)` +
         (perFileWhole ? ` + ${perFileWhole} wholeFile region(s)` : "") +
@@ -773,9 +823,17 @@ async function main() {
       "manifest.webmanifest data file) are hashed notRendered records (bytes + sha256, no pretty pass). The " +
       "off-origin loads (the Google Fonts stylesheet + font origins, the gstatic firebase base the optional " +
       "cloud-login path dynamic-imports) were never captured (socker precedent, PLAN §1) and have no derived " +
-      "layer; tools/capture.mjs --check lists them as external references. Identifiers in src/ are the " +
-      "bundle's own names — the rename campaign (PLAN §5) is recorded as an open task in README.md, not " +
-      "claimed here. Capture bytes are untouched by everything above; re-cut with `node tools/derive.mjs` " +
+      "layer; tools/capture.mjs --check lists them as external references. The bundle's module boundaries " +
+      "were decided from bytes (tools/probe-structure.mjs): the `__defs` registry IS a factory family (12 module " +
+      "factories), but every factory is a VENDOR module, so the whole region is wholeFile by the vendor rule " +
+      "(the turbopack README's \"the vendor chunk stays wholeFile\" gotcha adapted); there are 0 app factories, " +
+      "so the app code is a flat module and statement-aligned slices are its real shape. Identifiers in src/ " +
+      "carry the semantic rename campaign (PLAN §5): the script is AUTHORED, not minified, so tools/names.json " +
+      "renames only the genuinely opaque short bindings (single-letter globals, two/three-letter codes, the " +
+      "`_`-prefixed scratch family) and leaves the author's own semantic names alone; tools/apply-names.mjs " +
+      "applies them, tools/recover-scoped-map.mjs recovers rename-map.json, and this tool re-applies the map on " +
+      "every re-cut. The vendor `__defs`/`__req` loader and the twelve three.js module factories are never " +
+      "candidates. Capture bytes are untouched by everything above; re-cut with `node tools/derive.mjs` " +
       "after any capture refresh. `node tools/audit.js` is the gate.",
     renderOptions: {
       _default:
@@ -783,6 +841,22 @@ async function main() {
       js: "parser babel, no plugins (inline <script> blocks + captured sw.js)",
       css: "parser css, no plugins (inline <style>)",
       json: "parser json, no plugins (inline importmap blocks, if any)",
+    },
+    rename: {
+      map: "rename-map.json",
+      slices: renamedSlices,
+      names: renamedNameSet.size,
+      splices: renamedSplices,
+      namesSource:
+        "tools/names.json (reviewed worklist) → tools/apply-names.mjs (scope-aware writer, canonical guard family) → recovered by tools/recover-scoped-map.mjs",
+      note:
+        "Semantic renames are recorded per slice in rename-map.json and re-applied on every re-cut. The script " +
+        "is AUTHORED (not minified), so the campaign renames only the genuinely opaque chunk-scope bindings " +
+        "(129 names: single-letter globals, two/three-letter codes, the `_`-prefixed scratch family) and leaves " +
+        "the author's own semantic names, THREE.* property names and all globals/vendor identifiers untouched. " +
+        "The vendor `__defs`/`__req` loader and the twelve three.js r187dev module factories are wholeFile and " +
+        "never candidates. `T` (touch state) is a recorded frontier exclusion: it shares its spelling with a " +
+        "local `T` used in shorthand position, which the canonical token-level shorthand guard refuses.",
     },
     source:
       `readable/: ${inlineMapBlocks.length} inline twin(s) + ${jsRels.length} captured script twin(s) ` +
@@ -842,7 +916,8 @@ async function main() {
     const text = fs.readFileSync(abs, "utf8");
     const nl2 = text.indexOf("\n", text.indexOf("\n") + 1);
     const body = text.slice(nl2 + 1);
-    const expected = readLines(path.join(proj, s.sourceFile)).slice(s.startLine - 1, s.endLine).join("\n") + "\n";
+    const rawRange = readLines(path.join(proj, s.sourceFile)).slice(s.startLine - 1, s.endLine).join("\n") + "\n";
+    const expected = applyRecordedMap(rawRange, recordsFor(renameMap, s.file));
     if (body !== expected) {
       console.error(`ROUND-TRIP FAIL ${s.file}`);
       bad++;
@@ -862,7 +937,8 @@ async function main() {
   }
   console.log(
     `derive: ${written.readable.size} readable file(s), ${written.src.size} src slices ` +
-      `(${parsed}/${ranged} parse standalone, ${roundOK}/${ranged} round-trip byte-exact), ` +
+      `(${parsed}/${ranged} parse standalone, ${roundOK}/${ranged} round-trip byte-exact through the recorded rename map), ` +
+      `${renamedSlices} renamed slice(s) (${renamedNameSet.size} name(s), ${renamedSplices} splice(s)), ` +
       `${skippedTotal} skipped, ${sections.filter((s) => s.wholeFile).length} wholeFile, ` +
       `${prettyParsed} pretty js parse clean, ${notRendered.length} notRendered, ${pruned} orphan(s) pruned — ` +
       `self-check ${bad ? bad + " FAILURE(S)" : "clean"}`,

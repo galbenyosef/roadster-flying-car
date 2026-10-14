@@ -24,9 +24,13 @@
 //      have a src file and are re-verified textually against their recorded lines.
 //   3. The ranges of each sourceFile tile it exactly: first starts at line 1, each next
 //      starts at previous end + 1, last ends at EOF — no gaps, no overlaps.
-//   4. Byte-exact round-trip: every src slice minus its exact 2-line header
-//      (`// <tag> NN — <marker>` + `// Lines A-B of <pretty> (statement-aligned).`)
-//      equals its recorded sourceFile range byte for byte.
+//   4. Byte-exact round-trip through the rename layer: every src slice minus its exact
+//      2-line header (`// <tag> NN — <marker>` + `// Lines A-B of <pretty>
+//      (statement-aligned).`) equals its recorded sourceFile range byte for byte with
+//      the recorded rename map applied (tools/engine/rename-layer.mjs applyRecordedMap,
+//      the same application tools/derive.mjs re-cuts with). A body that differs from
+//      its readable range while rename-map.json records no map for it is an
+//      unrecorded rename — a problem.
 //   5. Every slice parses standalone with the exact gate command
 //      `node --input-type=module --check -` (stdin), as does every readable *.pretty.js.
 //   6. src/*.js on disk and the spec's ranged slices are the same set — no unlisted or
@@ -51,17 +55,23 @@
 //      WebGLRenderer, the vehicle controller, the frame loop, the branding) — a
 //      silently reshaped readable fails the gate instead of passing.
 //  12. Derived layers never enter the capture sums: no readable/, src/, legacy/ or
-//      split-spec.json path may appear in .upstream/manifest.json.
+//      split-spec.json / rename-map.json path may appear in .upstream/manifest.json.
+//  13. Rename-map honesty (the PLAN §5 campaign gate): rename-map.json parses; every
+//      recorded file is a ranged slice on disk; every scoped index addresses the
+//      recorded identifier token in that slice's readable range and is never an
+//      import/export specifier (foreign) position; every map target is a valid
+//      identifier and not the name itself; split-spec.json carries a `rename` block
+//      naming rename-map.json.
 //
 // usage: node tools/audit.js
-"use strict";
-const fs = require("node:fs");
-const path = require("node:path");
-const crypto = require("node:crypto");
-const { spawnSync } = require("node:child_process");
-const { pathToFileURL } = require("node:url");
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { pathToFileURL, fileURLToPath } from "node:url";
+import { applyRecordedMap, foreignNameIndices, tokens } from "./engine/rename-layer.mjs";
 
-const here = __dirname;
+const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, "..");
 const srcDir = path.join(proj, "src");
 const readableDir = path.join(proj, "readable");
@@ -234,6 +244,46 @@ if (spec?.defaultFile) {
   const df = path.join(srcDir, path.basename(String(spec.defaultFile)));
   if (!fs.existsSync(df)) problem(`split-spec defaultFile "${spec.defaultFile}" does not exist`);
 }
+if (!spec?.rename || typeof spec.rename !== "object") problem("split-spec.json records no rename block");
+else if (spec.rename.map !== "rename-map.json") problem(`split-spec rename.map is "${spec.rename.map}", expected "rename-map.json"`);
+
+// ── rename-map.json (the PLAN §5 campaign record this gate re-proves) ────
+const renameMapPath = path.join(proj, "rename-map.json");
+let renameMap = { files: {}, scoped: {} };
+const renameSlices = new Set();
+let flatRecorded = 0,
+  scopedRecorded = 0;
+if (fs.existsSync(renameMapPath)) {
+  try {
+    const rm = JSON.parse(fs.readFileSync(renameMapPath, "utf8"));
+    renameMap = { files: rm.files || {}, scoped: rm.scoped || {}, note: rm.note || "" };
+    if (!String(renameMap.note).trim()) problem("rename-map.json has no note (recovery record)");
+    for (const [f, map] of Object.entries(renameMap.files)) {
+      renameSlices.add(f);
+      for (const [name, target] of Object.entries(map)) {
+        flatRecorded++;
+        if (target === name) problem(`rename-map.json ${f}: "${name}" maps to itself`);
+        if (!/^[A-Za-z_$][\w$]*$/.test(target)) problem(`rename-map.json ${f}: "${name}" → "${target}" is not an identifier`);
+      }
+    }
+    for (const [f, map] of Object.entries(renameMap.scoped)) {
+      renameSlices.add(f);
+      for (const [name, hits] of Object.entries(map))
+        for (const [i, target] of hits) {
+          scopedRecorded++;
+          if (target === name) problem(`rename-map.json ${f}: "${name}" maps to itself at ${i}`);
+          if (!/^[A-Za-z_$][\w$]*$/.test(target)) problem(`rename-map.json ${f}: "${name}" → "${target}" is not an identifier`);
+        }
+    }
+  } catch (e) {
+    problem(`rename-map.json does not parse: ${e.message}`);
+  }
+}
+const recordFor = (file) => {
+  const files = renameMap.files[file];
+  const scoped = renameMap.scoped[file];
+  return files || scoped ? { files, scoped } : null;
+};
 
 const seen = new Set();
 const rangedFiles = new Set();
@@ -264,6 +314,12 @@ for (const f of onDisk) if (!rangedFiles.has(f)) problem(`src/${f} exists but is
 for (const f of rangedFiles) if (!onDisk.includes(f)) problem(`split-spec lists ${f} but it is not on disk`);
 for (const f of indexOnlyFiles)
   if (onDisk.includes(f)) problem(`index-only section ${f} must not have a src file on disk (wholeFile/skipped)`);
+
+// every rename-map.json record must be a ranged slice, on disk
+for (const f of renameSlices) {
+  if (!rangedFiles.has(f)) problem(`rename-map.json records ${f} but it is not a ranged slice in split-spec.json`);
+  else if (!onDisk.includes(f)) problem(`rename-map.json records ${f} but it is not on disk`);
+}
 
 // ── ranges: existence, bounds, tiling ───────────────────────────────────
 const bySource = new Map();
@@ -312,9 +368,10 @@ for (const [sourceFile, list] of bySource) {
   if (ok) tiledOK++;
 }
 
-// ── byte-exact round-trip + header provenance ───────────────────────────
+// ── byte-exact round-trip through the rename layer + header provenance ──
 let roundOK = 0,
-  ranged = 0;
+  ranged = 0,
+  renamedSlices = 0;
 for (const [, list] of bySource) {
   for (const { s, A, B } of list) {
     if (s.wholeFile === true || s.skipped === true) continue;
@@ -338,11 +395,58 @@ for (const [, list] of bySource) {
     if (header2 !== want2) problem(`src/${s.file}: header line 2 is not the recorded range: ${header2}`);
     const body = text.slice(nl2 + 1);
     const srcLines = getLines(path.join(proj, s.sourceFile));
-    const expected = srcLines.slice(A - 1, B).join("\n") + "\n";
+    const raw = srcLines.slice(A - 1, B).join("\n") + "\n";
+    const record = recordFor(s.file);
+    let expected = raw;
+    if (record) {
+      renamedSlices++;
+      try {
+        expected = applyRecordedMap(raw, record);
+      } catch (e) {
+        problem(`src/${s.file}: recorded rename map does not apply: ${e.message}`);
+        continue;
+      }
+      if (body === raw) problem(`src/${s.file}: rename-map.json records a map but the body is unchanged (record not applied)`);
+    } else if (body !== raw) {
+      problem(`src/${s.file}: body differs from its readable range but rename-map.json records no map (unrecorded rename)`);
+    }
     if (body !== expected)
-      problem(`src/${s.file}: body is not a byte-exact round-trip of ${s.sourceFile} lines ${A}-${B}`);
+      problem(`src/${s.file}: body is not a byte-exact round-trip of ${s.sourceFile} lines ${A}-${B} (through the recorded rename map)`);
     else roundOK++;
   }
+}
+
+// ── rename-map honesty: indices address the recorded identifier tokens ──
+let scopedOK = 0;
+for (const [file, scoped] of Object.entries(renameMap.scoped)) {
+  const sec = sections.find((s) => s.file === file);
+  if (!sec || typeof sec.startLine !== "number" || typeof sec.sourceFile !== "string") continue;
+  const lines = getLines(path.join(proj, sec.sourceFile));
+  const range = lines.slice(sec.startLine - 1, sec.endLine).join("\n") + "\n";
+  const toks = tokens(range);
+  const foreign = foreignNameIndices(toks);
+  for (const [name, hits] of Object.entries(scoped)) {
+    for (const [i, target] of hits) {
+      const t = toks[i];
+      if (!t || t.t !== "id" || t.v !== name) {
+        problem(`rename-map.json ${file}: index ${i} is not the identifier "${name}" (${t ? t.t + "(" + JSON.stringify(t.v.slice(0, 20)) + ")" : "none"})`);
+        continue;
+      }
+      if (foreign.has(i)) problem(`rename-map.json ${file}: index ${i} ("${name}") is an import/export specifier (foreign) position`);
+      if (!/^[A-Za-z_$][\w$]*$/.test(target)) problem(`rename-map.json ${file}: "${name}" → "${target}" is not an identifier`);
+    }
+  }
+  scopedOK++;
+}
+let flatOK = 0;
+for (const [file, map] of Object.entries(renameMap.files)) {
+  const sec = sections.find((s) => s.file === file);
+  if (!sec || typeof sec.startLine !== "number" || typeof sec.sourceFile !== "string") continue;
+  const lines = getLines(path.join(proj, sec.sourceFile));
+  const range = lines.slice(sec.startLine - 1, sec.endLine).join("\n");
+  const ids = new Set(tokens(range).filter((t) => t.t === "id").map((t) => t.v));
+  for (const name of Object.keys(map)) if (!ids.has(name)) problem(`rename-map.json ${file}: word-boundary key "${name}" does not occur in the slice range`);
+  flatOK++;
 }
 
 // ── skipped sections: textual re-verification ───────────────────────────
@@ -566,7 +670,7 @@ for (const s of sections) {
 if (manifest) {
   for (const rel of Object.keys(manifest.files)) {
     const norm = rel.split(path.sep).join("/");
-    if (/^(readable|src|legacy)\//.test(norm) || norm === "split-spec.json")
+    if (/^(readable|src|legacy)\//.test(norm) || ["split-spec.json", "rename-map.json", "index-inline-map.json", "_mirror-report.json"].includes(norm))
       problem(`derived layer leaked into the capture manifest: ${rel}`);
   }
 }
@@ -646,12 +750,13 @@ function loadPinnedPrettier() {
     process.exit(1);
   }
   console.log(
-    `AUDIT PASS — ${sections.length} spec sections (${roundOK}/${ranged} src↔pretty round-trips byte-exact, ` +
-      `${tiledOK}/${bySource.size} pretty sources tiled contiguously, ` +
+    `AUDIT PASS — ${sections.length} spec sections (${roundOK}/${ranged} src↔pretty round-trips byte-exact through the recorded rename map, ` +
+      `${renamedSlices} renamed slice(s), ${tiledOK}/${bySource.size} pretty sources tiled contiguously, ` +
       `${skippedOK}/${skippedTotal} skipped non-standalone sections re-verified textually, ` +
       `${checkOK}/${onDisk.length} src slices + ${prettyOK}/${prettyParsed} readable/*.pretty.js parse standalone (node --input-type=module --check -), ` +
       `${derivedOK}/${prettyFiles.length} pretties provably distinct from their capture source, ` +
       `${indexOnlyFiles.size} index-only wholeFile/skipped sections carry no src file, ` +
+      `rename map: ${flatRecorded} word-boundary + ${scopedRecorded} indexed record(s) over ${renameSlices.size} slice(s) (${flatOK} flat slice(s) + ${scopedOK} scoped slice(s) token-validated, no foreign position), ` +
       `${inlineBlocks} inline content block(s) with twins + index-inline-map.json, ` +
       `${spec?.notRendered?.length ?? 0} notRendered payload records (all captured payloads covered), ` +
       `${resolvedImports}/${checkedImports} imports resolve inside the capture (${whitelisted} whitelisted machinery), ` +
