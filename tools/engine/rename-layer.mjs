@@ -362,6 +362,54 @@ export function foreignNameIndices(toks) {
   return foreign;
 }
 
+/**
+ * Token indices of SHORTHAND export entries — `export { i }`, where the single
+ * identifier is BOTH the local binding and the chunk's public export name.
+ *
+ * A group with more than one identifier has a separate alias side (the last
+ * name), which `foreignNameIndices` already protects: the alias IS the public
+ * API and the local may be renamed freely. A ONE-identifier group has no alias
+ * side, so its identifier is simultaneously the local and the public name —
+ * renaming it moves the chunk's public API and every importer of that name
+ * stops resolving. lagoon-tree-village proved it: `i` became LAGOON_LOBES and
+ * `a f n p t` became angleToDir/polylinePath/RAD_TO_DEG/resampleCatmullRom/
+ * DEG_TO_RAD, and twelve chunks importing those names broke.
+ */
+export function shorthandExportIndices(toks) {
+  const out = new Set();
+  for (let i = 0; i < toks.length - 1; i++) {
+    const kw = toks[i];
+    if (kw.t !== "id" || kw.v !== "export") continue;
+    if (toks[i + 1].t !== "pun" || toks[i + 1].v !== "{") continue;
+    let end = i + 2;
+    while (end < toks.length && !(toks[end].t === "pun" && toks[end].v === "}")) end++;
+    let group = [];
+    const flush = () => {
+      const ids = group.filter((k) => toks[k].t === "id");
+      const hasAs = ids.some((k) => toks[k].v === "as");
+      if (ids.length === 1 && !hasAs) out.add(ids[0]);
+      group = [];
+    };
+    for (let k = i + 2; k < end; k++) {
+      if (toks[k].t === "pun" && toks[k].v === ",") flush();
+      else group.push(k);
+    }
+    flush();
+  }
+  return out;
+}
+
+/**
+ * The names a source re-exports under their OWN name — the shorthand exports
+ * (`export { i }`). These are the chunk's public API names.
+ */
+export function shorthandExportLocals(text) {
+  const toks = tokens(text);
+  const out = new Set();
+  for (const i of shorthandExportIndices(toks)) out.add(toks[i].v);
+  return out;
+}
+
 /** Rewrite text by replacing the spans in `reps` (any order). */
 export function spliceTokens(text, reps) {
   if (!reps.length) return text;
@@ -470,6 +518,7 @@ export function applyBindingMap(text, map) {
   if (!map || !Object.keys(map).length) return text;
   const ts = tokens(text);
   const foreign = foreignNameIndices(ts);
+  const shorthand = shorthandExportIndices(ts);
   // bracket context for the key guard (same brace-aware rule as
   // applyRecordedMap): an identifier is an object-literal key only inside
   // braces directly after "{" or ","
@@ -525,7 +574,16 @@ export function applyBindingMap(text, map) {
         prev.t === "lit" ||
         (prev.t === "pun" && (prev.v === ")" || prev.v === "]" || prev.v === "}")));
     if (isProp || isKey || isForInOf) continue;
-    reps.push({ s: t.s, e: t.e, to: map[t.v] });
+    // A shorthand export names the binding publicly: rename the local but keep
+    // the public name — `TARGET as ORIGINAL`. This is safe HERE and only here:
+    // this text is an index-only skipped tail, which no gate token-aligns
+    // against a pristine range, so the only contracts are that the rebuilt
+    // chunk parses and exports the same public names. The same form inside a
+    // committed src slice would insert two tokens and break the byte-exact
+    // round trip (recoverSlice requires equal token counts), which is why a
+    // shorthand export inside a slice is REFUSED rather than rewritten.
+    const to = shorthand.has(i) ? `${map[t.v]} as ${t.v}` : map[t.v];
+    reps.push({ s: t.s, e: t.e, to });
   }
   return spliceTokens(text, reps);
 }

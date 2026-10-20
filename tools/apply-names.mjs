@@ -92,7 +92,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { getAcorn } from "./lib-acorn.mjs";
-import { tokens, classifyTokens, stripHeader } from "./engine/rename-layer.mjs";
+import { tokens, classifyTokens, stripHeader, shorthandExportLocals } from "./engine/rename-layer.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, "..");
@@ -512,6 +512,26 @@ const targetsOf = (src) => {
     const ast = analyze(chunkText);
     const topDecl = new Set(programScope.names.keys());
 
+    // The names this chunk re-exports under their OWN name — the shorthand
+    // exports (`export { i }`). Renaming such a binding moves the chunk's
+    // PUBLIC export name and every importer of it stops resolving
+    // (lagoon-tree-village: `i` became LAGOON_LOBES and `a f n p t` became
+    // angleToDir/polylinePath/RAD_TO_DEG/resampleCatmullRom/DEG_TO_RAD).
+    //
+    // Only the IN-SLICE case is collected: the alias form
+    // (`export { TARGET as i }`) cannot be written into a committed slice — a
+    // slice's byte-exact round trip is proven by token-aligning it against
+    // its pristine range under a rule that requires equal token counts, and
+    // the alias form inserts two tokens — so such a name is REFUSED. In an
+    // INDEX-ONLY skipped tail the alias form IS possible and the engine emits
+    // it, so a name exported that way is not refused.
+    const exportedLocals = new Set();
+    for (const s of chunk.sections) {
+      if (s.wholeFile || s.skipped) continue;
+      const text = chunkLines.slice(s.startLine - 1, s.endLine).join("\n");
+      for (const n of shorthandExportLocals(text)) exportedLocals.add(n);
+    }
+
     // line index over the whole chunk (binary search over newline offsets)
     const starts = [0];
     for (let i = 0; i < chunkText.length; i++) if (chunkText[i] === "\n") starts.push(i + 1);
@@ -597,6 +617,9 @@ const targetsOf = (src) => {
         if (!decls.every(inRanged)) {
           verdict = "REFUSED";
           why = `declared outside the ranged regions (line ${decls[0]}) — wholeFile machinery/vendor band or skipped section`;
+        } else if (exportedLocals.has(name)) {
+          verdict = "REFUSED";
+          why = "re-exported under its own name in this chunk's export table — that name IS the chunk's public API, and the alias form cannot be written into a slice";
         } else if (whole.length) {
           verdict = "REFUSED";
           why = `referenced in a wholeFile band at line(s) ${whole.slice(0, 4).join(", ")}${whole.length > 4 ? " …" : ""}`;
@@ -747,6 +770,24 @@ const targetsOf = (src) => {
           for (const n of shorthandNames(text, appNames)) sh.add(`${n} (in ${s.file})`);
         }
         for (const n of sh) bad.push(`app[${chunk.sourceFile}]: ${n} occurs in shorthand-property position — a token rename cannot express it; drop the name`);
+      }
+    }
+
+    // Shorthand-EXPORT refusal (the chunk's public API): only a PROGRAM-SCOPE
+    // rule can rename the exported binding — a rule filed against a named
+    // scope addresses that scope's own bindings, and the export table names a
+    // top-level one.
+    if (exportedLocals.size) {
+      for (const [f, list] of fileRulesOfChunk) {
+        for (const rule of list) {
+          if (rule.scope != null) continue;
+          for (const n of Object.keys(rule.renames || {})) {
+            if (!exportedLocals.has(n)) continue;
+            bad.push(
+              `${f} [<program>]: ${n} is re-exported under its own name in this chunk's export table — that name IS the chunk's public API, and the alias form cannot be written into a slice; drop the name from the rule`,
+            );
+          }
+        }
       }
     }
 
