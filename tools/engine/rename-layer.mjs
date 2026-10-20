@@ -385,9 +385,18 @@ export function shorthandExportIndices(toks) {
     while (end < toks.length && !(toks[end].t === "pun" && toks[end].v === "}")) end++;
     let group = [];
     const flush = () => {
+      // The alias KEYWORD is found BY POSITION, not by value: a chunk can have
+      // a local literally named `as`, and then the group is
+      // `export { as as o }` — ids = [as, as, o] — where a value-based lookup
+      // finds the LOCAL, not the keyword. Worse, a group of ONE id whose
+      // value is "as" (`export { as }`) is a SHORTHAND export of a local named
+      // `as`, and a value-based "is there an `as` here?" test would wrongly
+      // call it an alias and skip it — so the alias form the engine emits for
+      // a renamed shorthand would never have fired for that local.
+      //   one id            -> shorthand: the local IS the public name
+      //   ids[1] === "as"   -> aliased: the public name is ids[2]
       const ids = group.filter((k) => toks[k].t === "id");
-      const hasAs = ids.some((k) => toks[k].v === "as");
-      if (ids.length === 1 && !hasAs) out.add(ids[0]);
+      if (ids.length === 1) out.add(ids[0]);
       group = [];
     };
     for (let k = i + 2; k < end; k++) {
