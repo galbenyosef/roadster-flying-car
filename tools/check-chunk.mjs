@@ -55,14 +55,18 @@ function exportedNames(text) {
       let group = [];
       const flush = () => {
         if (!group.length) return;
-        const asAt = group.find((k) => ts[k].t === "id" && ts[k].v === "as");
-        if (asAt !== undefined) {
-          const after = group.slice(group.indexOf(asAt) + 1).filter((k) => ts[k].t === "id");
-          if (after.length) names.add(ts[after[0]].v);
-        } else {
-          const ids = group.filter((k) => ts[k].t === "id");
-          if (ids.length === 1) names.add(ts[ids[0]].v);
-        }
+        // The alias KEYWORD is found BY POSITION, not by value: a chunk can
+        // have a local literally named `as`, and then the group is
+        // `export { as as o }` — ids = [as, as, o] — where a value-based
+        // lookup finds the LOCAL, not the keyword. The engine's own
+        // foreignNameIndices is position-based; this must agree with it.
+        //   one id            -> shorthand: the local IS the public name
+        //   ids[1] === "as"   -> aliased: the public name is ids[2]
+        //   otherwise         -> fall back to the last id
+        const ids = group.filter((k) => ts[k].t === "id");
+        if (ids.length === 1) names.add(ts[ids[0]].v);
+        else if (ids.length >= 3 && ts[ids[1]].v === "as") names.add(ts[ids[2]].v);
+        else if (ids.length >= 2) names.add(ts[ids.length - 1].v);
         group = [];
       };
       for (let k = i + 2; k < end; k++) {
@@ -73,6 +77,40 @@ function exportedNames(text) {
       i = end;
     } else if (n1.t === "id" && n1.v === "default") {
       names.add("default");
+    } else if (n1.t === "id" && n1.v === "async" && ts[i + 2]?.t === "id" && ts[i + 2].v === "function") {
+      // `export async function foo(…) { … }` — the `async` sits between
+      // `export` and `function`, so the name is one token further on
+      const name = ts[i + 3];
+      if (name && name.t === "id") names.add(name.v);
+    } else if (n1.t === "id" && n1.v === "*" && ts[i + 2]?.t === "id" && ts[i + 2].v === "as") {
+      // `export * as ns from "./x.js"` — the namespace object is the public name
+      const name = ts[i + 3];
+      if (name && name.t === "id") names.add(name.v);
+    } else if (n1.t === "id" && (n1.v === "class" || n1.v === "function")) {
+      // `export class Actor { … }` / `export function foo(…) { … }` — an
+      // INLINE export is a public name too, and a chunk can use those
+      // instead of an export table.
+      const name = ts[i + 2];
+      if (name && name.t === "id") names.add(name.v);
+    } else if (n1.t === "id" && (n1.v === "const" || n1.v === "let" || n1.v === "var")) {
+      // `export const a = 1, b = 2` — every declarator is exported. The
+      // declarator may have NO INITIALISER (`export let arrowBase;`), so the
+      // name is recognised by what FOLLOWS it: `=`, `,`, `;`, `)`, `}`, or
+      // the next statement's first token when the statement ended without a
+      // semicolon.
+      for (let k = i + 2; k < ts.length && k < i + 400; k++) {
+        const tk = ts[k];
+        if (tk.t === "id") {
+          const nx = ts[k + 1];
+          const isDeclarator =
+            nx &&
+            ((nx.t === "pun" && (nx.v === "=" || nx.v === "," || nx.v === ";" || nx.v === ")" || nx.v === "}")) ||
+              nx.t === "id");
+          if (isDeclarator && tk.v !== "of" && tk.v !== "in") names.add(tk.v);
+        }
+        if (tk.t === "pun" && tk.v === ";") break;
+        if (tk.t === "pun" && tk.v === "}" && ts[k - 1]?.t === "pun" && ts[k - 1].v === "{") break;
+      }
     }
   }
   return names;
