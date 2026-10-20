@@ -103,7 +103,7 @@ const all = process.argv.includes("--all");
 const dry = process.argv.includes("--dry");
 const listMode = process.argv.includes("--list");
 const file = all || listMode ? null : args[0];
-const namesFile = args[1] || path.join(proj, "tools", "names.json");
+const namesFile = (all ? args[0] : args[1]) || path.join(proj, "tools", "names.json");
 if (!all && !listMode && !file) {
   console.error("usage: node tools/apply-names.mjs <src-relative-file|--all|--list [readable source]> [names.json] [--dry]");
   process.exit(1);
