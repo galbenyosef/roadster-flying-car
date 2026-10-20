@@ -159,6 +159,7 @@ node tools/probe-structure.mjs        # read-only structure evidence (the __defs
 node tools/apply-names.mjs --all --dry   # the campaign preflight (nothing written)
 node tools/verify-rename.mjs --all    # every slice reproduces byte-exact through rename-map.json
 node tools/check-chunk.mjs --all      # cross-slice calls still resolve after the rename
+node tools/check-exports.mjs          # the derived layer still exports every public name
 ```
 
 ## Updating from upstream
