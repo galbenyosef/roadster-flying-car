@@ -608,7 +608,11 @@ export function recoverSlice(range, committedBody) {
   // occurrence in the range, is never a property or object key, and is not the
   // ambiguous `c ? x : y` middle token.
   const isKey = (name) =>
-    new RegExp(`\\.\\s*${escapeRe(name)}\\b`).test(range) || new RegExp(`[{,]\\s*${escapeRe(name)}\\s*:`).test(range);
+    // A property access, but NOT the third dot of a spread operator: `...HM(c)`
+    // is a CALL, not a property read, and matching it demoted a clean
+    // word-boundary rename to the index-addressed map (wonderforge).
+    new RegExp(`(?<!\\.)\\.(?!\\.)\\s*${escapeRe(name)}\\b`).test(range) ||
+    new RegExp(`[{,]\\s*${escapeRe(name)}\\s*:`).test(range);
   const ambiguous = new Set();
   for (let i = 0; i < a.length; i++) {
     if (a[i].t !== "id") continue;

@@ -307,8 +307,8 @@ section is entirely about `readable/`, `src/`, `split-spec.json`,
   `body`, `wheels`, `mission`, `composer`, `clamp`, `lerp`, …) and are left
   untouched — renaming them would destroy the author's naming, not recover it.
   `tools/names.json` therefore renames only the **129 genuinely opaque short
-  bindings — all 129 fired, 0 refused, 3,957 identifier positions** spliced
-  across **60 slices**: the single-letter globals (`$`→`byId`,
+  bindings — all 129 fired, 0 of them refused, 3,957 identifier positions**
+  spliced across **60 slices**: the single-letter globals (`$`→`byId`,
   `S`→`carState`, `M`→`currentMission`, `K`→`keyState`, `P`→`BLOCK_PITCH`,
   `U`→`upgradeLevel`), the two/three-letter code abbreviations (`RW`→`ROAD_WIDTH`,
   `NBK`→`BLOCK_COUNT`, `RPL`→`REPLAY`, `PHO`→`PHOTO`, `V26`→`MISSION_REBUILD`,
@@ -317,8 +317,11 @@ section is entirely about `readable/`, `src/`, `split-spec.json`,
   `_tc`→`textCache`, `_wv`→`wingVizSpans`, `_c3`→`scratchColor`). Applied by
   `tools/apply-names.mjs` (chunk scope = the app module's top level, so every
   nested local is untouched), recovered mechanically into `rename-map.json`
-  (**532 word-boundary + 17 indexed names over 164 occurrences**, 65/65 slices
-  aligned over 170,477 token positions, 60 renamed slices), and re-applied by
+  (**532 word-boundary + 17 indexed names over 164 occurrences** as recovered
+  on 2026-10-15; superseded 2026-10-20 by the fleet guard sync below —
+  **534 word-boundary + 13 indexed names over 103 occurrences**, with the slice
+  bytes themselves unchanged: 65/65 slices aligned over 170,477 token
+  positions, 60 renamed slices), and re-applied by
   `tools/derive.mjs` on every re-cut.
 - **Guard family carried (all recorded fixes)**: marked
   `FunctionDeclaration`/`ClassDeclaration` ids + token-level shorthand refusal
@@ -343,7 +346,11 @@ section is entirely about `readable/`, `src/`, `split-spec.json`,
   appears in shorthand position (`{ T, … }`), which the canonical token-level
   shorthand guard refuses — so `T` is left as the author wrote it rather than
   weakening the guard. (darths-rage's binding-resolution adaptation is a
-  project-specific divergence and was deliberately not adopted here.)
+  project-specific divergence and was deliberately not adopted here.) All four
+  refusals the writer made — `T` plus the three loader-machinery names
+  `__defs` / `__cache` / `__req` — are now recorded with their exact preflight
+  reasons in `tools/names.json`'s `refused` section (a refusal is a result,
+  not a failure).
 - **Pipeline** `apply → recover → derive → gates`; the superseded pre-campaign
   `src/` + `readable/` layers are archived under `legacy/2026-10-15/` (71
   files, 3.69 MB) — `readable/` is the capture rendering and is byte-identical
@@ -353,11 +360,11 @@ section is entirely about `readable/`, `src/`, `split-spec.json`,
 - **Gates**: `node tools/verify.mjs` → `6 files checked, 0 problems`;
   `node tools/audit.js` → `AUDIT PASS` (69 spec sections — 65/65 src↔pretty
   round-trips byte-exact through the recorded rename map, 60 renamed slices,
-  rename map 532 word-boundary + 164 indexed records over 60 slices
+  rename map 534 word-boundary + 103 indexed records over 60 slices
   token-validated with no foreign position, 5/5 pretties re-render byte-exact
   under pinned prettier 3.9.6 at the fixed point, vendor + shape guards held);
   `node tools/verify-rename.mjs --all` → `65/65 slice(s) reproduce byte-exact,
-  60 renamed slice(s) (164 indexed occurrence(s)), 3/3 chunk(s)
+  60 renamed slice(s) (103 indexed occurrence(s)), 3/3 chunk(s)
   references+bindings YES`; `node tools/check-chunk.mjs --all` → `3 chunk(s),
   65 slice body(ies) substituted — all cross-slice calls resolve`;
   `node tools/derive.mjs` re-run → 73 derived files byte-identical;
@@ -368,6 +375,63 @@ section is entirely about `readable/`, `src/`, `split-spec.json`,
   loopback → entry + `sw.js` + `manifest.webmanifest` + both icons + `og.jpg`
   HTTP 200 at their recorded sizes (`cloud.json` → 404, matching upstream),
   listener PID killed, port proven closed.
+
+### 2026-10-20 fleet guard sync + campaign re-run (the rename layer re-proved)
+
+The mirror's own tool set was two guard fixes behind the fleet template
+(`_standard/templates/rename-campaign/`), so the current set was copied in and
+the whole campaign re-run under it. Nothing was weakened, nothing was invented,
+and **not one byte of `src/` or `readable/` changed** — which is the point of
+the exercise.
+
+- **What changed in the tools** (copied verbatim from the fleet template; the
+  template set *is* this mirror's lineage, so no per-mirror adaptation was
+  needed beyond what was already recorded):
+  - `tools/engine/rename-layer.mjs` — the property-access detector no longer
+    matches the third dot of a **spread** call: `...ECO(...)` is a call, not a
+    property read. Before the fix, a clean word-boundary rename was demoted to
+    the index-addressed map because the range contained a `...ECO` spread.
+  - `tools/apply-names.mjs` — a **labeled statement** body is now walked. The
+    label identifier itself is still never renamed (it is a name position),
+    but the statement body must be walked, or a program-scope name used inside
+    `outer: for (…) { … }` was renamed at some references and not others
+    (caught elsewhere in the fleet as verify-rename reference drift).
+- **Re-run, in the mandated order** (`apply → recover → derive → gates`):
+  - `node tools/apply-names.mjs --all --dry` → `65 file(s) visited, 0 changed,
+    3957 identifier splice(s) (app: 129 name(s) over 1 chunk(s))` — the
+    committed slices are **byte-identical** to what the current guards
+    produce: zero names lost, zero names invented, proven by re-derivation
+    from the pristine readable layer alone.
+  - `node tools/recover-scoped-map.mjs` → `65 slice(s) aligned (170,477
+    identifier/token positions), 60 renamed slice(s) — 534 word-boundary
+    record(s), 15 indexed name(s) over 103 occurrence(s)`; the map now records
+    **13** scoped slices instead of 15, because `ECO` (slice 18) and `PHO`
+    (slice 38) are promoted from index-addressed records to ordinary
+    word-boundary renames by the spread fix.
+  - `node tools/derive.mjs` → re-cut from the capture + the recovered map:
+    **65/65 src slices byte-identical** to the committed ones; only
+    `rename-map.json` (the record's shape) and one `split-spec.json`
+    `renameBindings` ordering line changed. `split-spec.json` still records
+    **129 name(s) / 3,957 splice(s) / 60 renamed slice(s)**.
+- **Refusals are now part of the record** (the spec's "a refusal is a result,
+  not a failure"): `tools/names.json` gained a `refused` section listing the
+  four names the writer refused, each with its exact preflight reason —
+  `__defs`, `__cache`, `__req` (loader machinery inside a wholeFile region:
+  "the region is never rewritten, so the rename cannot be complete") and `T`
+  (shorthand-property position: "a token rename cannot express it"). None of
+  the four is one of the 129 worklist rules; all 129 fired.
+- **Gates (all green)**: `node tools/verify.mjs` → `6 files checked, 0
+  problems`; `node tools/audit.js` → `AUDIT PASS` (rename map: 534
+  word-boundary + 103 indexed record(s) over 60 slice(s), 60 flat + 13 scoped
+  slice(s) token-validated, no foreign position); `node tools/verify-rename.mjs
+  --all` → `65/65 slice(s) reproduce byte-exact, 60 renamed slice(s) (103
+  indexed occurrence(s)), 3/3 chunk(s) references+bindings YES`; `node
+  tools/check-chunk.mjs --all` → `3 chunk(s), 65 slice body(ies) substituted —
+  all cross-slice calls resolve`; `node tools/refcheck.mjs` → no shadowing /
+  duplicate / shorthand drift; `node tools/derive.mjs --check` → self-check
+  clean (writes nothing); `node tools/record-manifest.mjs --check` → `PASS —
+  6 capture file(s) recorded, walk agrees byte-for-byte, no derived path
+  leaked`. The capture was never touched.
 
 ## Mirror conventions
 
