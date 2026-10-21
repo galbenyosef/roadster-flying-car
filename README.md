@@ -429,7 +429,8 @@ the exercise.
   indexed occurrence(s)), 3/3 chunk(s) references+bindings YES`; `node
   tools/check-chunk.mjs --all` → `3 chunk(s), 65 slice body(ies) substituted —
   all cross-slice calls resolve`; `node tools/refcheck.mjs` → no shadowing /
-  duplicate / shorthand drift; `node tools/derive.mjs --check` → self-check
+  duplicate / shorthand drift; `node tools/derive.mjs --check` → re-derives in a
+  throwaway scratch copy outside the mirror and compares with the committed tree —
   clean (writes nothing); `node tools/record-manifest.mjs --check` → `PASS —
   6 capture file(s) recorded, walk agrees byte-for-byte, no derived path
   leaked`. The capture was never touched.

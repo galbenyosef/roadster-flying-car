@@ -59,6 +59,18 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { applyRecordedMap, recordCounts } from "./engine/rename-layer.mjs";
+// ── --check: prove the committed derived layer is current, writing NOTHING ─
+// This tool used to ignore its command line entirely, so `node tools/derive.mjs
+// --check` was a full in-place re-derivation: it rewrote readable/ + src/ +
+// split-spec.json and (on a mirror whose derive does not re-apply the recorded
+// rename map) stripped the rename layer off src/ -- damage that looks
+// legitimate, because the files still parse. --check now runs the mirror's
+// documented rebuild chain in a throwaway scratch copy OUTSIDE the mirror and
+// compares the result with the committed tree; it writes nothing here.
+if (process.argv.includes("--check")) {
+  const { runDeriveCheck } = await import("./derive-check.mjs");
+  process.exit(await runDeriveCheck());
+}
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, "..");
