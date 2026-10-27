@@ -143,7 +143,7 @@ async function loadPrettier() {
   const candidates = [
     process.env.PRETTIER_MJS,
     path.join(proj, "node_modules", "prettier", "index.mjs"),
-    "D:/repos/mirrors/metropolygonia/node_modules/prettier/index.mjs",
+    path.join(proj, "tools", "vendor", "prettier", "index.mjs"),
   ].filter(Boolean);
   for (const c of candidates) {
     if (!fs.existsSync(c)) continue;
