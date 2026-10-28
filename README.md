@@ -435,6 +435,29 @@ the exercise.
   6 capture file(s) recorded, walk agrees byte-for-byte, no derived path
   leaked`. The capture was never touched.
 
+## Boot test (2026-10-27)
+
+- Entry: `http://127.0.0.1:4929/index.html` (served at the repo root by
+  `tools/serve.mjs`) with the network blocked (`--host-resolver-rules=MAP *
+  127.0.0.1`).
+- Outcome: **rendered** — the TAP TO IGNITE gate painted over a live 3D city,
+  and clicking through (`TAP TO IGNITE` → `PLAY` → `START STORY`, then
+  `SKIP TUTORIAL`) reached the playable first-drive tutorial: car on the city
+  street, active-wing/downforce HUD, minimap, `0 PTS · 0/31 TOKENS`,
+  `TEST 00 · FIRST DRIVE — Hold W to drive · 0/30 mph — STEP 1/8`.
+- Evidence: body 502 chars; canvas 1262x568 (secondary canvases 200x200,
+  757x341, 148x148); 0 console errors (1 WebGL shadow-map warning); 1 failed
+  same-origin request, 1 blocked cross-origin (the Google Fonts stylesheet —
+  its font files never get requested because the CSS never loads); screenshot
+  `docs/boot-2026-10-27.png`.
+- Gaps seen: `cloud.json` → 404 (the already-recorded upstream gap, fetched by
+  the optional cloud-config probe; the code tolerates it).
+- **The "playable build absent/gated" hypothesis is refuted.** The gate is a
+  single click-through, the menu and story mode are local (`fetch` touches only
+  the same-origin `cloud.json`), and the build plays offline — no asset beyond
+  the recorded `cloud.json` gap is missing, and no cross-origin load is needed
+  for gameplay.
+
 ## Mirror conventions
 
 - **Capture layer** — the captured files are byte-exact copies of what the
